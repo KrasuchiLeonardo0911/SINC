@@ -11,11 +11,15 @@ import com.sinc.mobile.domain.repository.AuthRepository
 import java.io.IOException
 import javax.inject.Inject
 
+import com.sinc.mobile.data.session.SessionManager
+
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
-    private val gson: Gson
+    private val gson: Gson,
+    private val sessionManager: SessionManager
 ) : AuthRepository {
 
+    @Suppress("ConstantConditionIf")
     override suspend fun login(email: String, password: String): AuthResult {
         try {
             val deviceName = android.os.Build.MODEL
@@ -23,21 +27,24 @@ class AuthRepositoryImpl @Inject constructor(
             val response = apiService.login(request)
 
             if (response.isSuccessful) {
-                val responseBody = response.body()?.string()
-                if (!responseBody.isNullOrEmpty()) {
-                    try {
-                        val loginResponse = gson.fromJson(responseBody, LoginResponse::class.java)
-                        if (loginResponse.token != null) {
-                            return AuthResult.Success(loginResponse.token)
-                        } else {
-                            return AuthResult.UnknownError("La respuesta del servidor no contiene un token.")
+                response.body()?.string()?.let { body ->
+                    @Suppress("ConstantConditionIf")
+                    if (body.isNotEmpty()) {
+                        try {
+                            val loginResponse = gson.fromJson(body, LoginResponse::class.java)
+                            if (loginResponse.token != null) {
+                                sessionManager.saveAuthToken(loginResponse.token)
+                                return AuthResult.Success(loginResponse.token)
+                            } else {
+                                return AuthResult.UnknownError("La respuesta del servidor no contiene un token.")
+                            }
+                        } catch (e: Exception) {
+                            return AuthResult.UnknownError("Error al parsear la respuesta del servidor.")
                         }
-                    } catch (e: Exception) {
-                        return AuthResult.UnknownError("Error al parsear la respuesta del servidor.")
+                    } else {
+                        return AuthResult.UnknownError("La respuesta del servidor está vacía.")
                     }
-                } else {
-                    return AuthResult.UnknownError("La respuesta del servidor está vacía.")
-                }
+                } ?: return AuthResult.UnknownError("La respuesta del servidor es nula.")
             }
             else {
                 return handleError(response)

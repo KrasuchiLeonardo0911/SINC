@@ -7,14 +7,19 @@ import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.AuthResult
 import com.sinc.mobile.domain.use_case.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class LoginState(
     val isLoading: Boolean = false,
-    val loginSuccess: Boolean = false,
     val error: String? = null
 )
+
+sealed class NavigationEvent {
+    object NavigateToHome : NavigationEvent()
+}
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
@@ -24,14 +29,17 @@ class LoginViewModel @Inject constructor(
     private val _state = mutableStateOf(LoginState())
     val state: State<LoginState> = _state
 
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
+
     fun onLoginClick(email: String, password: String) {
         viewModelScope.launch {
             _state.value = LoginState(isLoading = true)
 
             when (val result = loginUseCase(email, password)) {
                 is AuthResult.Success -> {
-                    _state.value = LoginState(loginSuccess = true)
-                    // Aquí en el futuro guardaríamos el token
+                    _state.value = LoginState()
+                    _navigationEvent.emit(NavigationEvent.NavigateToHome)
                 }
                 is AuthResult.InvalidCredentials -> {
                     _state.value = LoginState(error = "Credenciales inválidas.")

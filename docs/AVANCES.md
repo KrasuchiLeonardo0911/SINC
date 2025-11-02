@@ -88,3 +88,13 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
     - Se creó un tema `Theme.App.Starting` para el splash, configurando un fondo blanco y el logo de la app como ícono central.
     - Se diagnosticó y solucionó un problema de recorte del logo (causado por la máscara circular de la API) mediante el uso de un `inset` drawable (`splash_logo.xml`) que añade un margen interno para asegurar que el logo se muestre completo.
 - **Estado**: La aplicación ahora tiene una identidad visual coherente, un flujo de login robusto y una pantalla de inicio profesional.
+
+- **Hito**: Implementación de Navegación y Pantalla Principal (HomeScreen).
+- **Detalles**:
+    - Se configuró la navegación de la aplicación utilizando Jetpack Navigation para Compose.
+    - Se creó un `AppNavigation` composable para gestionar las rutas de la aplicación, con `LoginScreen` como punto de partida.
+    - Se implementó la redirección desde `LoginScreen` a una nueva `HomeScreen` tras una autenticación exitosa.
+    - Se modificó `LoginViewModel` para emitir un evento de navegación de un solo uso (`SharedFlow`), desacoplando la lógica de negocio de la de navegación.
+    - Se creó la `HomeScreen` y su `HomeViewModel` correspondiente para mostrar la lista de Unidades Productivas (UPs).
+    - Se implementó la capa de datos y de dominio para obtener las UPs desde la API (`/api/movil/unidades-productivas`), incluyendo DTO, modelo, repositorio y caso de uso.
+- **Estado**: La navegación funciona correctamente. La `HomeScreen` intenta cargar los datos pero falla con un error 401 (Unauthorized) de la API, indicando que el token de autenticación no se está enviando en la petición. El siguiente paso es implementar el manejo del token.

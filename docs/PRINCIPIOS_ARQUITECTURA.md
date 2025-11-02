@@ -77,3 +77,7 @@ Esta sección documenta patrones específicos y decisiones de implementación qu
     - **Implementación**: Requiere la creación de un tema específico (`Theme.App.Starting`) que hereda de `Theme.SplashScreen` y define el fondo, el ícono y el tema post-splash. Este tema se aplica a la `Activity` de entrada en el `AndroidManifest.xml` y se activa con `installSplashScreen()` en `MainActivity`.
     - **Ajuste de Icono**: Para evitar el recorte de logos no circulares por la máscara de la API, se utiliza un `inset` drawable como recurso para el ícono (`windowSplashScreenAnimatedIcon`), lo que permite añadir un padding efectivo.
 
+- **Navegación con Jetpack Navigation Compose**:
+    - **Rol**: Gestiona el flujo entre las diferentes pantallas (Composables) de la aplicación de una manera idiomática en Compose.
+    - **Implementación**: Se define un `NavHost` central en `AppNavigation.kt` que contiene el grafo de navegación. Las acciones de navegación se exponen a las pantallas a través de callbacks (lambdas), como `onLoginSuccess`, para mantener los Composables desacoplados del `NavController` y facilitar las previsualizaciones y pruebas.
+
