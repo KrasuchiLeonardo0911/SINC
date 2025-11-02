@@ -78,7 +78,7 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
     - Se añadió el logo de la organización (`logoovinos.png`) a la pantalla de login, que está construida con Jetpack Compose.
     - Se cambió el esquema de colores de la aplicación para usar un tono bordó (`#8C2218`) como color primario.
     - **Diagnóstico de Tema de Compose**: Se detectó que los colores no se aplicaban debido a la funcionalidad de **Color Dinámico (Material You)** de Android 12+, que estaba activada por defecto en el tema de Compose (`Theme.kt`).
-    - **Solución**: Se deshabilitó el color dinámico (`dynamicColor = false`) en `SINCTheme` para forzar el uso del esquema de colores personalizado de la marca. Esto solucionó el color del `Button` y del `CircularProgressIndicator`.
+    - **Solución**: Se deshabilitó el color dinámico (`dynamicColor = false`) en `SINCTheme` para forzar el uso del esquema de colores personalizado de la marca.
     - Se limpió el código de diagnóstico que forzaba el color del botón, dejándolo dependiente del tema general.
 
 - **Hito**: Implementación de Pantalla de Inicio (Splash Screen).
@@ -96,5 +96,76 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
     - Se implementó la redirección desde `LoginScreen` a una nueva `HomeScreen` tras una autenticación exitosa.
     - Se modificó `LoginViewModel` para emitir un evento de navegación de un solo uso (`SharedFlow`), desacoplando la lógica de negocio de la de navegación.
     - Se creó la `HomeScreen` y su `HomeViewModel` correspondiente para mostrar la lista de Unidades Productivas (UPs).
-    - Se implementó la capa de datos y de dominio para obtener las UPs desde la API (`/api/movil/unidades-productivas`), incluyendo DTO, modelo, repositorio y caso de uso.
-- **Estado**: La navegación funciona correctamente. La `HomeScreen` intenta cargar los datos pero falla con un error 401 (Unauthorized) de la API, indicando que el token de autenticación no se está enviando en la petición. El siguiente paso es implementar el manejo del token.
+            - Se implementó la capa de datos y de dominio para obtener las UPs desde la API (`/api/movil/unidades-productivas`), incluyendo DTO, modelo, repositorio y caso de uso.
+    - **Estado**: La navegación funciona correctamente. La `HomeScreen` intenta cargar los datos pero falla con un error 401 (Unauthorized) de la API, indicando que el token de autenticación no se está enviando en la petición. El siguiente paso es implementar el manejo del token.
+    
+    ---
+    
+    ### 02 de Noviembre de 2025
+    
+    - **Hito**: Implementación de la Arquitectura de Persistencia Local (Offline-First).
+    - **Detalles**:
+        - Se definió y documentó la estrategia de persistencia local en `docs/OFFLINE_ARCHITECTURE.md`, adoptando el patrón "Single Source of Truth" (SSOT) con la base de datos Room como fuente única de verdad para la UI.
+        - Se analizaron las migraciones y modelos de la base de datos del backend (Laravel) para alinear la estructura de la base de datos local.
+        - **Capa de Datos (`:data`)**:
+            - Se añadieron las dependencias de Room al catálogo de versiones (`libs.versions.toml`) y al `build.gradle.kts` del módulo `:data`.
+            - Se crearon las `Entity` de Room para todas las tablas necesarias, reflejando la estructura del backend:
+                - `UnidadProductivaEntity`
+                - `EspecieEntity`
+                - `RazaEntity`
+                - `CategoriaAnimalEntity`
+                - `MotivoMovimientoEntity` (incluyendo el campo `tipo` para 'alta'/'baja')
+                - `MovimientoPendienteEntity` (para almacenar movimientos a sincronizar)
+            - Se implementó un `TypeConverter` para `LocalDateTime` para su correcto almacenamiento en la base de datos.
+            - Se crearon las interfaces DAO (`@Dao`) para cada entidad, definiendo las operaciones de acceso a datos (CRUD).
+            - Se definió la clase `SincMobileDatabase` que extiende `RoomDatabase`, uniendo todas las entidades, DAOs y el `TypeConverter`.
+            - Se creó un `DatabaseModule` de Hilt para proveer las instancias singleton de la base de datos y los DAOs a toda la aplicación.
+    
+    - **Hito**: Implementación de Tests para la Capa de Persistencia.
+    - **Detalles**:
+        - Se decidió implementar tests unitarios para la capa de datos para garantizar su correcto funcionamiento antes de continuar con el desarrollo.
+        - Se añadieron las dependencias de testing necesarias (`androidx.test.ext:junit`, `androidx.room:room-testing`, `kotlinx-coroutines-test`, `com.google.truth:truth`) al `build.gradle.kts` del módulo `:data`.
+        - Se creó la clase de test `UnidadProductivaDaoTest.kt` en el directorio `androidTest` del módulo `:data`.
+        - Se implementaron los siguientes casos de prueba para `UnidadProductivaDao`:
+            - `insertAllAndGetAllUnidadesProductivas`: Verifica que la inserción de una lista de entidades y su posterior recuperación funcionan correctamente.
+            - `clearAllUnidadesProductivas`: Verifica que la operación de borrado elimina todos los registros de la tabla.
+            - `insertOnConflictReplacesExisting`: Verifica que la estrategia de conflicto `OnConflictStrategy.REPLACE` actualiza correctamente un registro existente si se inserta con la misma clave primaria.
+    - **Estado**: La capa de persistencia local con Room está completamente definida y configurada. Se han escrito los tests unitarios para `UnidadProductivaDao` para validar su funcionalidad.
+
+- **Hito**: Finalización de Tests para todos los DAOs de la Base de Datos Local.
+- **Detalles**:
+        - Se completó la implementación y verificación de los tests instrumentados para todos los DAOs definidos en `SincMobileDatabase`.
+        - Se crearon y pasaron exitosamente los tests para:
+            - `UnidadProductivaDao`
+            - `EspecieDao`
+            - `RazaDao`
+            - `CategoriaAnimalDao`
+            - `MotivoMovimientoDao`
+            - `MovimientoPendienteDao`
+        - Durante el proceso, se resolvieron varios problemas de configuración y sintaxis:
+            - Se añadió la dependencia `coreLibraryDesugaring` y se limpiaron dependencias de test redundantes en `data/build.gradle.kts`.
+            - Se añadió la dependencia `androidx-arch-core-testing` para `InstantTaskExecutorRule`.
+            - Se corrigió el uso del `HiltTestRunner` eliminando la anotación `@RunWith(AndroidJUnit4::class)` de los tests.
+            - Se adaptaron los métodos de test para usar `runTest` de `kotlinx-coroutines-test` para manejar correctamente las corrutinas y el tipo de retorno `void`.
+            - Se corrigieron errores tipográficos en `TestDatabaseModule.kt`.
+            - Se ajustaron los métodos de los DAOs (`MovimientoPendienteDao`) y las aserciones en los tests para manejar correctamente los IDs autogenerados y las comparaciones de objetos.
+    - **Estado**: Todos los DAOs de la capa de persistencia local están cubiertos por tests instrumentados que verifican su correcto funcionamiento. El siguiente paso es continuar con la implementación de los tests para los DAOs restantes y luego integrar la capa de persistencia con los repositorios y casos de uso.
+
+---
+
+### 02 de Noviembre de 2025
+
+- **Hito**: Corrección y Estabilización de `CatalogosRepositoryImplTest` para Sincronización de Catálogos.
+- **Detalles**:
+    - Se abordaron y resolvieron múltiples problemas que impedían la ejecución exitosa del test instrumentado `CatalogosRepositoryImplTest`, crucial para verificar la funcionalidad de sincronización de catálogos (especies, razas, categorías, motivos de movimiento) y el uso offline de la aplicación.
+    - **Problema 1: Timeout en la Conexión al MockWebServer**:
+        - **Causa**: Conflicto en la inyección de dependencias de Hilt, donde el test y el cliente Retrofit usaban instancias diferentes de `MockWebServer`, o el servidor no se iniciaba/configuraba correctamente para el cliente.
+        - **Solución**: Se refactorizó el test para gestionar manualmente las dependencias de red (`MockWebServer`, `OkHttpClient`, `Retrofit`, `AuthApiService`) dentro del método `@Before`. Esto asegura que cada test tenga su propio entorno de red aislado y correctamente configurado, eliminando los conflictos de ciclo de vida con Hilt.
+    - **Problema 2: `java.lang.IllegalArgumentException: start() already called`**:
+        - **Causa**: Un intento previo de solucionar el timeout mediante la anotación `@Singleton` en el `MockWebServer` de Hilt provocó que la misma instancia del servidor se intentara iniciar varias veces en tests consecutivos.
+        - **Solución**: La gestión manual de dependencias resolvió este problema al garantizar que una nueva instancia de `MockWebServer` se crea y se inicia para cada test, y se cierra correctamente en el `@After`.
+    - **Problema 3: Lógica Incorrecta en `syncCatalogos_apiError_returnsFailure`**:
+        - **Causa**: El test estaba diseñado para verificar el manejo de errores de la API, pero contenía una línea que lanzaba una excepción y fallaba el test si la operación resultaba en un fallo (el comportamiento esperado).
+        - **Solución**: Se eliminó la línea `if (result.isFailure) { throw result.exceptionOrNull()!! }` de este test, permitiendo que las aserciones posteriores validaran correctamente el manejo del error sin provocar una falla prematura del test.
+    - **Limpieza**: Se eliminaron las importaciones y proveedores de Hilt relacionados con las dependencias de red del `TestAppModule.kt` que ya no eran necesarios.
+- **Estado**: El `CatalogosRepositoryImplTest` pasa exitosamente, confirmando la robustez de la lógica de sincronización de catálogos. La aplicación está lista para implementar la funcionalidad de sincronización en el sistema.

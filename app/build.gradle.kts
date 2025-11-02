@@ -32,6 +32,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlin {
         compilerOptions {
@@ -56,6 +57,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(project(":domain"))
     implementation(project(":data"))
+
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.48")

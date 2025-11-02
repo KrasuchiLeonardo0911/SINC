@@ -81,3 +81,19 @@ Esta sección documenta patrones específicos y decisiones de implementación qu
     - **Rol**: Gestiona el flujo entre las diferentes pantallas (Composables) de la aplicación de una manera idiomática en Compose.
     - **Implementación**: Se define un `NavHost` central en `AppNavigation.kt` que contiene el grafo de navegación. Las acciones de navegación se exponen a las pantallas a través de callbacks (lambdas), como `onLoginSuccess`, para mantener los Composables desacoplados del `NavController` y facilitar las previsualizaciones y pruebas.
 
+- **Persistencia de Datos con Room y patrón "Single Source of Truth" (SSOT)**:
+    - **Rol**: Para habilitar la funcionalidad offline-first, se utiliza la librería Room como abstracción sobre una base de datos SQLite local.
+    - **Decisión Arquitectónica**: Se adopta el patrón "Single Source of Truth". La capa de datos (`:data`) es la única que accede directamente a las fuentes de datos (API remota y base de datos Room). Los repositorios en esta capa son responsables de mantener la base de datos local sincronizada con el servidor. La capa de dominio y la capa de presentación **siempre** consumen datos desde la base de datos local (a través de `Flow`s de Room), asegurando que la UI sea reactiva, rápida y siempre funcional, incluso sin conexión.
+    - **Implementación**:
+        - Se definen `Entity`s en la capa de datos que reflejan la estructura del backend.
+        - Se crean `DAO`s (Data Access Objects) para definir las operaciones de base de datos.
+        - Se utiliza un `TypeConverter` para manejar tipos de datos no soportados nativamente por SQLite, como `LocalDateTime`.
+        - Se provee la base de datos y los DAOs como singletons a través de un `DatabaseModule` de Hilt.
+
+- **Estrategia de Pruebas para la Persistencia**:
+    - **Decisión Arquitectónica**: Para garantizar la fiabilidad de la capa de persistencia, los DAOs se prueban con tests de instrumentación.
+    - **Implementación**:
+        - Se utiliza una base de datos Room **en memoria** (`Room.inMemoryDatabaseBuilder`) para cada prueba. Esto garantiza un entorno de prueba limpio, rápido y aislado, sin afectar el almacenamiento real del dispositivo.
+        - Se utiliza `HiltAndroidTest` para crear un entorno de prueba que puede inyectar dependencias, como la base de datos en memoria, en las clases de prueba.
+        - Se utilizan librerías como `kotlinx-coroutines-test` y `Google Truth` para escribir pruebas de coroutines claras, predecibles y con aserciones legibles.
+
