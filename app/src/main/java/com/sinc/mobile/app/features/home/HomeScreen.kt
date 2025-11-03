@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -172,12 +175,21 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                                 if (state.isSaving) {
                                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                                 } else {
-                                    Button(
-                                        onClick = { viewModel.saveMovement() },
-                                        enabled = state.isFormValid,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("Guardar")
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Button(
+                                            onClick = { viewModel.saveMovement() },
+                                            enabled = state.isFormValid,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Guardar")
+                                        }
+                                        Button(
+                                            onClick = { viewModel.syncMovements() },
+                                            enabled = state.movimientosPendientes.any { !it.sincronizado },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Sincronizar")
+                                        }
                                     }
                                 }
 
@@ -186,6 +198,22 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                                 }
                                 if (state.saveSuccess) {
                                     Text(text = "¡Movimiento guardado con éxito!", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp))
+                                }
+                            }
+                        }
+
+                        if (state.movimientosPendientes.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Movimientos Pendientes", style = MaterialTheme.typography.titleLarge)
+                            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                                items(state.movimientosPendientes) { movimiento ->
+                                    Card(modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth()) {
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            Text("Especie: ${state.catalogos?.especies?.find { it.id == movimiento.especieId }?.nombre ?: ""}")
+                                            Text("Cantidad: ${movimiento.cantidad}")
+                                            Text("Sincronizado: ${if (movimiento.sincronizado) "Sí" else "No"}")
+                                        }
+                                    }
                                 }
                             }
                         }

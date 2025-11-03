@@ -2,10 +2,12 @@ package com.sinc.mobile.data.local.dao
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.google.common.truth.Truth.assertThat
+import com.sinc.mobile.data.di.DatabaseModule
 import com.sinc.mobile.data.local.SincMobileDatabase
-import com.sinc.mobile.data.local.entities.* // Import all entities
+import com.sinc.mobile.data.local.entities.MovimientoPendienteEntity
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -14,9 +16,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDateTime
 import javax.inject.Inject
-
-import com.sinc.mobile.data.di.DatabaseModule
-import dagger.hilt.android.testing.UninstallModules
 
 @UninstallModules(DatabaseModule::class)
 @HiltAndroidTest
@@ -34,13 +33,6 @@ class MovimientoPendienteDaoTest {
     @Inject
     lateinit var movimientoPendienteDao: MovimientoPendienteDao
 
-    // Inject all parent DAOs for foreign key setup
-    @Inject lateinit var unidadProductivaDao: UnidadProductivaDao
-    @Inject lateinit var especieDao: EspecieDao
-    @Inject lateinit var categoriaAnimalDao: CategoriaAnimalDao
-    @Inject lateinit var motivoMovimientoDao: MotivoMovimientoDao
-    @Inject lateinit var razaDao: RazaDao
-
     @Before
     fun setup() {
         hiltRule.inject()
@@ -51,107 +43,106 @@ class MovimientoPendienteDaoTest {
         database.close()
     }
 
-    private suspend fun setupForeignKeys() {
-        val up = UnidadProductivaEntity(1, "UP Test", "ID1", null, null, null, null, true, true)
-        unidadProductivaDao.insertAll(listOf(up))
-
-        val especie = EspecieEntity(1, "Ovino")
-        especieDao.insertAll(listOf(especie))
-
-        val raza = RazaEntity(1, 1, "Merino")
-        razaDao.insertAll(listOf(raza))
-
-        val categoria = CategoriaAnimalEntity(1, 1, "Cordero")
-        categoriaAnimalDao.insertAll(listOf(categoria))
-
-        val motivo = MotivoMovimientoEntity(1, "Nacimiento", "alta")
-        motivoMovimientoDao.insertAll(listOf(motivo))
-    }
-
     @Test
-    fun insertAllAndGetAllMovimientosPendientes() = runTest {
-        setupForeignKeys()
-
-        val originalMovimientos = listOf(
-            MovimientoPendienteEntity(
-                unidad_productiva_id = 1,
-                especie_id = 1,
-                categoria_id = 1,
-                raza_id = 1,
-                cantidad = 10,
-                motivo_movimiento_id = 1,
-                destino_traslado = null,
-                fecha_registro = LocalDateTime.now(),
-                sincronizado = false
-            )
-        )
-        movimientoPendienteDao.insertAll(originalMovimientos)
-
-        val allMovimientos = movimientoPendienteDao.getAllMovimientosPendientes().first()
-        assertThat(allMovimientos).hasSize(originalMovimientos.size)
-        assertThat(allMovimientos[0].unidad_productiva_id).isEqualTo(originalMovimientos[0].unidad_productiva_id)
-        assertThat(allMovimientos[0].especie_id).isEqualTo(originalMovimientos[0].especie_id)
-        assertThat(allMovimientos[0].categoria_id).isEqualTo(originalMovimientos[0].categoria_id)
-        assertThat(allMovimientos[0].raza_id).isEqualTo(originalMovimientos[0].raza_id)
-        assertThat(allMovimientos[0].cantidad).isEqualTo(originalMovimientos[0].cantidad)
-        assertThat(allMovimientos[0].motivo_movimiento_id).isEqualTo(originalMovimientos[0].motivo_movimiento_id)
-        assertThat(allMovimientos[0].destino_traslado).isEqualTo(originalMovimientos[0].destino_traslado)
-        // Compare LocalDateTime fields with a tolerance or by converting to String if exact match is problematic
-        assertThat(allMovimientos[0].fecha_registro.toLocalDate()).isEqualTo(originalMovimientos[0].fecha_registro.toLocalDate())
-        assertThat(allMovimientos[0].sincronizado).isEqualTo(originalMovimientos[0].sincronizado)
-    }
-
-    @Test
-    fun clearAllMovimientosPendientes() = runTest {
-        setupForeignKeys()
-
-        val movimientos = listOf(
-            MovimientoPendienteEntity(
-                unidad_productiva_id = 1,
-                especie_id = 1,
-                categoria_id = 1,
-                raza_id = 1,
-                cantidad = 5,
-                motivo_movimiento_id = 1,
-                destino_traslado = null,
-                fecha_registro = LocalDateTime.now(),
-                sincronizado = false
-            )
-        )
-        movimientoPendienteDao.insertAll(movimientos)
-
-        movimientoPendienteDao.clearAll()
-
-        val allMovimientos = movimientoPendienteDao.getAllMovimientosPendientes().first()
-        assertThat(allMovimientos).isEmpty()
-    }
-
-    @Test
-    fun insertOnConflictReplacesExisting() = runTest {
-        setupForeignKeys()
-
-        val movimiento1 = MovimientoPendienteEntity(
+    fun insertAndGetMovimiento() = runTest {
+        val now = LocalDateTime.now()
+        val movimiento = MovimientoPendienteEntity(
+            id = 1,
             unidad_productiva_id = 1,
             especie_id = 1,
             categoria_id = 1,
             raza_id = 1,
             cantidad = 10,
             motivo_movimiento_id = 1,
-            destino_traslado = null,
-            fecha_registro = LocalDateTime.now(),
-            sincronizado = false
+            destino_traslado = "Vecino",
+            observaciones = "Animales sanos",
+            fecha_registro = now,
+            sincronizado = false,
+            fecha_creacion_local = now
         )
-        movimientoPendienteDao.insertAll(listOf(movimiento1))
-
-        // Retrieve the inserted entity to get its auto-generated ID
-        val insertedMovimiento = movimientoPendienteDao.getAllMovimientosPendientes().first().first()
-        val updatedMovimiento1 = insertedMovimiento.copy(cantidad = 20, sincronizado = true)
-        movimientoPendienteDao.insertAll(listOf(updatedMovimiento1))
+        movimientoPendienteDao.insert(movimiento)
 
         val allMovimientos = movimientoPendienteDao.getAllMovimientosPendientes().first()
-        assertThat(allMovimientos).hasSize(1)
-        assertThat(allMovimientos[0].id).isEqualTo(updatedMovimiento1.id)
-        assertThat(allMovimientos[0].cantidad).isEqualTo(updatedMovimiento1.cantidad)
-        assertThat(allMovimientos[0].sincronizado).isTrue()
+        assertThat(allMovimientos).contains(movimiento)
+    }
+
+    @Test
+    fun insertWithNullObservaciones() = runTest {
+        val now = LocalDateTime.now()
+        val movimiento = MovimientoPendienteEntity(
+            id = 1,
+            unidad_productiva_id = 1,
+            especie_id = 1,
+            categoria_id = 1,
+            raza_id = 1,
+            cantidad = 5,
+            motivo_movimiento_id = 2,
+            destino_traslado = null,
+            observaciones = null,
+            fecha_registro = now,
+            sincronizado = false,
+            fecha_creacion_local = now
+        )
+        movimientoPendienteDao.insert(movimiento)
+
+        val result = movimientoPendienteDao.getAllMovimientosPendientes().first().first()
+        assertThat(result.id).isEqualTo(1)
+        assertThat(result.observaciones).isNull()
+    }
+
+    @Test
+    fun getUnsyncedMovimientos() = runTest {
+        val now = LocalDateTime.now()
+        val syncedMovimiento = MovimientoPendienteEntity(
+            id = 1, unidad_productiva_id = 1, especie_id = 1, categoria_id = 1, raza_id = 1,
+            cantidad = 10, motivo_movimiento_id = 1, destino_traslado = null, observaciones = null,
+            fecha_registro = now, sincronizado = true, fecha_creacion_local = now
+        )
+        val unsyncedMovimiento = MovimientoPendienteEntity(
+            id = 2, unidad_productiva_id = 1, especie_id = 1, categoria_id = 1, raza_id = 1,
+            cantidad = 5, motivo_movimiento_id = 2, destino_traslado = null, observaciones = null,
+            fecha_registro = now, sincronizado = false, fecha_creacion_local = now
+        )
+        movimientoPendienteDao.insertAll(listOf(syncedMovimiento, unsyncedMovimiento))
+
+        val unsynced = movimientoPendienteDao.getUnsyncedMovimientos().first()
+        assertThat(unsynced).containsExactly(unsyncedMovimiento)
+    }
+
+    @Test
+    fun markAsSynced() = runTest {
+        val now = LocalDateTime.now()
+        val movimiento = MovimientoPendienteEntity(
+            id = 1, unidad_productiva_id = 1, especie_id = 1, categoria_id = 1, raza_id = 1,
+            cantidad = 10, motivo_movimiento_id = 1, destino_traslado = null, observaciones = null,
+            fecha_registro = now, sincronizado = false, fecha_creacion_local = now
+        )
+        val insertedId = movimientoPendienteDao.insert(movimiento)
+
+        movimientoPendienteDao.markAsSynced(insertedId)
+
+        val result = movimientoPendienteDao.getAllMovimientosPendientes().first().first()
+        assertThat(result.sincronizado).isTrue()
+    }
+
+    @Test
+    fun clearAll() = runTest {
+        val now = LocalDateTime.now()
+        val movimiento1 = MovimientoPendienteEntity(
+            id = 1, unidad_productiva_id = 1, especie_id = 1, categoria_id = 1, raza_id = 1,
+            cantidad = 10, motivo_movimiento_id = 1, destino_traslado = null, observaciones = null,
+            fecha_registro = now, sincronizado = false, fecha_creacion_local = now
+        )
+        val movimiento2 = MovimientoPendienteEntity(
+            id = 2, unidad_productiva_id = 1, especie_id = 1, categoria_id = 1, raza_id = 1,
+            cantidad = 5, motivo_movimiento_id = 2, destino_traslado = null, observaciones = null,
+            fecha_registro = now, sincronizado = false, fecha_creacion_local = now
+        )
+        movimientoPendienteDao.insertAll(listOf(movimiento1, movimiento2))
+
+        movimientoPendienteDao.clearAll()
+
+        val allMovimientos = movimientoPendienteDao.getAllMovimientosPendientes().first()
+        assertThat(allMovimientos).isEmpty()
     }
 }

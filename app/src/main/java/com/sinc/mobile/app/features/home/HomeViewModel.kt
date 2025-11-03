@@ -16,9 +16,13 @@ import com.sinc.mobile.domain.use_case.GetCatalogosUseCase
 import com.sinc.mobile.domain.model.Categoria
 import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.Raza
+import java.time.LocalDateTime
 
-import com.sinc.mobile.domain.model.Movimiento
-import com.sinc.mobile.domain.use_case.SaveMovimientoUseCase
+import com.sinc.mobile.domain.model.MovimientoPendiente
+
+import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
+import com.sinc.mobile.domain.use_case.SaveMovimientoLocalUseCase
+import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
 import com.sinc.mobile.domain.model.MotivoMovimiento
 
 data class HomeState(
@@ -43,14 +47,17 @@ data class HomeState(
     val isFormValid: Boolean = false,
     val isSaving: Boolean = false,
     val saveError: String? = null,
-    val saveSuccess: Boolean = false
+    val saveSuccess: Boolean = false,
+    val movimientosPendientes: List<MovimientoPendiente> = emptyList()
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     private val getCatalogosUseCase: GetCatalogosUseCase,
-    private val saveMovimientoUseCase: SaveMovimientoUseCase
+    private val getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
+    private val saveMovimientoLocalUseCase: SaveMovimientoLocalUseCase,
+    private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase
 ) : ViewModel() {
 
     private val _state = mutableStateOf(HomeState())
@@ -58,6 +65,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadUnidadesProductivas()
+        loadMovimientosPendientes()
     }
 
     fun onUnidadSelected(unidad: UnidadProductiva) {
@@ -149,7 +157,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, saveError = null, saveSuccess = false)
             val state = _state.value
-            val movimiento = Movimiento(
+            val movimiento = MovimientoPendiente(
+                unidadProductivaId = state.selectedUnidad!!.id,
                 especieId = state.selectedEspecie!!.id,
                 categoriaId = state.selectedCategoria!!.id,
                 razaId = state.selectedRaza!!.id,
@@ -157,13 +166,26 @@ class HomeViewModel @Inject constructor(
                 motivoMovimientoId = state.selectedMotivo!!.id,
                 destinoTraslado = if (state.selectedMotivo?.nombre?.contains("Traslado", ignoreCase = true) == true ||
                                      state.selectedMotivo?.nombre?.contains("Venta", ignoreCase = true) == true ||
-                                     state.selectedMotivo?.nombre?.contains("Compra", ignoreCase = true) == true) state.destino else null
+                                     state.selectedMotivo?.nombre?.contains("Compra", ignoreCase = true) == true) state.destino else null,
+                observaciones = null, // Add a field for observaciones in HomeState if needed
+                fechaRegistro = LocalDateTime.now()
             )
-            saveMovimientoUseCase(movimiento).onSuccess {
+            saveMovimientoLocalUseCase(movimiento).onSuccess {
                 _state.value = _state.value.copy(isSaving = false, saveSuccess = true)
                 // Optionally reset form fields here
             }.onFailure {
                 _state.value = _state.value.copy(isSaving = false, saveError = it.message ?: "Error al guardar movimiento")
+            }
+        }
+    }
+
+    fun syncMovements() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSaving = true, saveError = null, saveSuccess = false)
+            syncMovimientosPendientesUseCase().onSuccess {
+                _state.value = _state.value.copy(isSaving = false, saveSuccess = true) // We can reuse saveSuccess for sync success
+            }.onFailure {
+                _state.value = _state.value.copy(isSaving = false, saveError = it.message ?: "Error al sincronizar movimientos")
             }
         }
     }
@@ -173,6 +195,14 @@ class HomeViewModel @Inject constructor(
             _state.value = _state.value.copy(isLoading = true)
             getUnidadesProductivasUseCase().collect {
                 _state.value = _state.value.copy(isLoading = false, unidades = it)
+            }
+        }
+    }
+
+    private fun loadMovimientosPendientes() {
+        viewModelScope.launch {
+            getMovimientosPendientesUseCase().collect {
+                _state.value = _state.value.copy(movimientosPendientes = it)
             }
         }
     }

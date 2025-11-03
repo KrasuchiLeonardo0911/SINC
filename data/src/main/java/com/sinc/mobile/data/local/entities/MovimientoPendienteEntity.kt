@@ -14,6 +14,7 @@ data class MovimientoPendienteEntity(
     val cantidad: Int,
     val motivo_movimiento_id: Int,
     val destino_traslado: String?,
+    val observaciones: String?,
     val fecha_registro: LocalDateTime, // Corresponds to backend's fecha_registro
     val sincronizado: Boolean = false,
     val fecha_creacion_local: LocalDateTime = LocalDateTime.now() // Local timestamp

@@ -1,7 +1,9 @@
 package com.sinc.mobile.data.di
 
 import com.google.gson.Gson
+import com.sinc.mobile.data.network.AuthInterceptor
 import com.sinc.mobile.data.network.api.AuthApiService
+import com.sinc.mobile.data.network.api.MovimientoApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,12 +26,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.HEADERS
         }
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
             .build()
     }
 
@@ -47,6 +50,12 @@ object NetworkModule {
     @Singleton
     fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
         return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMovimientoApiService(retrofit: Retrofit): MovimientoApiService {
+        return retrofit.create(MovimientoApiService::class.java)
     }
 }
 
