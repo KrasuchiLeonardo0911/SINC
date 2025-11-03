@@ -2,6 +2,7 @@ package com.sinc.mobile.data.di
 
 import com.google.gson.Gson
 import com.sinc.mobile.data.network.AuthInterceptor
+import com.sinc.mobile.data.network.ErrorInterceptor
 import com.sinc.mobile.data.network.api.AuthApiService
 import com.sinc.mobile.data.network.api.MovimientoApiService
 import dagger.Module
@@ -26,13 +27,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        errorInterceptor: ErrorInterceptor
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.HEADERS
+            level = HttpLoggingInterceptor.Level.BODY
         }
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
+            .addInterceptor(errorInterceptor)
             .build()
     }
 

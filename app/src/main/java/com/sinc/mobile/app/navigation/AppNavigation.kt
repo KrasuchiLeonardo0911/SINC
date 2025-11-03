@@ -1,6 +1,7 @@
 package com.sinc.mobile.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,9 +16,7 @@ object Routes {
 }
 
 @Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-
+fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) {
             SplashScreen(

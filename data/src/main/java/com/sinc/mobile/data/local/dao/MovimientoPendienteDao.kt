@@ -4,27 +4,22 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.sinc.mobile.data.local.entities.MovimientoPendienteEntity
 import kotlinx.coroutines.flow.Flow
+import androidx.room.Delete
+import androidx.room.Update
 
 @Dao
 interface MovimientoPendienteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(movimiento: MovimientoPendienteEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(movimientos: List<MovimientoPendienteEntity>)
-
-    @Query("SELECT * FROM movimientos_pendientes WHERE sincronizado = 0")
-    fun getUnsyncedMovimientos(): Flow<List<MovimientoPendienteEntity>>
+    suspend fun insert(movimiento: MovimientoPendienteEntity)
 
     @Query("SELECT * FROM movimientos_pendientes")
-    fun getAllMovimientosPendientes(): Flow<List<MovimientoPendienteEntity>>
+    fun getAll(): Flow<List<MovimientoPendienteEntity>>
 
-    @Query("UPDATE movimientos_pendientes SET sincronizado = 1 WHERE id = :movimientoId")
-    suspend fun markAsSynced(movimientoId: Long)
+    @Delete
+    suspend fun delete(movimiento: MovimientoPendienteEntity)
 
-    @Query("DELETE FROM movimientos_pendientes")
-    suspend fun clearAll()
+    @Update
+    suspend fun update(movimiento: MovimientoPendienteEntity)
 }

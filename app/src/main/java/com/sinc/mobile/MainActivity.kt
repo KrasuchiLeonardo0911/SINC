@@ -4,20 +4,45 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.rememberNavController
 import com.sinc.mobile.app.navigation.AppNavigation
+import com.sinc.mobile.app.navigation.Routes
+import com.sinc.mobile.domain.navigation.NavigationCommand
+import com.sinc.mobile.domain.navigation.NavigationManager
 import com.sinc.mobile.ui.theme.SINCTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var navigationManager: NavigationManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         enableEdgeToEdge()
         setContent {
             SINCTheme {
-                AppNavigation()
+                val navController = rememberNavController()
+
+                LaunchedEffect(Unit) {
+                    navigationManager.commands.collectLatest { command ->
+                        if (command is NavigationCommand.NavigateToLogin) {
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+
+                AppNavigation(navController)
             }
         }
     }

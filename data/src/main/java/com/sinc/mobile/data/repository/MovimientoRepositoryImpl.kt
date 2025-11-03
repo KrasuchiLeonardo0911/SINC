@@ -6,7 +6,6 @@ import com.sinc.mobile.data.network.api.MovimientoApiService
 import com.sinc.mobile.data.network.dto.MovimientoRequest
 import com.sinc.mobile.data.network.dto.MovimientosBatchRequest
 import com.sinc.mobile.data.session.SessionManager
-import com.sinc.mobile.domain.model.Movimiento
 import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.domain.repository.MovimientoRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,9 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class MovimientoRepositoryImpl @Inject constructor(
     private val movimientoPendienteDao: MovimientoPendienteDao,
     private val movimientoApiService: MovimientoApiService,
@@ -25,8 +22,7 @@ class MovimientoRepositoryImpl @Inject constructor(
 
     override suspend fun saveMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit> {
         return try {
-            val entity = movimiento.toEntity()
-            movimientoPendienteDao.insert(entity)
+            movimientoPendienteDao.insert(movimiento.toEntity())
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -34,38 +30,36 @@ class MovimientoRepositoryImpl @Inject constructor(
     }
 
     override fun getMovimientosPendientes(): Flow<List<MovimientoPendiente>> {
-        return movimientoPendienteDao.getAllMovimientosPendientes().map {
-            it.map { entity -> entity.toDomain() }
+        return movimientoPendienteDao.getAll().map { entities ->
+            entities.map { it.toDomain() }
         }
     }
 
     override suspend fun syncMovimientosPendientes(): Result<Unit> {
-        val token = sessionManager.getAuthToken()
-            ?: return Result.failure(Exception("No hay token de autenticación disponible"))
-
         return try {
-            val unsyncedEntities = movimientoPendienteDao.getUnsyncedMovimientos().first()
-
-            if (unsyncedEntities.isEmpty()) {
+            val pendientes = getMovimientosPendientes().first()
+            if (pendientes.isEmpty()) {
                 return Result.success(Unit)
             }
 
-            // Group by unidad_productiva_id
-            val groupedByUp = unsyncedEntities.groupBy { it.unidad_productiva_id }
+            val groupedByUp = pendientes.groupBy { it.unidadProductivaId }
 
-            groupedByUp.forEach { (upId, movimientosForUp) ->
-                val apiMovimientos = movimientosForUp.map { it.toApiRequest() }
-                val batchRequest = MovimientosBatchRequest(upId, apiMovimientos)
+            for ((upId, movimientos) in groupedByUp) {
+                val batchRequest = MovimientosBatchRequest(
+                    upId = upId,
+                    movimientos = movimientos.map { it.toApiRequest() }
+                )
+
                 val response = movimientoApiService.saveMovimientos(batchRequest)
 
                 if (response.isSuccessful) {
-                    movimientosForUp.forEach { entity ->
-                        movimientoPendienteDao.markAsSynced(entity.id)
+                    movimientos.forEach { movimiento ->
+                        movimientoPendienteDao.update(movimiento.copy(sincronizado = true).toEntity())
                     }
                 } else {
-                    // Handle API error, maybe log it or return a specific failure
-                    val errorBody = response.errorBody()?.string()
-                    return@syncMovimientosPendientes Result.failure(Exception("API Error: ${response.code()} - $errorBody"))
+                    // If one batch fails, we stop and return failure. 
+                    // A more robust implementation could collect failures and continue.
+                    return Result.failure(Exception("Error al sincronizar movimientos para la UP $upId"))
                 }
             }
             Result.success(Unit)
@@ -74,10 +68,13 @@ class MovimientoRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveMovimiento(movimiento: Movimiento): Result<Unit> {
-        // This function might be removed or refactored later if all movements go through local persistence first.
-        // For now, it's a placeholder or for direct API calls if needed.
-        return Result.failure(UnsupportedOperationException("Direct API save not implemented for MovimientoRepositoryImpl"))
+    override suspend fun deleteMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit> {
+        return try {
+            movimientoPendienteDao.delete(movimiento.toEntity())
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
 
@@ -94,8 +91,7 @@ fun MovimientoPendiente.toEntity(): MovimientoPendienteEntity {
         destino_traslado = this.destinoTraslado,
         observaciones = this.observaciones,
         fecha_registro = this.fechaRegistro,
-        sincronizado = this.sincronizado,
-        fecha_creacion_local = LocalDateTime.now() // Always set current time on entity creation
+        sincronizado = this.sincronizado
     )
 }
 
@@ -115,14 +111,13 @@ fun MovimientoPendienteEntity.toDomain(): MovimientoPendiente {
     )
 }
 
-fun MovimientoPendienteEntity.toApiRequest(): MovimientoRequest {
+fun MovimientoPendiente.toApiRequest(): MovimientoRequest {
     return MovimientoRequest(
-        especie_id = this.especie_id,
-        categoria_id = this.categoria_id,
-        raza_id = this.raza_id,
+        especie_id = this.especieId,
+        categoria_id = this.categoriaId,
+        raza_id = this.razaId,
         cantidad = this.cantidad,
-        motivo_movimiento_id = this.motivo_movimiento_id,
-        destino_traslado = this.destino_traslado,
-        // observaciones is not part of the API request body as per API_MOVIL.md
+        motivo_movimiento_id = this.motivoMovimientoId,
+        destino_traslado = this.destinoTraslado
     )
 }
