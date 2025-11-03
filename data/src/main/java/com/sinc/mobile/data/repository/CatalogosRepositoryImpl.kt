@@ -25,6 +25,9 @@ import com.sinc.mobile.data.local.entities.RazaEntity
 import com.sinc.mobile.data.local.entities.CategoriaAnimalEntity
 import com.sinc.mobile.data.local.entities.MotivoMovimientoEntity
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+
 class CatalogosRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val sessionManager: SessionManager,
@@ -34,31 +37,19 @@ class CatalogosRepositoryImpl @Inject constructor(
     private val motivoMovimientoDao: MotivoMovimientoDao
 ) : CatalogosRepository {
 
-    override suspend fun getCatalogos(): Result<Catalogos> {
-        val authToken = sessionManager.getAuthToken()
-        if (authToken == null) {
-            return Result.failure(Exception("No hay token de autenticación disponible."))
-        }
-
-        // This method will now fetch from local DB first, or trigger sync if needed.
-        // For now, we'll keep it as is, but the syncCatalogos will be the primary way to update.
-        // We will refine this logic later to implement the SSOT pattern.
-        return try {
-            val response = apiService.getCatalogos("Bearer $authToken")
-            if (response.isSuccessful) {
-                val dto = response.body()
-                if (dto != null) {
-                    Result.success(dto.toDomain())
-                } else {
-                    Result.failure(Exception("El cuerpo de la respuesta de catálogos es nulo"))
-                }
-            } else {
-                Result.failure(Exception("Error de API al obtener catálogos: ${response.code()}"))
-            }
-        } catch (e: IOException) {
-            Result.failure(e)
-        } catch (e: Exception) {
-            Result.failure(e)
+    override fun getCatalogos(): Flow<Catalogos> {
+        return combine(
+            especieDao.getAllEspecies(),
+            razaDao.getAllRazas(),
+            categoriaAnimalDao.getAllCategorias(),
+            motivoMovimientoDao.getAllMotivosMovimiento()
+        ) { especies, razas, categorias, motivos ->
+            Catalogos(
+                especies = especies.map { it.toDomain() },
+                razas = razas.map { it.toDomain() },
+                categorias = categorias.map { it.toDomain() },
+                motivosMovimiento = motivos.map { it.toDomain() }
+            )
         }
     }
 
@@ -112,21 +103,13 @@ class CatalogosRepositoryImpl @Inject constructor(
     }
 }
 
-private fun CatalogosDto.toDomain(): Catalogos {
-    return Catalogos(
-        especies = this.especies.map { it.toDomain() },
-        razas = this.razas.map { it.toDomain() },
-        categorias = this.categorias.map { it.toDomain() },
-        motivosMovimiento = this.motivosMovimiento.map { it.toDomain() }
-    )
-}
+// Mappers from Entity to Domain
+private fun EspecieEntity.toDomain(): Especie = Especie(id, nombre)
+private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
+private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
+private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
 
-private fun EspecieDto.toDomain(): Especie = Especie(id, nombre)
-private fun RazaDto.toDomain(): Raza = Raza(id, nombre, especieId)
-private fun CategoriaDto.toDomain(): Categoria = Categoria(id, nombre, especieId)
-private fun MotivoMovimientoDto.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
-
-// Mapping functions from DTO to Entity for local persistence
+// Mappers from DTO to Entity
 private fun EspecieDto.toEntity(): EspecieEntity = EspecieEntity(id, nombre)
 private fun RazaDto.toEntity(): RazaEntity = RazaEntity(id = id, especie_id = especieId, nombre = nombre)
 private fun CategoriaDto.toEntity(): CategoriaAnimalEntity = CategoriaAnimalEntity(id = id, especie_id = especieId, nombre = nombre)

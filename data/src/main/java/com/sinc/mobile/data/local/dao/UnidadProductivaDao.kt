@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -17,4 +18,10 @@ interface UnidadProductivaDao {
 
     @Query("DELETE FROM unidades_productivas")
     suspend fun clearAll()
+
+    @Transaction
+    suspend fun clearAndInsert(unidades: List<UnidadProductivaEntity>) {
+        clearAll()
+        insertAll(unidades)
+    }
 }

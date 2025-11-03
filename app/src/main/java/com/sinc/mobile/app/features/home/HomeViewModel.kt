@@ -171,10 +171,8 @@ class HomeViewModel @Inject constructor(
     fun loadUnidadesProductivas() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
-            getUnidadesProductivasUseCase().onSuccess { unidades ->
-                _state.value = _state.value.copy(isLoading = false, unidades = unidades)
-            }.onFailure {
-                _state.value = _state.value.copy(isLoading = false, error = it.message ?: "Error desconocido")
+            getUnidadesProductivasUseCase().collect {
+                _state.value = _state.value.copy(isLoading = false, unidades = it)
             }
         }
     }
@@ -182,10 +180,8 @@ class HomeViewModel @Inject constructor(
     private fun loadCatalogos() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isCatalogosLoading = true)
-            getCatalogosUseCase().onSuccess { catalogos ->
-                _state.value = _state.value.copy(isCatalogosLoading = false, catalogos = catalogos)
-            }.onFailure { 
-                _state.value = _state.value.copy(isCatalogosLoading = false, error = "Error al cargar catálogos: ${it.message}")
+            getCatalogosUseCase().collect {
+                _state.value = _state.value.copy(isCatalogosLoading = false, catalogos = it)
             }
         }
     }

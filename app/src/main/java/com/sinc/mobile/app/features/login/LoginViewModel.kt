@@ -12,8 +12,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.sinc.mobile.domain.use_case.SyncDataUseCase
+
 data class LoginState(
     val isLoading: Boolean = false,
+    val isSyncing: Boolean = false,
     val error: String? = null
 )
 
@@ -23,7 +26,8 @@ sealed class NavigationEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val syncDataUseCase: SyncDataUseCase
 ) : ViewModel() {
 
     private val _state = mutableStateOf(LoginState())
@@ -38,8 +42,14 @@ class LoginViewModel @Inject constructor(
 
             when (val result = loginUseCase(email, password)) {
                 is AuthResult.Success -> {
-                    _state.value = LoginState()
-                    _navigationEvent.emit(NavigationEvent.NavigateToHome)
+                    _state.value = LoginState(isSyncing = true)
+                    val syncResult = syncDataUseCase()
+                    if (syncResult.isSuccess) {
+                        _state.value = LoginState()
+                        _navigationEvent.emit(NavigationEvent.NavigateToHome)
+                    } else {
+                        _state.value = LoginState(error = syncResult.exceptionOrNull()?.message ?: "Error durante la sincronización.")
+                    }
                 }
                 is AuthResult.InvalidCredentials -> {
                     _state.value = LoginState(error = "Credenciales inválidas.")

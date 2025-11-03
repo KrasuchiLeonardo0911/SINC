@@ -6,8 +6,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sinc.mobile.app.features.home.HomeScreen
 import com.sinc.mobile.app.features.login.LoginScreen
+import com.sinc.mobile.app.features.splash.SplashScreen
 
 object Routes {
+    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val HOME = "home"
 }
@@ -16,7 +18,21 @@ object Routes {
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Routes.LOGIN) {
             LoginScreen(onLoginSuccess = {
                 navController.navigate(Routes.HOME) {

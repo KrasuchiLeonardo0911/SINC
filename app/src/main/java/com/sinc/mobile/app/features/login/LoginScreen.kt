@@ -68,13 +68,17 @@ fun LoginScreen(
             Button(
                 onClick = { viewModel.onLoginClick(email, password) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading
+                enabled = !state.isLoading && !state.isSyncing
             ) {
                 Text("Login")
             }
 
             if (state.isLoading) {
                 CircularProgressIndicator()
+            }
+
+            if (state.isSyncing) {
+                Text("Sincronizando datos...")
             }
 
             state.error?.let {

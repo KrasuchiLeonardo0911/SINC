@@ -2,6 +2,9 @@ package com.sinc.mobile.domain.repository
 
 import com.sinc.mobile.domain.model.UnidadProductiva
 
+import kotlinx.coroutines.flow.Flow
+
 interface UnidadProductivaRepository {
-    suspend fun getUnidadesProductivas(): Result<List<UnidadProductiva>>
+    fun getUnidadesProductivas(): Flow<List<UnidadProductiva>>
+    suspend fun syncUnidadesProductivas(): Result<Unit>
 }
