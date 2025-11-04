@@ -20,13 +20,13 @@ interface AuthApiService {
 
     @Headers("Accept: application/json")
     @GET("api/movil/unidades-productivas")
-    suspend fun getUnidadesProductivas(@retrofit2.http.Header("Authorization") authToken: String): Response<List<UnidadProductivaDto>>
+    suspend fun getUnidadesProductivas(): Response<List<UnidadProductivaDto>>
 
     @Headers("Accept: application/json")
     @GET("api/movil/catalogos")
-    suspend fun getCatalogos(@retrofit2.http.Header("Authorization") authToken: String): Response<CatalogosDto>
+    suspend fun getCatalogos(): Response<CatalogosDto>
 
     @Headers("Accept: application/json")
     @POST("api/movil/cuaderno/movimientos")
-    suspend fun saveMovimientos(@retrofit2.http.Header("Authorization") authToken: String, @Body request: MovimientoRequest): Response<ResponseBody>
+    suspend fun saveMovimientos(@Body request: MovimientoRequest): Response<ResponseBody>
 }

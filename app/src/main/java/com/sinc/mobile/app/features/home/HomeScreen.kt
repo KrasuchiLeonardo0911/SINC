@@ -9,6 +9,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,87 +24,144 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sinc.mobile.ui.theme.SuccessGreen
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state = viewModel.state.value
+    val scaffoldState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item {
-            if (state.isLoading) {
-                CircularProgressIndicator()
-                return@item
-            }
-
-            state.error?.let {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Error: $it", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { viewModel.loadInitialData() }, modifier = Modifier.padding(top = 8.dp)) {
-                        Text("Reintentar")
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = 56.dp, // Altura de la pestaña cuando está colapsada
+        sheetContent = {
+            // Contenido de la hoja inferior (Movimientos Pendientes)
+            MovimientosPendientesSheetContent(
+                state = state,
+                viewModel = viewModel,
+                onHeaderClick = {
+                    scope.launch {
+                        scaffoldState.bottomSheetState.expand()
                     }
                 }
-                return@item
-            }
-
-            // Step 1: Unidad Productiva Selection
-            UnidadSelectionStep(
-                unidades = state.unidades,
-                selectedUnidad = state.selectedUnidad,
-                isDropdownExpanded = state.isDropdownExpanded,
-                onExpandedChange = viewModel::onDropdownExpandedChange,
-                onUnidadSelected = viewModel::onUnidadSelected
             )
+        }
+    ) { innerPadding ->
+        // Contenido principal de la pantalla (Pasos 1, 2, 3)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), // Padding del Scaffold
+            contentPadding = PaddingValues(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio entre items
+        ) {
+            item { Spacer(modifier = Modifier.height(16.dp)) } // Espacio superior
+            item {
+                if (state.isLoading) {
+                    CircularProgressIndicator()
+                    return@item
+                }
+
+                state.error?.let {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Error: $it", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { viewModel.loadInitialData() }) {
+                                Text("Reintentar")
+                            }
+                        }
+                    }
+                    return@item
+                }
+
+                // Step 1: Unidad Productiva Selection in a Card
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        UnidadSelectionStep(
+                            unidades = state.unidades,
+                            selectedUnidad = state.selectedUnidad,
+                            isDropdownExpanded = state.isDropdownExpanded,
+                            onExpandedChange = viewModel::onDropdownExpandedChange,
+                            onUnidadSelected = viewModel::onUnidadSelected
+                        )
+                    }
+                }
+            }
 
             if (state.selectedUnidad != null) {
-                // Step 2: Action Selection (Alta/Baja)
-                ActionSelectionStep(
-                    onActionSelected = viewModel::onActionSelected,
-                    modifier = Modifier.padding(top = 24.dp)
-                )
+                item {
+                    // Step 2: Action Selection in a Card
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        ActionSelectionStep(
+                            onActionSelected = viewModel::onActionSelected,
+                            modifier = Modifier.padding(16.dp),
+                            selectedAction = state.selectedAction
+                        )
+                    }
+                }
             }
-        }
 
-        item {
             // Step 3: Movimiento Form (or Skeleton)
             if (state.selectedAction != null) {
-                if (state.isSaving) {
-                    FormSkeleton(modifier = Modifier.fillMaxWidth())
-                } else {
-                    MovimientoForm(
-                        state = state,
-                        viewModel = viewModel,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
+                item {
+                    if (state.isFormLoading || state.isSaving) {
+                        FormSkeleton(modifier = Modifier.fillMaxWidth())
+                    } else {
+                        MovimientoForm(
+                            state = state,
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
         }
+    }
+}
 
-        // Always show pending movements if a UP is selected
-        if (state.selectedUnidad != null && !state.isSaving) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("Movimientos Pendientes", style = MaterialTheme.typography.titleLarge)
-            }
-            item {
-                MovimientosPendientesTable(
-                    movimientos = state.movimientosAgrupados, // Updated to use grouped data
-                    catalogos = state.catalogos,
-                    unidades = state.unidades,
-                    onDelete = viewModel::deleteMovimientoGroup // Updated to call new delete function
-                )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SyncSection(state = state, onSync = viewModel::syncMovements)
-            }
+@Composable
+private fun MovimientosPendientesSheetContent(
+    state: HomeState,
+    viewModel: HomeViewModel,
+    onHeaderClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Pestaña para expandir
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clickable(onClick = onHeaderClick),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text("Movimientos Pendientes (${state.movimientosAgrupados.size})")
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Expandir")
         }
+
+        // Contenido de la tabla y sincronización
+        MovimientosPendientesTable(
+            movimientos = state.movimientosAgrupados,
+            catalogos = state.catalogos,
+            unidades = state.unidades,
+            onDelete = viewModel::deleteMovimientoGroup
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        SyncSection(state = state, onSync = viewModel::syncMovements)
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -142,90 +203,93 @@ private fun SyncSection(state: HomeState, onSync: () -> Unit) {
 
 @Composable
 fun MovimientosPendientesTable(
-    movimientos: List<MovimientoAgrupado>, // Changed to grouped data model
+    movimientos: List<MovimientoAgrupado>,
     catalogos: com.sinc.mobile.domain.model.Catalogos?,
     unidades: List<com.sinc.mobile.domain.model.UnidadProductiva>,
-    onDelete: (MovimientoAgrupado) -> Unit // Changed to grouped data model
+    onDelete: (MovimientoAgrupado) -> Unit
 ) {
     if (movimientos.isEmpty()) {
         Text(
             "No hay movimientos pendientes.",
             modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodyMedium
         )
         return
     }
 
-    val columnWidths = listOf(150.dp, 100.dp, 150.dp, 120.dp, 150.dp, 50.dp, 50.dp)
-    val totalTableWidth = columnWidths.sumOf { it.value.toDouble() }.dp
-    val scrollState = rememberScrollState()
+    // Usamos un Column en lugar de LazyColumn porque ya estamos dentro de una LazyColumn padre
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        movimientos.forEach { movimiento ->
+            MovimientoItemCard(movimiento, catalogos, unidades, onDelete)
+        }
+    }
+}
 
-    Row(modifier = Modifier.horizontalScroll(scrollState)) {
-        Column(
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MovimientoItemCard(
+    movimiento: MovimientoAgrupado,
+    catalogos: com.sinc.mobile.domain.model.Catalogos?,
+    unidades: List<com.sinc.mobile.domain.model.UnidadProductiva>,
+    onDelete: (MovimientoAgrupado) -> Unit
+) {
+    val motivo = catalogos?.motivosMovimiento?.find { it.id == movimiento.motivoMovimientoId }?.nombre ?: "N/A"
+    val isAlta = motivo.contains("Alta", ignoreCase = true) || motivo.contains("Compra", ignoreCase = true)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
             modifier = Modifier
-                .width(totalTableWidth)
-                .border(1.dp, MaterialTheme.colorScheme.outline)
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .height(IntrinsicSize.Min)
-            ) {
-                HeaderCell(text = "UP", width = columnWidths[0])
-                VerticalDivider()
-                HeaderCell(text = "Especie", width = columnWidths[1])
-                VerticalDivider()
-                HeaderCell(text = "Categoría", width = columnWidths[2])
-                VerticalDivider()
-                HeaderCell(text = "Raza", width = columnWidths[3])
-                VerticalDivider()
-                HeaderCell(text = "Motivo", width = columnWidths[4])
-                VerticalDivider()
-                HeaderCell(text = "Cant.", width = columnWidths[5])
-                VerticalDivider()
-                HeaderCell(text = "", width = columnWidths[6])
+            // Icono y Cantidad
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val (text, color) = if (isAlta) {
+                    "+" to SuccessGreen
+                } else {
+                    "" to MaterialTheme.colorScheme.error // No hay texto para la baja, solo color
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = color
+                )
+                Text(
+                    text = movimiento.cantidadTotal.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = color // Aplicamos el color también al número
+                )
             }
-            HorizontalDivider()
 
-            // Data Rows
-            movimientos.forEach { movimiento ->
-                val up = unidades.find { it.id == movimiento.unidadProductivaId }?.nombre ?: "N/A"
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Detalles del Movimiento
+            Column(modifier = Modifier.weight(1f)) {
                 val especie = catalogos?.especies?.find { it.id == movimiento.especieId }?.nombre ?: "N/A"
                 val categoria = catalogos?.categorias?.find { it.id == movimiento.categoriaId }?.nombre ?: "N/A"
-                val raza = catalogos?.razas?.find { it.id == movimiento.razaId }?.nombre ?: "N/A"
-                val motivo = catalogos?.motivosMovimiento?.find { it.id == movimiento.motivoMovimientoId }?.nombre ?: "N/A"
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    DataCell(text = up, width = columnWidths[0])
-                    VerticalDivider()
-                    DataCell(text = especie, width = columnWidths[1])
-                    VerticalDivider()
-                    DataCell(text = categoria, width = columnWidths[2])
-                    VerticalDivider()
-                    DataCell(text = raza, width = columnWidths[3])
-                    VerticalDivider()
-                    DataCell(text = motivo, width = columnWidths[4])
-                    VerticalDivider()
-                    DataCell(text = movimiento.cantidadTotal.toString(), width = columnWidths[5]) // Use cantidadTotal
-                    VerticalDivider()
-                    Box(
-                        modifier = Modifier
-                            .width(columnWidths[6])
-                            .fillMaxHeight()
-                    ) {
-                        IconButton(onClick = { onDelete(movimiento) }, modifier = Modifier.align(Alignment.Center)) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar")
-                        }
-                    }
-                }
-                HorizontalDivider()
+                Text(text = motivo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "$especie | $categoria",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                val up = unidades.find { it.id == movimiento.unidadProductivaId }?.nombre ?: "N/A"
+                Text(
+                    text = up,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            // Botón de Borrar
+            IconButton(onClick = { onDelete(movimiento) }) {
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
             }
         }
     }
@@ -263,7 +327,7 @@ private fun VerticalDivider() {
         modifier = Modifier
             .fillMaxHeight()
             .width(1.dp),
-        color = MaterialTheme.colorScheme.outlineVariant
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     )
 }
 
@@ -271,7 +335,7 @@ private fun VerticalDivider() {
 private fun HorizontalDivider() {
     Divider(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.outlineVariant
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     )
 }
 
@@ -285,16 +349,18 @@ private fun UnidadSelectionStep(
     onExpandedChange: (Boolean) -> Unit,
     onUnidadSelected: (com.sinc.mobile.domain.model.UnidadProductiva) -> Unit
 ) {
+    // Texto del título más sutil
     Text(
-        text = "Paso 1: Seleccione un campo",
-        style = MaterialTheme.typography.headlineSmall,
-        modifier = Modifier.padding(bottom = 16.dp)
+        text = "Seleccione el campo",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(bottom = 8.dp) // Reducimos el padding inferior
     )
     ExposedDropdownMenuBox(
         expanded = isDropdownExpanded,
         onExpandedChange = onExpandedChange
     ) {
-        TextField(
+        // Usamos OutlinedTextField para un look más moderno
+        OutlinedTextField(
             value = selectedUnidad?.nombre ?: "",
             onValueChange = {},
             readOnly = true,
@@ -302,7 +368,6 @@ private fun UnidadSelectionStep(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded)
             },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
         ExposedDropdownMenu(
@@ -322,22 +387,42 @@ private fun UnidadSelectionStep(
 @Composable
 private fun ActionSelectionStep(
     onActionSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedAction: String? // Nuevo parámetro
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Paso 2: Seleccione una acción",
-            style = MaterialTheme.typography.titleLarge,
+            text = "Seleccione una acción",
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Button(onClick = { onActionSelected("alta") }, modifier = Modifier.weight(1f)) {
+            val isAltaSelected = selectedAction == "alta"
+            val isBajaSelected = selectedAction == "baja"
+
+            OutlinedButton(
+                onClick = { onActionSelected("alta") },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (isAltaSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    contentColor = if (isAltaSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                ),
+                border = if (isAltaSelected) null else ButtonDefaults.outlinedButtonBorder
+            ) {
                 Text("Alta")
             }
-            Button(onClick = { onActionSelected("baja") }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(
+                onClick = { onActionSelected("baja") },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (isBajaSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    contentColor = if (isBajaSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                ),
+                border = if (isBajaSelected) null else ButtonDefaults.outlinedButtonBorder
+            ) {
                 Text("Baja")
             }
         }
@@ -350,8 +435,9 @@ private fun MovimientoForm(
     viewModel: HomeViewModel,
     modifier: Modifier = Modifier
 ) {
-    state.catalogos?.let { catalogos ->
-        Card(modifier = modifier) {
+    state.catalogos?.let {
+        // Esta Card ya existe, así que el estilo se aplicará automáticamente.
+        Card(modifier = modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
@@ -359,12 +445,12 @@ private fun MovimientoForm(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Paso 3: Registrar ${state.selectedAction?.replaceFirstChar { it.uppercase() }}",
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "Registrar ${state.selectedAction?.replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 FormDropdown(
-                    items = catalogos.especies,
+                    items = it.especies,
                     label = "Especie",
                     selectedItem = state.selectedEspecie,
                     onItemSelected = viewModel::onEspecieSelected,
@@ -402,7 +488,7 @@ private fun MovimientoForm(
                     enabled = state.selectedEspecie != null
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                TextField(
+                OutlinedTextField(
                     value = state.cantidad,
                     onValueChange = { viewModel.onCantidadChanged(it) },
                     label = { Text("Cantidad") },
@@ -417,7 +503,7 @@ private fun MovimientoForm(
 
                 if (isDestinoVisible) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    TextField(
+                    OutlinedTextField(
                         value = state.destino,
                         onValueChange = { viewModel.onDestinoChanged(it) },
                         label = { Text("Destino/Origen") },

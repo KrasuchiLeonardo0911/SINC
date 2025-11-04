@@ -97,3 +97,14 @@ Esta sección documenta patrones específicos y decisiones de implementación qu
         - Se utiliza `HiltAndroidTest` para crear un entorno de prueba que puede inyectar dependencias, como la base de datos en memoria, en las clases de prueba.
         - Se utilizan librerías como `kotlinx-coroutines-test` y `Google Truth` para escribir pruebas de coroutines claras, predecibles y con aserciones legibles.
 
+---
+
+## 6. Estructura de la Interfaz de Usuario (UI)
+
+- **Principio**: Se favorece la creación de Composables pequeños, reutilizables y con un propósito único. Las pantallas complejas se construyen componiendo estas unidades más pequeñas.
+- **Implementación**: En lugar de tener una única función Composable monolítica para toda una pantalla (ej. `HomeScreen`), la lógica se divide en sub-componentes más pequeños (ej. `UnidadSelectionStep`, `ActionSelectionStep`, `MovimientoFormStep`, `MovimientosPendientesTable`).
+- **Ventajas**:
+    - **Legibilidad y Mantenibilidad**: Es más fácil entender y modificar un Composable pequeño que uno grande y complejo.
+    - **Reutilización**: Los Composables pequeños pueden ser reutilizados en diferentes partes de la aplicación.
+    - **Testabilidad**: Es más sencillo escribir pruebas de UI para Composables pequeños y aislados.
+

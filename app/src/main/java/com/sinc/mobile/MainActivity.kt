@@ -12,7 +12,7 @@ import com.sinc.mobile.app.navigation.AppNavigation
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.domain.navigation.NavigationCommand
 import com.sinc.mobile.domain.navigation.NavigationManager
-import com.sinc.mobile.ui.theme.SINCTheme
+import com.sinc.mobile.ui.theme.SincMobileTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         setContent {
-            SINCTheme {
+            SincMobileTheme {
                 val navController = rememberNavController()
 
                 LaunchedEffect(Unit) {

@@ -2,12 +2,51 @@ package com.sinc.mobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Generado para el tema SINC - Light
+val md_theme_light_primary = Color(0xFF8C2218)
+val md_theme_light_onPrimary = Color(0xFFFFFFFF)
+val md_theme_light_primaryContainer = Color(0xFFFFDAD5)
+val md_theme_light_onPrimaryContainer = Color(0xFF410001)
+val md_theme_light_secondary = Color(0xFF775651)
+val md_theme_light_onSecondary = Color(0xFFFFFFFF)
+val md_theme_light_secondaryContainer = Color(0xFFFFDAD5)
+val md_theme_light_onSecondaryContainer = Color(0xFF2C1512)
+val md_theme_light_tertiary = Color(0xFF6C5D2F)
+val md_theme_light_onTertiary = Color(0xFFFFFFFF)
+val md_theme_light_tertiaryContainer = Color(0xFFF6E1A7)
+val md_theme_light_onTertiaryContainer = Color(0xFF231B00)
+val md_theme_light_error = Color(0xFFBA1A1A)
+val md_theme_light_onError = Color(0xFFFFFFFF)
+val md_theme_light_background = Color(0xFFF8F9FA) // Fondo gris claro para efecto TALL
+val md_theme_light_onBackground = Color(0xFF201A19)
+val md_theme_light_surface = Color(0xFFFFFFFF) // Fondo blanco para las tarjetas
+val md_theme_light_onSurface = Color(0xFF201A19)
+val md_theme_light_surfaceVariant = Color(0xFFF5DDDA)
+val md_theme_light_onSurfaceVariant = Color(0xFF534341)
+val md_theme_light_outline = Color(0xFF857371)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Generado para el tema SINC - Dark
+val md_theme_dark_primary = Color(0xFFFFB4A9)
+val md_theme_dark_onPrimary = Color(0xFF690002)
+val md_theme_dark_primaryContainer = Color(0xFF8C2218)
+val md_theme_dark_onPrimaryContainer = Color(0xFFFFDAD5)
+val md_theme_dark_secondary = Color(0xFFE7BDB6)
+val md_theme_dark_onSecondary = Color(0xFF442925)
+val md_theme_dark_secondaryContainer = Color(0xFF5D3F3B)
+val md_theme_dark_onSecondaryContainer = Color(0xFFFFDAD5)
+val md_theme_dark_tertiary = Color(0xFFD9C58D)
+val md_theme_dark_onTertiary = Color(0xFF3B2F05)
+val md_theme_dark_tertiaryContainer = Color(0xFF534619)
+val md_theme_dark_onTertiaryContainer = Color(0xFFF6E1A7)
+val md_theme_dark_error = Color(0xFFFFB4AB)
+val md_theme_dark_onError = Color(0xFF690005)
+val md_theme_dark_background = Color(0xFF121212) // Fondo oscuro estándar
+val md_theme_dark_onBackground = Color(0xFFEDE0DE)
+val md_theme_dark_surface = Color(0xFF1F1B1A) // Superficie ligeramente más clara
+val md_theme_dark_onSurface = Color(0xFFD0C4C2)
+val md_theme_dark_surfaceVariant = Color(0xFF534341)
+val md_theme_dark_onSurfaceVariant = Color(0xFFD8C2BF)
+val md_theme_dark_outline = Color(0xFFA08C8A)
 
-val Bordeaux = Color(0xFF8C2218)
+// Color personalizado para "Altas"
+val SuccessGreen = Color(0xFF4CAF50)

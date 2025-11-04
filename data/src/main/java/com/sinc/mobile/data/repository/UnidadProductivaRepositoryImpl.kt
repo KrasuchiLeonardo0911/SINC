@@ -30,7 +30,7 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             ?: return Result.failure(Exception("No hay token de autenticación disponible para sincronizar unidades productivas."))
 
         return try {
-            val response = apiService.getUnidadesProductivas("Bearer $authToken")
+            val response = apiService.getUnidadesProductivas()
             if (response.isSuccessful) {
                 val dtos = response.body()
                 if (dtos != null) {

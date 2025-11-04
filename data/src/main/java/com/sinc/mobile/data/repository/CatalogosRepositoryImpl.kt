@@ -63,7 +63,7 @@ class CatalogosRepositoryImpl @Inject constructor(
 
         return try {
             Log.d("CatalogosRepo", "Realizando llamada a la API para catálogos")
-            val response = apiService.getCatalogos("Bearer $authToken")
+            val response = apiService.getCatalogos()
             Log.d("CatalogosRepo", "Respuesta de la API: ${response.code()}")
             if (response.isSuccessful) {
                 val catalogosDto = response.body()

@@ -4,8 +4,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField // Importar OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +31,7 @@ fun <T> FormDropdown(
         onExpandedChange = { if (enabled) expanded = it },
         modifier = modifier
     ) {
-        TextField(
+        OutlinedTextField( // Usar OutlinedTextField
             value = selectedItem?.let(itemToString) ?: "",
             onValueChange = {},
             readOnly = true,
@@ -39,7 +39,7 @@ fun <T> FormDropdown(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            // colors = ExposedDropdownMenuDefaults.textFieldColors(), // Eliminar esta línea
             modifier = Modifier.menuAnchor(),
             enabled = enabled
         )

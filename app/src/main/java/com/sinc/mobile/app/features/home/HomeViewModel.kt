@@ -167,20 +167,29 @@ class HomeViewModel @Inject constructor(
 
     fun onActionSelected(action: String) {
         viewModelScope.launch {
-            val filteredMotivos = _state.value.catalogos?.motivosMovimiento?.filter {
-                it.tipo.equals(action, ignoreCase = true)
-            } ?: emptyList()
-
+            // 1. Activa el esqueleto y resetea el estado del formulario
             _state.value = _state.value.copy(
+                isFormLoading = true,
                 selectedAction = action,
-                filteredMotivos = filteredMotivos,
                 currentStep = FormStep.MovimientoForm,
                 selectedEspecie = null,
                 selectedCategoria = null,
                 selectedRaza = null,
                 selectedMotivo = null,
                 cantidad = "",
-                destino = "",
+                destino = ""
+            )
+
+            // 2. Espera para dar feedback visual
+            kotlinx.coroutines.delay(500)
+
+            // 3. Desactiva el esqueleto y filtra los datos necesarios
+            val filteredMotivos = _state.value.catalogos?.motivosMovimiento?.filter {
+                it.tipo.equals(action, ignoreCase = true)
+            } ?: emptyList()
+
+            _state.value = _state.value.copy(
+                filteredMotivos = filteredMotivos,
                 isFormLoading = false
             )
         }
