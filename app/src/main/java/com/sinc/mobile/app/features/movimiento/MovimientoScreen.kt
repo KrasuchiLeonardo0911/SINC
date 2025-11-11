@@ -27,12 +27,16 @@ import com.sinc.mobile.app.ui.components.FormSkeleton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovimientoScreen(viewModel: MovimientoViewModel = hiltViewModel()) {
+fun MovimientoScreen(
+    modifier: Modifier = Modifier,
+    viewModel: MovimientoViewModel = hiltViewModel()
+) {
     val state = viewModel.state.value
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
 
     BottomSheetScaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         sheetPeekHeight = 56.dp, // Altura de la pestaña cuando está colapsada
         sheetContent = {

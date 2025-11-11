@@ -17,13 +17,13 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.sinc.mobile.app.features.home.MainScreenRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Sidebar(
-    navController: NavController,
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
     onCloseDrawer: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -32,9 +32,9 @@ fun Sidebar(
             SidebarItem(
                 icon = Icons.Outlined.Home,
                 text = "Inicio",
-                isSelected = navController.currentDestination?.route == MainScreenRoutes.DASHBOARD,
+                isSelected = currentRoute == MainScreenRoutes.DASHBOARD,
                 onClick = {
-                    navController.navigate(MainScreenRoutes.DASHBOARD)
+                    onNavigate(MainScreenRoutes.DASHBOARD)
                     onCloseDrawer()
                 }
             )
@@ -51,9 +51,9 @@ fun Sidebar(
             SidebarItem(
                 icon = Icons.Outlined.Book,
                 text = "Cuaderno de Campo",
-                isSelected = navController.currentDestination?.route == MainScreenRoutes.MOVIMIENTO,
+                isSelected = currentRoute == MainScreenRoutes.MOVIMIENTO,
                 onClick = {
-                    navController.navigate(MainScreenRoutes.MOVIMIENTO)
+                    onNavigate(MainScreenRoutes.MOVIMIENTO)
                     onCloseDrawer()
                 }
             )

@@ -237,7 +237,7 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
 - **Estado**: La funcionalidad de sincronización de unidades productivas está implementada y verificada con tests, siguiendo la arquitectura offline-first.
 
 
-### 03 de Noviembre de 2025
+### 11 de Noviembre de 2025
 
 - **Hito**: Refactorización y Mejora de la Pantalla de Registro de Movimientos (HomeScreen).
 - **Detalles**:
@@ -279,3 +279,35 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
     - Se eliminó el parámetro `onNavigateToMovimiento` de la `DashboardScreen` y de su llamada en `MainScreen.kt`, ya que no era necesario.
 
 - **Estado**: La interfaz de usuario principal ha sido rediseñada para ser más limpia y funcional, con una nueva pantalla de configuraciones y un sidebar mejorado. El siguiente paso es implementar la lógica para las nuevas opciones.
+
+- **Hito**: Corrección de Bugs y Creación de Componentes de UI.
+- **Detalles**:
+    - Se realizó una sesión intensiva de corrección de errores y desarrollo de componentes reutilizables para establecer una base sólida para la aplicación.
+
+- **Hito**: Corrección de Bugs Críticos de UI y Navegación.
+- **Detalles**:
+    - **Campo de Contraseña en Login**: Se corrigió el campo de contraseña para que el texto esté oculto por defecto y se añadió un ícono para alternar la visibilidad.
+    - **Funcionalidad de Logout**: Se implementó el flujo completo de cierre de sesión en `SettingsScreen`, respetando la arquitectura limpia (Repositorio, Caso de Uso, ViewModel).
+    - **Parpadeo del Sidebar**: Se eliminó un parpadeo visual del menú lateral al inicio de la app. Se refactorizó la lógica de arranque, eliminando el `SplashScreen` composable y decidiendo la ruta inicial (`Login` o `Home`) de forma síncrona en `MainActivity`.
+    - **Error de Pantalla en Blanco**: Se solucionó un bug que causaba una pantalla en blanco después de una secuencia específica de navegación. Se refactorizó `MainScreen` para eliminar un `NavHost` anidado y usar una gestión de estado más simple, estabilizando la composición de la pantalla.
+
+- **Hito**: Creación de Librería de Componentes de UI Básicos.
+- **Detalles**:
+    - Se creó una serie de componentes de UI genéricos y reutilizables en la carpeta `app/src/main/java/com/sinc/mobile/app/ui/components/`.
+    - **`GlobalBanner`**: Un banner de notificaciones que aparece en la parte superior para mostrar mensajes de éxito o error, con animaciones de entrada y salida suaves.
+    - **`ConfirmationDialog`**: Un diálogo de alerta estándar para confirmar acciones del usuario (ej. "¿Estás seguro?").
+    - **`LoadingOverlay`**: Una capa de carga modal de pantalla completa para bloquear la UI durante operaciones asíncronas importantes.
+    - **`EmptyState`**: Un componente para mostrar cuando una lista o pantalla no tiene contenido, mejorando la experiencia de usuario sobre una pantalla vacía.
+    - **`ValidatedTextField`**: Un campo de texto que incluye lógica para mostrar un mensaje de error de validación de forma estandarizada.
+
+- **Hito**: Implementación de Barra de Navegación Inferior.
+- **Detalles**:
+    - Se añadió una `NavigationBar` de Material 3 en la parte inferior de `MainScreen`.
+    - Se extrajo la lógica a un componente reutilizable `BottomNavBar`.
+    - La barra contiene accesos directos de solo-ícono a "Inicio", "Cuaderno" y "Notificaciones".
+    - Se aseguró que la barra respete los `insets` del sistema para no ser ocultada por la barra de navegación de Android.
+
+- **Estado General**:
+    - La base de la UI de la aplicación es ahora mucho más robusta y escalable.
+    - Se cuenta con una pequeña librería de componentes reutilizables que agilizará el desarrollo de futuras pantallas.
+    - La navegación y la gestión de estado de las pantallas principales han sido estabilizadas.

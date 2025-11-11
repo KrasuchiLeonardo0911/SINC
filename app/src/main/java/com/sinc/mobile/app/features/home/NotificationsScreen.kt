@@ -9,18 +9,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun DashboardScreen(
-    modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
-) {
+fun NotificationsScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Bienvenido a SINC Mobile", modifier = Modifier.padding(bottom = 16.dp))
+        Text(text = "Pantalla de Notificaciones")
     }
 }
