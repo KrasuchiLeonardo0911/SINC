@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.sinc.mobile.app.features.home.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
+import com.sinc.mobile.app.features.maquetas.CuadernoDeCampoMaquetaScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 
@@ -14,6 +15,7 @@ object Routes {
     const val HOME = "home"
     const val MOVIMIENTO = "movimiento"
     const val SETTINGS = "settings"
+    const val MAQUETA_CUADERNO = "maqueta_cuaderno"
 }
 
 @Composable
@@ -44,6 +46,9 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+        composable(Routes.MAQUETA_CUADERNO) {
+            CuadernoDeCampoMaquetaScreen()
         }
     }
 }

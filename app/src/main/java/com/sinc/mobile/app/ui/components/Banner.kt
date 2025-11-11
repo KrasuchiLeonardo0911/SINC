@@ -25,12 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.SuccessGreen
+import com.sinc.mobile.ui.theme.colorAlta // Importar el nuevo color
 import kotlinx.coroutines.delay
 import java.util.UUID
 
 enum class BannerType(val backgroundColor: Color, val textColor: Color) {
-    SUCCESS(SuccessGreen, Color.White),
+    SUCCESS(colorAlta, Color.White), // Usar colorAlta
     ERROR(Color(0xFFBA1A1A), Color.White)
 }
 

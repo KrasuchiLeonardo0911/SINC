@@ -1,0 +1,358 @@
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, MapPin, Plus, Minus, X, Check, TrendingUp, TrendingDown, Trash2, RefreshCw } from 'lucide-react';
+
+export default function CuadernoDeCampoCompleto() {
+    // --- ESTADO ---
+    const [selectedUnidad, setSelectedUnidad] = useState(null);
+    const [accionSeleccionada, setAccionSeleccionada] = useState(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        especie: 'Ovino',
+        categoria: '',
+        cantidad: '',
+        motivo: '',
+    });
+
+    // --- DATOS DE MAQUETA ---
+    const unidades = [
+        { id: 1, nombre: 'El Destino', localidad: 'Tandil', hectareas: 150 },
+        { id: 2, nombre: 'La Esperanza', localidad: 'Azul', hectareas: 230 },
+        { id: 3, nombre: 'Los Pinos', localidad: 'Rauch', hectareas: 180 }
+    ];
+
+    const [movimientos, setMovimientos] = useState([
+        { id: 1, tipo: 'alta', especie: 'Ovino', categoria: 'Cordero/a', cantidad: 12, motivo: 'Nacimiento' },
+        { id: 2, tipo: 'baja', especie: 'Ovino', categoria: 'Oveja Adulta', cantidad: 5, motivo: 'Venta' },
+        { id: 3, tipo: 'alta', especie: 'Caprino', categoria: 'Cabrito/a', cantidad: 8, motivo: 'Compra' }
+    ]);
+
+    useEffect(() => {
+        if (!selectedUnidad && unidades.length > 0) {
+            setSelectedUnidad(unidades[0]);
+        }
+    }, []);
+
+    // --- HANDLERS ---
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const nuevoMovimiento = {
+            id: Date.now(),
+            tipo: accionSeleccionada,
+            ...formData,
+            cantidad: parseInt(formData.cantidad)
+        };
+        setMovimientos([...movimientos, nuevoMovimiento]);
+        setFormData({ especie: 'Ovino', categoria: '', cantidad: '', motivo: '' });
+        setAccionSeleccionada(null);
+    };
+
+    const eliminarMovimiento = (id) => {
+        setMovimientos(movimientos.filter(m => m.id !== id));
+    };
+
+    const sincronizarTodo = () => {
+        alert('Sincronización simulada completada');
+    };
+
+    // Datos dinámicos del formulario
+    const categorias = formData.especie === 'Ovino' 
+        ? ['Cordero/a', 'Oveja Adulta', 'Carnero', 'Borrega']
+        : ['Cabrito/a', 'Cabra Adulta', 'Macho Cabrío'];
+
+    const motivos = accionSeleccionada === 'alta'
+        ? ['Nacimiento', 'Compra', 'Traslado entrada']
+        : ['Venta', 'Muerte', 'Traslado salida', 'Consumo'];
+
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* ==================== HEADER FIJO ==================== */}
+            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+                <div className="px-4 py-3">
+                    <h1 className="text-xl font-bold text-slate-900">Cuaderno de Campo</h1>
+                    <p className="text-xs text-slate-500 mt-0.5">Gestión de movimientos</p>
+                </div>
+            </div>
+
+            {/* ==================== CONTENIDO ==================== */}
+            <div className="px-4 pt-4 pb-20 space-y-4">
+                
+                {/* ==================== SELECTOR DE UNIDAD ==================== */}
+                <div className="relative">
+                    <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="w-full bg-white rounded-2xl p-4 shadow-sm border border-slate-200 active:scale-98 transition-transform"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                <MapPin className="text-emerald-600" size={24} />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="font-semibold text-slate-900">
+                                    {selectedUnidad?.nombre || 'Seleccionar campo'}
+                                </p>
+                                <p className="text-sm text-slate-500">
+                                    {selectedUnidad?.localidad || 'Haz clic para elegir'}
+                                </p>
+                            </div>
+                            <ChevronDown 
+                                className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                                size={20}
+                            />
+                        </div>
+                    </button>
+
+                    {/* Dropdown */}
+                    {isDropdownOpen && (
+                        <>
+                            <div 
+                                className="fixed inset-0 z-40" 
+                                onClick={() => setIsDropdownOpen(false)}
+                            />
+                            <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50">
+                                {unidades.map((unidad) => (
+                                    <button
+                                        key={unidad.id}
+                                        onClick={() => {
+                                            setSelectedUnidad(unidad);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        className={`w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 ${
+                                            selectedUnidad?.id === unidad.id ? 'bg-emerald-50' : ''
+                                        }`}
+                                    >
+                                        <p className="font-medium text-slate-900">{unidad.nombre}</p>
+                                        <p className="text-sm text-slate-500">{unidad.localidad}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* ==================== BOTONES DE ACCIÓN ==================== */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Botón Alta */}
+                    <button
+                        onClick={() => setAccionSeleccionada(accionSeleccionada === 'alta' ? null : 'alta')}
+                        className={`relative overflow-hidden rounded-2xl p-4 transition-all active:scale-95 ${
+                            accionSeleccionada === 'alta'
+                                ? 'text-white shadow-lg' 
+                                : 'bg-white text-slate-700 border-2 border-slate-200'
+                        }`}
+                        style={accionSeleccionada === 'alta' ? { backgroundColor: '#10b981' } : {}}
+                    >
+                        <div className="flex flex-col items-center gap-2">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                accionSeleccionada === 'alta' ? 'bg-white/20' : 'bg-slate-100'
+                            }`}>
+                                <Plus size={20} />
+                            </div>
+                            <span className="text-sm font-semibold">Registrar Alta</span>
+                        </div>
+                    </button>
+
+                    {/* Botón Baja */}
+                    <button
+                        onClick={() => setAccionSeleccionada(accionSeleccionada === 'baja' ? null : 'baja')}
+                        className={`relative overflow-hidden rounded-2xl p-4 transition-all active:scale-95 ${
+                            accionSeleccionada === 'baja'
+                                ? 'text-white shadow-lg' 
+                                : 'bg-white text-slate-700 border-2 border-slate-200'
+                        }`}
+                        style={accionSeleccionada === 'baja' ? { backgroundColor: '#f43f5e' } : {}}
+                    >
+                        <div className="flex flex-col items-center gap-2">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                accionSeleccionada === 'baja' ? 'bg-white/20' : 'bg-slate-100'
+                            }`}>
+                                <Minus size={20} />
+                            </div>
+                            <span className="text-sm font-semibold">Registrar Baja</span>
+                        </div>
+                    </button>
+                </div>
+
+                {/* ==================== FORMULARIO ==================== */}
+                {accionSeleccionada && (
+                    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden animate-in slide-in-from-top-4 duration-300">
+                        {/* Header del formulario */}
+                        <div className={`px-4 py-3 ${accionSeleccionada === 'alta' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                            <div className="flex items-center justify-between text-white">
+                                <h3 className="font-semibold">Nueva {accionSeleccionada === 'alta' ? 'Alta' : 'Baja'}</h3>
+                                <button 
+                                    onClick={() => setAccionSeleccionada(null)} 
+                                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Campos del formulario */}
+                        <form onSubmit={handleSubmit} className="p-4 space-y-3">
+                            {/* Especie */}
+                            <div>
+                                <label className="text-xs font-medium text-slate-600 block mb-1.5">Especie</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Ovino', 'Caprino'].map(esp => (
+                                        <button
+                                            key={esp}
+                                            type="button"
+                                            onClick={() => setFormData({...formData, especie: esp, categoria: ''})}
+                                            className={`py-2 px-3 rounded-xl text-sm font-medium transition-all ${
+                                                formData.especie === esp
+                                                    ? 'bg-slate-900 text-white'
+                                                    : 'bg-slate-100 text-slate-600'
+                                            }`}
+                                        >
+                                            {esp}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Categoría */}
+                            <div>
+                                <label className="text-xs font-medium text-slate-600 block mb-1.5">Categoría</label>
+                                <select
+                                    value={formData.categoria}
+                                    onChange={(e) => setFormData({...formData, categoria: e.target.value})}
+                                    required
+                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {categorias.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Cantidad */}
+                            <div>
+                                <label className="text-xs font-medium text-slate-600 block mb-1.5">Cantidad</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.cantidad}
+                                    onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
+                                    required
+                                    placeholder="0"
+                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                />
+                            </div>
+
+                            {/* Motivo */}
+                            <div>
+                                <label className="text-xs font-medium text-slate-600 block mb-1.5">Motivo</label>
+                                <select
+                                    value={formData.motivo}
+                                    onChange={(e) => setFormData({...formData, motivo: e.target.value})}
+                                    required
+                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {motivos.map(mot => (
+                                        <option key={mot} value={mot}>{mot}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Botón Submit */}
+                            <button
+                                type="submit"
+                                className={`w-full py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all active:scale-95`}
+                                style={{ backgroundColor: accionSeleccionada === 'alta' ? '#10b981' : '#f43f5e' }}
+                            >
+                                <Check size={18} />
+                                Guardar Movimiento
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* ==================== LISTA DE MOVIMIENTOS ==================== */}
+                {movimientos.length > 0 && (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                            <h2 className="text-sm font-semibold text-slate-700">
+                                Pendientes de Sincronizar
+                            </h2>
+                            <span className="text-xs text-slate-500">
+                                {movimientos.length} movimiento{movimientos.length !== 1 ? 's' : ''}
+                            </span>
+                        </div>
+                        
+                        {/* Items de movimientos */}
+                        <div className="space-y-2">
+                            {movimientos.map((mov) => {
+                                const isAlta = mov.tipo === 'alta';
+                                const Icon = isAlta ? TrendingUp : TrendingDown;
+
+                                return (
+                                    <div
+                                        key={mov.id}
+                                        className="bg-white rounded-xl p-3 border border-slate-200 flex items-center gap-3"
+                                    >
+                                        {/* Icono */}
+                                        <div 
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0`}
+                                            style={{ backgroundColor: isAlta ? '#d1fae5' : '#ffe4e6' }}
+                                        >
+                                            <Icon 
+                                                size={20} 
+                                                style={{ color: isAlta ? '#10b981' : '#f43f5e' }}
+                                            />
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-slate-900 text-sm truncate">
+                                                {mov.especie} - {mov.categoria}
+                                            </p>
+                                            <p className="text-xs text-slate-500 truncate">{mov.motivo}</p>
+                                        </div>
+
+                                        {/* Cantidad */}
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span 
+                                                className="font-bold text-lg"
+                                                style={{ color: isAlta ? '#10b981' : '#f43f5e' }}
+                                            >
+                                                {isAlta ? '+' : '-'}{mov.cantidad}
+                                            </span>
+
+                                            {/* Eliminar */}
+                                            <button
+                                                onClick={() => eliminarMovimiento(mov.id)}
+                                                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={16} className="text-slate-400" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Botón Sincronizar */}
+                        <button
+                            onClick={sincronizarTodo}
+                            className="w-full py-3 bg-white border-2 border-slate-200 rounded-xl font-medium text-slate-700 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                        >
+                            <RefreshCw size={18} />
+                            Sincronizar Todo
+                        </button>
+                    </div>
+                )}
+
+                {/* Mensaje cuando no hay movimientos */}
+                {movimientos.length === 0 && !accionSeleccionada && (
+                    <div className="text-center py-12 text-slate-400">
+                        <p className="text-sm">No hay movimientos pendientes</p>
+                        <p className="text-xs mt-1">Registra una alta o baja para comenzar</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -2,8 +2,11 @@ package com.sinc.mobile.app.features.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +17,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    onNavigateToMaqueta: () -> Unit
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
@@ -22,5 +26,9 @@ fun DashboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "Bienvenido a SINC Mobile", modifier = Modifier.padding(bottom = 16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onNavigateToMaqueta) {
+            Text("Ver Maqueta Cuaderno de Campo")
+        }
     }
 }

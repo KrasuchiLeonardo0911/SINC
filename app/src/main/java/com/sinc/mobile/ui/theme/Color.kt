@@ -48,5 +48,11 @@ val md_theme_dark_surfaceVariant = Color(0xFF534341)
 val md_theme_dark_onSurfaceVariant = Color(0xFFD8C2BF)
 val md_theme_dark_outline = Color(0xFFA08C8A)
 
-// Color personalizado para "Altas"
-val SuccessGreen = Color(0xFF4CAF50)
+// --- Paleta de Colores del Ejemplo de Maqueta ---
+val colorAlta = Color(0xFF10b981) // emerald-500
+val colorBaja = Color(0xFFf43f5e) // rose-500
+val colorSuperficie = Color.White
+val colorBorde = Color(0xFFe2e8f0) // slate-200
+val colorFondo = Color(0xFFf8fafc) // slate-50
+val colorTextoPrincipal = Color(0xFF0f172a) // slate-900
+val colorTextoSecundario = Color(0xFF64748b) // slate-500
