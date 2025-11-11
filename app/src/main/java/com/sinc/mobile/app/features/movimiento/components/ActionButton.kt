@@ -47,7 +47,7 @@ fun ActionButton(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp, horizontal = 8.dp),
+                .padding(vertical = 12.dp, horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -60,7 +60,7 @@ fun ActionButton(
             ) {
                 Icon(icon, contentDescription = text, tint = contentColor, modifier = Modifier.size(24.dp))
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             Text(text, fontWeight = FontWeight.SemiBold, color = contentColor, fontSize = 14.sp)
         }
     }

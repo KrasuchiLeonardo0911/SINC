@@ -13,16 +13,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.app.features.movimiento.components.ActionSelectionStep
-import com.sinc.mobile.app.features.movimiento.components.MovimientoForm
-import com.sinc.mobile.app.features.movimiento.components.MovimientoItemCard
-import com.sinc.mobile.app.features.movimiento.components.UnidadSelectionStep
+import com.sinc.mobile.app.features.movimiento.components.*
+import com.sinc.mobile.app.ui.components.EmptyState
 import com.sinc.mobile.ui.theme.*
 
 @Composable
@@ -33,7 +32,9 @@ fun MovimientoScreen(
     val state = viewModel.state.value
     val syncState = viewModel.syncManager.syncState.value
 
-    Column(modifier = modifier.fillMaxSize().background(colorFondo)) {
+    Column(modifier = modifier
+        .fillMaxSize()
+        .background(colorFondo)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
@@ -81,7 +82,7 @@ fun MovimientoScreen(
                                 formManager = formManager,
                                 selectedAction = currentAction,
                                 onSave = viewModel::saveMovement,
-                                onDismiss = { viewModel.onActionSelected("") }, // Empty action dismisses
+                                onDismiss = viewModel::dismissForm,
                                 isSaving = state.isSaving,
                                 saveError = state.saveError
                             )
@@ -91,16 +92,25 @@ fun MovimientoScreen(
             }
 
             // --- 4. Lista de Movimientos Pendientes ---
-            if (syncState.movimientosAgrupados.isNotEmpty()) {
+            item {
+                Text(
+                    "Pendientes de Sincronizar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorTextoPrincipal.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+                )
+            }
+
+            if (syncState.movimientosAgrupados.isEmpty()) {
                 item {
-                    Text(
-                        "Pendientes de Sincronizar",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorTextoPrincipal.copy(alpha = 0.8f),
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+                    EmptyState(
+                        icon = Icons.Outlined.Inbox,
+                        title = "No hay movimientos pendientes",
+                        message = "Los movimientos que registres aparecerán aquí para ser sincronizados."
                     )
                 }
+            } else {
                 items(syncState.movimientosAgrupados) { movimiento ->
                     MovimientoItemCard(
                         movimiento = movimiento,

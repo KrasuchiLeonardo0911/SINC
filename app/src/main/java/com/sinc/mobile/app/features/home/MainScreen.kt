@@ -82,10 +82,7 @@ fun MainScreen(
                 val modifier = Modifier.padding(paddingValues)
                 when (currentScreen) {
                     MainScreenRoutes.DASHBOARD -> DashboardScreen(
-                        modifier = modifier,
-                        onNavigateToMaqueta = {
-                            navController.navigate(com.sinc.mobile.app.navigation.Routes.MAQUETA_CUADERNO)
-                        }
+                        modifier = modifier
                     )
                     MainScreenRoutes.MOVIMIENTO -> MovimientoScreen(modifier = modifier)
                     MainScreenRoutes.NOTIFICATIONS -> NotificationsScreen(modifier = modifier)

@@ -15,7 +15,6 @@ object Routes {
     const val HOME = "home"
     const val MOVIMIENTO = "movimiento"
     const val SETTINGS = "settings"
-    const val MAQUETA_CUADERNO = "maqueta_cuaderno"
 }
 
 @Composable
@@ -46,9 +45,6 @@ fun AppNavigation(
                     }
                 }
             )
-        }
-        composable(Routes.MAQUETA_CUADERNO) {
-            CuadernoDeCampoMaquetaScreen()
         }
     }
 }

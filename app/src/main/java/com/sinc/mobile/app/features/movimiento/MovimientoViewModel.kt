@@ -105,6 +105,12 @@ class MovimientoViewModel @Inject constructor(
     }
 
     fun onActionSelected(action: String) {
+        // Si se pulsa la misma acción o la acción está vacía (desde el botón 'X'), se cierra.
+        if (action == state.value.selectedAction || action.isBlank()) {
+            dismissForm()
+            return
+        }
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isFormLoading = true, selectedAction = action)
             formManager = MovimientoFormManager(state.value.catalogos, action)
@@ -113,6 +119,11 @@ class MovimientoViewModel @Inject constructor(
 
             _state.value = _state.value.copy(isFormLoading = false)
         }
+    }
+
+    fun dismissForm() {
+        _state.value = _state.value.copy(selectedAction = null)
+        formManager = null
     }
 
     fun onDropdownExpandedChange(isExpanded: Boolean) {

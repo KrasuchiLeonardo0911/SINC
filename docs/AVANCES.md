@@ -311,3 +311,46 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
     - La base de la UI de la aplicación es ahora mucho más robusta y escalable.
     - Se cuenta con una pequeña librería de componentes reutilizables que agilizará el desarrollo de futuras pantallas.
     - La navegación y la gestión de estado de las pantallas principales han sido estabilizadas.
+
+- **Hito**: Refactorización Arquitectónica de la Pantalla "Cuaderno de Campo".
+- **Detalles**:
+    - Se inició una refactorización completa de la vista `MovimientoScreen.kt` para mejorar su mantenibilidad y estructura.
+    - Se extrajeron todos los Composables de UI (`UnidadSelectionStep`, `ActionSelectionStep`, `MovimientoForm`, `MovimientosPendientesTable`, etc.) a archivos individuales dentro de un nuevo paquete `.../movimiento/components`.
+    - El archivo `MovimientoScreen.kt` fue limpiado, conteniendo ahora solo la lógica de orquestación de los componentes extraídos.
+
+- **Hito**: Refactorización Profunda del `MovimientoViewModel`.
+- **Detalles**:
+    - Se identificó que el `MovimientoViewModel` tenía una alta complejidad y múltiples responsabilidades.
+    - **Primera Fase**: Se extrajo toda la lógica y el estado relacionados con el formulario de registro a una nueva clase `MovimientoFormManager`. El ViewModel ahora delega la gestión del formulario a esta clase.
+    - **Segunda Fase**: Se extrajo la lógica de carga, agrupación y sincronización de movimientos pendientes a una nueva clase `MovimientoSyncManager`.
+    - **Resultado**: El `MovimientoViewModel` quedó significativamente más limpio, actuando como un orquestador de alto nivel para los `Manager` especializados, mejorando la separación de responsabilidades.
+
+- **Hito**: Creación y Pulido de Maqueta de Interfaz de Usuario (UI).
+- **Detalles**:
+    - Se creó una nueva pantalla de maqueta (`CuadernoDeCampoMaquetaScreen.kt`) para visualizar un rediseño moderno de la interfaz, basado en un ejemplo de React/Tailwind proporcionado.
+    - Se aplicó una nueva paleta de colores (verde para altas, rojo para bajas), un layout basado en tarjetas con bordes y esquinas redondeadas, y una mejor jerarquía visual.
+    - Se pulió la maqueta en base a feedback, ajustando la alineación y tamaño de los botones de acción, mejorando el selector de campo con un icono `Place` y un título, y optimizando el comportamiento del menú desplegable.
+
+- **Hito**: Implementación del Nuevo Diseño en la Vista Funcional.
+- **Detalles**:
+    - Se aplicó el nuevo diseño de la maqueta a la pantalla funcional `MovimientoScreen.kt` y a sus componentes reales.
+    - Se reemplazó el `BottomSheetScaffold` por un layout de `LazyColumn`, integrando la lista de movimientos pendientes directamente en el cuerpo principal de la pantalla.
+    - Se actualizaron todos los componentes (`UnidadSelectionStep`, `ActionSelectionStep`, `MovimientoForm`, `MovimientoItemCard`) para usar los nuevos estilos, colores e iconos.
+
+- **Hito**: Corrección de Bugs y Mejoras de Usabilidad.
+- **Detalles**:
+    - Se solucionaron múltiples errores de compilación que surgieron durante la refactorización y el rediseño, principalmente por importaciones faltantes (`BorderStroke`, `RoundedCornerShape`, `EmptyState`, etc.).
+    - Se corrigió un bug crítico donde el botón 'X' para cerrar el formulario de alta/baja no funcionaba. Se implementó una función `dismissForm()` en el ViewModel para manejar correctamente el cierre.
+    - Se ajustó el ancho del componente `FormDropdown` para que ocupe todo el espacio horizontal, solucionando problemas de alineación en el formulario.
+    - Se compactó el layout de los botones de acción y del formulario para mejorar la visibilidad sin necesidad de hacer scroll.
+    - Se implementó el `EmptyState` para la lista de movimientos pendientes, mostrando un mensaje claro cuando no hay datos, en lugar de ocultar la sección.
+
+- **Hito**: Limpieza Final y Mejoras en la Pantalla de Inicio.
+- **Detalles**:
+    - Se eliminó el botón de acceso a la maqueta de la pantalla de inicio (`DashboardScreen`).
+    - Se mejoró la presentación visual de `DashboardScreen`, reemplazando el texto simple por una `Card` de bienvenida con un icono y una breve descripción, utilizando la nueva paleta de colores.
+    - Se eliminó la ruta de navegación a la maqueta del grafo de navegación (`AppNavigation.kt`) para mantener el código de producción limpio.
+
+- **Estado General al Final de la Sesión**:
+    - La funcionalidad del "Cuaderno de Campo" es ahora más robusta arquitectónicamente y presenta una interfaz de usuario moderna y pulida.
+    - El proyecto se encuentra en un estado estable y compilable.

@@ -67,7 +67,7 @@ fun MovimientoForm(
             // Form Body
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FormDropdown(
                     items = formState.filteredEspecies,
@@ -126,7 +126,7 @@ fun MovimientoForm(
                     )
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
 
                 Button(
                     onClick = onSave,
