@@ -12,11 +12,11 @@ class AuthInterceptor @Inject constructor(
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = sessionManager.getAuthToken()
-        val request = chain.request().newBuilder()
-        // token?.let {
-        //     request.addHeader("Authorization", "Bearer $it")
-        // }
-        return chain.proceed(request.build())
-    }
+                                val token = sessionManager.getAuthToken()
+                                val request = chain.request().newBuilder()
+                                token?.let {
+                                    android.util.Log.d("TOKEN_DEBUG", "Token enviado: $it")
+                                    request.addHeader("Authorization", "Bearer $it")
+                                }
+                                return chain.proceed(request.build())    }
 }

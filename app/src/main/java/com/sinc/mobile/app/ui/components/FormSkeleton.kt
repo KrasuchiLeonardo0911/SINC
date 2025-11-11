@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.home
+package com.sinc.mobile.app.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

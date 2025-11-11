@@ -78,7 +78,8 @@ dependencies {
     // Accompanist
     implementation("com.google.accompanist:accompanist-placeholder-material3:0.32.0")
 
-    testImplementation(libs.junit)
+    // Material Icons Extended
+    implementation(libs.androidx.compose.material.icons.extended)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

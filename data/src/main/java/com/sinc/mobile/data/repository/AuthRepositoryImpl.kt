@@ -33,6 +33,7 @@ class AuthRepositoryImpl @Inject constructor(
                         try {
                             val loginResponse = gson.fromJson(body, LoginResponse::class.java)
                             if (loginResponse.token != null) {
+                                android.util.Log.d("TOKEN_DEBUG", "Token recibido y guardado: ${loginResponse.token}")
                                 sessionManager.saveAuthToken(loginResponse.token)
                                 return AuthResult.Success(loginResponse.token)
                             } else {
@@ -87,6 +88,15 @@ class AuthRepositoryImpl @Inject constructor(
                     return AuthResult.UnknownError("Error al parsear la respuesta de error: ${response.code()}")
                 }
             }
+        }
+    }
+
+    override suspend fun logout(): Result<Unit> {
+        return try {
+            sessionManager.clearAuthToken()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

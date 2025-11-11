@@ -1,11 +1,7 @@
-package com.sinc.mobile.app.features.home
+package com.sinc.mobile.app.features.movimiento
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -26,10 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.ui.theme.SuccessGreen
 import androidx.compose.ui.graphics.Color
+import com.sinc.mobile.app.ui.components.FormDropdown
+import com.sinc.mobile.app.ui.components.FormSkeleton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun MovimientoScreen(viewModel: MovimientoViewModel = hiltViewModel()) {
     val state = viewModel.state.value
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
@@ -128,8 +126,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
 @Composable
 private fun MovimientosPendientesSheetContent(
-    state: HomeState,
-    viewModel: HomeViewModel,
+    state: MovimientoState,
+    viewModel: MovimientoViewModel,
     onHeaderClick: () -> Unit
 ) {
     Column(
@@ -166,7 +164,7 @@ private fun MovimientosPendientesSheetContent(
 }
 
 @Composable
-private fun SyncSection(state: HomeState, onSync: () -> Unit) {
+private fun SyncSection(state: MovimientoState, onSync: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Button(
             onClick = onSync,
@@ -431,8 +429,8 @@ private fun ActionSelectionStep(
 
 @Composable
 private fun MovimientoForm(
-    state: HomeState,
-    viewModel: HomeViewModel,
+    state: MovimientoState,
+    viewModel: MovimientoViewModel,
     modifier: Modifier = Modifier
 ) {
     state.catalogos?.let {

@@ -25,8 +25,10 @@ testRules = "1.5.0"
 desugar = "2.0.4"
 coreTesting = "2.2.0"
 mockwebserver = "4.12.0" # Added for testing API calls
+composeMaterialIconsExtended = "1.6.8" # Using the version from composeBom
 
 [libraries]
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIconsExtended" }
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }

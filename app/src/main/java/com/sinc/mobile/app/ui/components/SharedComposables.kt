@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.home
+package com.sinc.mobile.app.ui.components
 
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
