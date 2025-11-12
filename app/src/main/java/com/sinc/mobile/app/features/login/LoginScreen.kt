@@ -22,7 +22,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val state = viewModel.state.value
     var email by remember { mutableStateOf("") }
@@ -93,6 +94,10 @@ fun LoginScreen(
                 enabled = !state.isLoading && !state.isSyncing
             ) {
                 Text("Login")
+            }
+
+            TextButton(onClick = onNavigateToForgotPassword) {
+                Text("¿Olvidaste tu contraseña?")
             }
 
             if (state.isLoading) {

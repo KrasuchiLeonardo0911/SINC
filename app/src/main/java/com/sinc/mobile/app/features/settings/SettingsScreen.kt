@@ -1,6 +1,7 @@
 package com.sinc.mobile.app.features.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,10 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.ExitToApp
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Card
@@ -25,13 +27,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,8 +47,11 @@ import kotlinx.coroutines.flow.collectLatest
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onNavigateToChangePassword: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collectLatest { event ->
             when (event) {
@@ -51,13 +62,29 @@ fun SettingsScreen(
         }
     }
 
+    if (showLogoutDialog) {
+        ConfirmationDialog(
+            showDialog = true,
+            onDismiss = { showLogoutDialog = false },
+            onConfirm = {
+                viewModel.logout()
+                showLogoutDialog = false
+            },
+            title = "Cerrar Sesión",
+            message = "¿Estás seguro de que quieres cerrar la sesión?"
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 title = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         Text("Configuración")
                     }
@@ -65,7 +92,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -87,21 +114,26 @@ fun SettingsScreen(
                 SettingsCard(
                     title = "Cuenta",
                     items = listOf(
-                        "Perfil" to androidx.compose.material.icons.Icons.Outlined.Person,
-                        "Correo" to androidx.compose.material.icons.Icons.Outlined.Email,
-                        "Teléfono" to androidx.compose.material.icons.Icons.Outlined.Phone
+                        "Contraseña" to Icons.Outlined.Lock,
+                        "Correo" to Icons.Outlined.Email,
+                        "Teléfono" to Icons.Outlined.Phone
                     ),
-                    onClick = { /* TODO: Implement navigation or action for account settings */ }
+                    onClick = { itemTitle ->
+                        if (itemTitle == "Contraseña") {
+                            onNavigateToChangePassword()
+                        }
+                        // TODO: Handle other items
+                    }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsCard(
                     title = "Sesión",
                     items = listOf(
-                        "Cerrar Sesión" to androidx.compose.material.icons.Icons.Outlined.ExitToApp
+                        "Cerrar Sesión" to Icons.AutoMirrored.Outlined.ExitToApp
                     ),
                     onClick = { itemTitle ->
                         if (itemTitle == "Cerrar Sesión") {
-                            viewModel.logout()
+                            showLogoutDialog = true
                         }
                     }
                 )
@@ -118,7 +150,10 @@ fun SettingsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -127,20 +162,28 @@ fun SettingsCard(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             items.forEach { (itemTitle, icon) ->
+                val isLogout = itemTitle == "Cerrar Sesión"
+                val contentColor = if (isLogout) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onClick(itemTitle) }
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = itemTitle,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
+                        tint = contentColor
                     )
-                    Text(text = itemTitle, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = itemTitle,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = contentColor
+                    )
                 }
             }
         }

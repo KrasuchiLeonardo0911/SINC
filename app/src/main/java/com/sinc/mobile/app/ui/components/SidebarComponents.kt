@@ -52,8 +52,8 @@ fun SidebarItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f) else Color.Transparent
+    val contentColor = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

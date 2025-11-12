@@ -14,29 +14,30 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    primary = md_theme_light_primary,
-    onPrimary = md_theme_light_onPrimary,
-    primaryContainer = md_theme_light_primaryContainer,
-    onPrimaryContainer = md_theme_light_onPrimaryContainer,
-    secondary = md_theme_light_secondary,
-    onSecondary = md_theme_light_onSecondary,
-    secondaryContainer = md_theme_light_secondaryContainer,
-    onSecondaryContainer = md_theme_light_onSecondaryContainer,
-    tertiary = md_theme_light_tertiary,
-    onTertiary = md_theme_light_onTertiary,
-    tertiaryContainer = md_theme_light_tertiaryContainer,
-    onTertiaryContainer = md_theme_light_onTertiaryContainer,
-    error = md_theme_light_error,
-    onError = md_theme_light_onError,
-    background = md_theme_light_background,
-    onBackground = md_theme_light_onBackground,
-    surface = md_theme_light_surface,
-    onSurface = md_theme_light_onSurface,
-    surfaceVariant = md_theme_light_surfaceVariant,
-    onSurfaceVariant = md_theme_light_onSurfaceVariant,
-    outline = md_theme_light_outline,
+    primary = colorTextoPrincipal,
+    onPrimary = Color.White,
+    secondary = colorTextoSecundario,
+    onSecondary = Color.White,
+    tertiary = colorAlta,
+    onTertiary = Color.White,
+    error = colorBaja,
+    onError = Color.White,
+    background = colorFondo,
+    onBackground = colorTextoPrincipal,
+    surface = colorSuperficie,
+    onSurface = colorTextoPrincipal,
+    outline = colorBorde,
+    primaryContainer = colorFondo,
+    onPrimaryContainer = colorTextoPrincipal,
+    secondaryContainer = colorFondo,
+    onSecondaryContainer = colorTextoSecundario,
+    tertiaryContainer = colorFondo,
+    onTertiaryContainer = colorAlta,
+    surfaceVariant = colorFondo,
+    onSurfaceVariant = colorTextoSecundario,
 )
 
 
@@ -64,9 +65,9 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun SincMobileTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

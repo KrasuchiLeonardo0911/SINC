@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,7 +27,9 @@ fun Sidebar(
     onNavigate: (String) -> Unit,
     onCloseDrawer: () -> Unit
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(
+        drawerContainerColor = MaterialTheme.colorScheme.surface
+    ) {
         Column(modifier = Modifier.padding(vertical = 16.dp)) {
             SidebarSection(title = "Principal")
             SidebarItem(

@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
+import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
 import com.sinc.mobile.app.features.home.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.maquetas.CuadernoDeCampoMaquetaScreen
@@ -15,6 +17,9 @@ object Routes {
     const val HOME = "home"
     const val MOVIMIENTO = "movimiento"
     const val SETTINGS = "settings"
+    const val CHANGE_PASSWORD = "change_password"
+    const val FORGOT_PASSWORD = "forgot_password"
+    const val SPLASH = "splash"
 }
 
 @Composable
@@ -23,12 +28,20 @@ fun AppNavigation(
     startDestination: String
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
+        composable(Routes.SPLASH) {
+            // This is a temporary destination, the real navigation happens in MainActivity's LaunchedEffect
+        }
         composable(Routes.LOGIN) {
-            LoginScreen(onLoginSuccess = {
-                navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.LOGIN) { inclusive = true }
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                },
+                onNavigateToForgotPassword = {
+                    navController.navigate(Routes.FORGOT_PASSWORD)
                 }
-            })
+            )
         }
         composable(Routes.HOME) {
             MainScreen(navController = navController)
@@ -42,6 +55,30 @@ fun AppNavigation(
                 onNavigateToLogin = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.HOME) { inclusive = true } // Pop up to home to clear backstack
+                    }
+                },
+                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) }
+            )
+        }
+        composable(Routes.CHANGE_PASSWORD) {
+            ChangePasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.HOME) { inclusive = true } // Pop up to home to clear backstack
+                    }
+                },
+                onNavigateToForgotPassword = {
+                    navController.navigate(Routes.FORGOT_PASSWORD)
+                }
+            )
+        }
+        composable(Routes.FORGOT_PASSWORD) {
+            ForgotPasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }
             )

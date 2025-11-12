@@ -9,8 +9,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.sinc.mobile.app.features.home.MainScreenRoutes
 
@@ -32,7 +34,9 @@ fun BottomNavBar(
     )
 
     NavigationBar(
-        modifier = Modifier.windowInsetsPadding(NavigationBarDefaults.windowInsets)
+        modifier = Modifier.windowInsetsPadding(NavigationBarDefaults.windowInsets),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp
     ) {
         bottomNavItems.forEach { item ->
             NavigationBarItem(

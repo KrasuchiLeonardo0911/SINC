@@ -1,6 +1,7 @@
 package com.sinc.mobile.app.ui.components
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ fun ConfirmationDialog(
 ) {
     if (showDialog) {
         AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surface,
             onDismissRequest = onDismiss,
             title = { Text(title) },
             text = { Text(message) },

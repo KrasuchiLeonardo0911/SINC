@@ -12,6 +12,9 @@ import retrofit2.http.POST
 import com.sinc.mobile.data.network.dto.CatalogosDto
 
 import com.sinc.mobile.data.network.dto.MovimientoRequest
+import com.sinc.mobile.data.network.dto.ChangePasswordRequest
+import com.sinc.mobile.data.network.dto.RequestPasswordResetRequest
+import com.sinc.mobile.data.network.dto.ResetPasswordWithCodeRequest
 
 interface AuthApiService {
     @Headers("Accept: application/json")
@@ -29,4 +32,16 @@ interface AuthApiService {
     @Headers("Accept: application/json")
     @POST("api/movil/cuaderno/movimientos")
     suspend fun saveMovimientos(@Body request: MovimientoRequest): Response<ResponseBody>
+
+    @Headers("Accept: application/json")
+    @POST("api/movil/password/change")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ResponseBody>
+
+    @Headers("Accept: application/json")
+    @POST("api/movil/password/request-reset")
+    suspend fun requestPasswordReset(@Body request: RequestPasswordResetRequest): Response<ResponseBody>
+
+    @Headers("Accept: application/json")
+    @POST("api/movil/password/reset-with-code")
+    suspend fun resetPasswordWithCode(@Body request: ResetPasswordWithCodeRequest): Response<ResponseBody>
 }

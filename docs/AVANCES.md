@@ -354,3 +354,30 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
 - **Estado General al Final de la Sesión**:
     - La funcionalidad del "Cuaderno de Campo" es ahora más robusta arquitectónicamente y presenta una interfaz de usuario moderna y pulida.
     - El proyecto se encuentra en un estado estable y compilable.
+
+---
+
+### 12 de Noviembre de 2025
+
+-   **Hito**: Corrección de Colores y Temas.
+  -   **Detalles**: Se deshabilitó el color dinámico (Material You) y se forzó el tema claro en `Theme.kt`. Se aplicó la paleta de colores "Maqueta" al `lightColorScheme` para una apariencia más moderna y consistente. Se corrigieron los tintes rojizos en componentes como `BottomNavBar`, `Sidebar`, `SettingsScreen` (`TopAppBar` y `SettingsCard`) forzando colores de superficie neutros, lo que resolvió el problema de la herencia de colores antiguos. Se ajustó el color del texto de los ítems seleccionados en el `Sidebar` para que permaneciera oscuro, mejorando la legibilidad.
+
+-   **Hito**: Implementación de Cambio de Contraseña (Usuario Autenticado).
+  -   **Detalles**: Se implementó el flujo completo de cambio de contraseña siguiendo la arquitectura limpia. Esto incluyó la adición del endpoint a `AuthApiService`, la creación de DTOs y modelos de dominio (`ChangePasswordRequest`, `ChangePasswordData`), la implementación del repositorio (`AuthRepositoryImpl`) y un caso de uso (`ChangePasswordUseCase`) con validaciones. Se creó `ChangePasswordViewModel` y `ChangePasswordScreen` (anteriormente `ProfileScreen`) para la interfaz de usuario.
+
+-   **Hito**: Implementación de Recuperación de Contraseña (Flujo de Token).
+  -   **Detalles**: Se implementó el flujo de dos pasos para recuperar la contraseña (solicitar código y restablecer con código). Se añadieron los endpoints a `AuthApiService`, se crearon DTOs y modelos de dominio (`RequestPasswordResetRequest`, `ResetPasswordWithCodeRequest`, `RequestPasswordResetData`, `ResetPasswordWithCodeData`), se implementó el repositorio y dos casos de uso (`RequestPasswordResetUseCase`, `ResetPasswordWithCodeUseCase`) con validaciones. Se creó `ForgotPasswordViewModel` y `ForgotPasswordScreen`.
+
+-   **Hito**: Mejoras de UX en Flujos de Contraseña.
+  -   **Detalles**: Se unificó la experiencia de usuario post-cambio/restablecimiento de contraseña mediante un `InfoDialog` genérico. Este diálogo informa al usuario del éxito y lo redirige al login tras su aceptación, reemplazando los `Snackbar` y la redirección inmediata. Se añadió un overlay de carga con mensajes descriptivos (`Enviando código...`, `Restableciendo...`) en `ForgotPasswordScreen` para proporcionar feedback visual durante las operaciones asíncronas.
+
+-   **Hito**: Refactorización y Limpieza de Navegación y UI.
+  -   **Detalles**: Se renombró la opción "Perfil" a "Contraseña" en `SettingsScreen` con un icono de candado (`Icons.Outlined.Lock`) para mayor claridad. Se renombraron los archivos `ProfileScreen.kt` y `ProfileViewModel.kt` a `ChangePasswordScreen.kt` y `ChangePasswordViewModel.kt` respectivamente, y se actualizaron todas las referencias en `AppNavigation.kt` y `SettingsScreen.kt`. Se añadió texto descriptivo a `ChangePasswordScreen` para guiar al usuario sobre los requisitos de la contraseña.
+
+-   **Hito**: Corrección de Errores y Advertencias.
+  -   **Detalles**: Se corrigió un error de compilación en `RequestPasswordResetUseCase` eliminando una dependencia de Android (`android.util.Patterns`) en la capa de dominio, reemplazándola por una expresión regular de Kotlin. Se corrigieron errores de sintaxis en `SettingsScreen.kt` causados por una operación de reemplazo incompleta. Se solucionó una advertencia de deprecación para el icono `ExitToApp` en `SettingsScreen.kt` utilizando su versión `AutoMirrored`. Se eliminaron los archivos y la carpeta obsoletos de la antigua funcionalidad de perfil (`ProfileScreen.kt`, `ProfileViewModel.kt` y el directorio `features/profile`).
+
+-   **Hito**: Configuración de Entorno de Desarrollo.
+  -   **Detalles**: Se cambió la URL base de la API en `NetworkModule.kt` a `http://10.0.2.2:8000/` para facilitar las pruebas locales con el servidor Laravel en un emulador de Android.
+
+---

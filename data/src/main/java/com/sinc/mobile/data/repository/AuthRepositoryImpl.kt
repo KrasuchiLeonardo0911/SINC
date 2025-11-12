@@ -2,16 +2,21 @@ package com.sinc.mobile.data.repository
 
 import com.google.gson.Gson
 import com.sinc.mobile.data.network.api.AuthApiService
+import com.sinc.mobile.data.network.dto.ChangePasswordRequest
 import com.sinc.mobile.data.network.dto.ErrorResponse
 import com.sinc.mobile.data.network.dto.LoginRequest
 import com.sinc.mobile.data.network.dto.LoginResponse
+import com.sinc.mobile.data.network.dto.RequestPasswordResetRequest
+import com.sinc.mobile.data.network.dto.ResetPasswordWithCodeRequest
 import com.sinc.mobile.data.network.dto.ValidationErrorResponse
+import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.model.AuthResult
+import com.sinc.mobile.domain.model.ChangePasswordData
+import com.sinc.mobile.domain.model.RequestPasswordResetData
+import com.sinc.mobile.domain.model.ResetPasswordWithCodeData
 import com.sinc.mobile.domain.repository.AuthRepository
 import java.io.IOException
 import javax.inject.Inject
-
-import com.sinc.mobile.data.session.SessionManager
 
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
@@ -48,7 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
                 } ?: return AuthResult.UnknownError("La respuesta del servidor es nula.")
             }
             else {
-                return handleError(response)
+                return handleAuthError(response)
             }
         } catch (e: IOException) {
             return AuthResult.NetworkError
@@ -57,7 +62,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun handleError(response: retrofit2.Response<*>): AuthResult {
+    private fun handleAuthError(response: retrofit2.Response<*>): AuthResult {
         val errorBodyString: String?
         try {
             errorBodyString = response.errorBody()?.string()
@@ -77,9 +82,9 @@ class AuthRepositoryImpl @Inject constructor(
                     val firstErrorMessage = validationError.errors.values.firstOrNull()?.firstOrNull()
                     AuthResult.UnknownError(firstErrorMessage ?: validationError.message)
                 } catch (e: Exception) {
-                        return AuthResult.UnknownError("Error al parsear la respuesta de validación.")
-                    }
+                    return AuthResult.UnknownError("Error al parsear la respuesta de validación.")
                 }
+            }
             else -> {
                 try {
                     val errorResponse = gson.fromJson(errorBodyString, ErrorResponse::class.java)
@@ -91,6 +96,27 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun handleResultUnitResponse(response: retrofit2.Response<*>): Result<Unit> {
+        val errorBody = response.errorBody()?.string()
+        val errorMessage = if (errorBody != null) {
+            try {
+                val validationError = gson.fromJson(errorBody, ValidationErrorResponse::class.java)
+                validationError.errors.values.firstOrNull()?.firstOrNull() ?: validationError.message
+            } catch (e: Exception) {
+                try {
+                    val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                    errorResponse.message
+                } catch (e2: Exception) {
+                    "Error al procesar la respuesta del servidor."
+                }
+            }
+        } else {
+            "Error desconocido."
+        }
+        return Result.failure(Exception(errorMessage))
+    }
+
+
     override suspend fun logout(): Result<Unit> {
         return try {
             sessionManager.clearAuthToken()
@@ -99,4 +125,62 @@ class AuthRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun changePassword(passwordData: ChangePasswordData): Result<Unit> {
+        try {
+            val request = ChangePasswordRequest(
+                currentPassword = passwordData.currentPassword,
+                password = passwordData.newPassword,
+                passwordConfirmation = passwordData.newPasswordConfirmation
+            )
+            val response = apiService.changePassword(request)
+            return if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                handleResultUnitResponse(response)
+            }
+        } catch (e: IOException) {
+            return Result.failure(Exception("Error de red. Por favor, comprueba tu conexión."))
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+    override suspend fun requestPasswordReset(data: RequestPasswordResetData): Result<Unit> {
+        try {
+            val request = RequestPasswordResetRequest(email = data.email)
+            val response = apiService.requestPasswordReset(request)
+            return if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                handleResultUnitResponse(response)
+            }
+        } catch (e: IOException) {
+            return Result.failure(Exception("Error de red. Por favor, comprueba tu conexión."))
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+    override suspend fun resetPasswordWithCode(data: ResetPasswordWithCodeData): Result<Unit> {
+        try {
+            val request = ResetPasswordWithCodeRequest(
+                email = data.email,
+                code = data.code,
+                password = data.password,
+                passwordConfirmation = data.passwordConfirmation
+            )
+            val response = apiService.resetPasswordWithCode(request)
+            return if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                handleResultUnitResponse(response)
+            }
+        } catch (e: IOException) {
+            return Result.failure(Exception("Error de red. Por favor, comprueba tu conexión."))
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
 }
+
