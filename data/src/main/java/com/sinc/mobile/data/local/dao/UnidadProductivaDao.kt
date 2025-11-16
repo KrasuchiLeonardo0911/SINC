@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface UnidadProductivaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUnidadProductiva(unidad: UnidadProductivaEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(unidades: List<UnidadProductivaEntity>)
 
     @Query("SELECT * FROM unidades_productivas")

@@ -1,8 +1,10 @@
 package com.sinc.mobile.data.repository
 
-import com.sinc.mobile.data.network.api.AuthApiService
-import com.sinc.mobile.data.network.dto.UnidadProductivaDto
+import com.sinc.mobile.data.network.api.UnidadProductivaApiService
+import com.sinc.mobile.data.network.dto.request.CreateUnidadProductivaRequest
+import com.sinc.mobile.data.network.dto.response.UnidadProductivaDto
 import com.sinc.mobile.domain.model.UnidadProductiva
+import com.sinc.mobile.domain.model.CreateUnidadProductivaData
 import com.sinc.mobile.domain.repository.UnidadProductivaRepository
 import java.io.IOException
 import javax.inject.Inject
@@ -14,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class UnidadProductivaRepositoryImpl @Inject constructor(
-    private val apiService: AuthApiService,
+    private val unidadProductivaApiService: UnidadProductivaApiService,
     private val sessionManager: SessionManager,
     private val unidadProductivaDao: UnidadProductivaDao
 ) : UnidadProductivaRepository {
@@ -30,7 +32,7 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             ?: return Result.failure(Exception("No hay token de autenticación disponible para sincronizar unidades productivas."))
 
         return try {
-            val response = apiService.getUnidadesProductivas()
+            val response = unidadProductivaApiService.getUnidadesProductivas()
             if (response.isSuccessful) {
                 val dtos = response.body()
                 if (dtos != null) {
@@ -49,22 +51,91 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun createUnidadProductiva(data: CreateUnidadProductivaData): Result<UnidadProductiva> {
+        val authToken = sessionManager.getAuthToken()
+            ?: return Result.failure(Exception("No hay token de autenticación disponible para crear unidades productivas."))
+
+        val request = CreateUnidadProductivaRequest(
+            nombre = data.nombre,
+            identificadorLocal = data.identificadorLocal,
+            superficie = data.superficie,
+            latitud = data.latitud,
+            longitud = data.longitud,
+            municipioId = data.municipioId,
+            condicionTenenciaId = data.condicionTenenciaId,
+            fuenteAguaId = data.fuenteAguaId,
+            tipoSueloId = data.tipoSueloId,
+            tipoPastoId = data.tipoPastoId
+        )
+
+        return try {
+            val response = unidadProductivaApiService.createUnidadProductiva(request)
+            if (response.isSuccessful) {
+                val dto = response.body()
+                if (dto != null) {
+                    // Opcional: Insertar la nueva UP en la base de datos local inmediatamente
+                    unidadProductivaDao.insertUnidadProductiva(dto.toEntity())
+                    Result.success(dto.toDomain())
+                } else {
+                    Result.failure(Exception("El cuerpo de la respuesta de creación de unidad productiva es nulo"))
+                }
+            } else {
+                Result.failure(Exception("Error de API al crear unidad productiva: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+
 
 private fun UnidadProductivaDto.toEntity(): UnidadProductivaEntity {
     return UnidadProductivaEntity(
         id = this.id,
         nombre = this.nombre,
+        identificadorLocal = this.identificadorLocal,
+        superficie = this.superficie,
         latitud = this.latitud?.toDoubleOrNull(),
         longitud = this.longitud?.toDoubleOrNull(),
-        municipio_id = null, // No disponible en el DTO
-        paraje_id = null // No disponible en el DTO
+        municipioId = this.municipioId,
+        condicionTenenciaId = this.condicionTenenciaId,
+        fuenteAguaId = this.fuenteAguaId,
+        tipoSueloId = this.tipoSueloId,
+        tipoPastoId = this.tipoPastoId
+    )
+}
+
+private fun UnidadProductivaDto.toDomain(): UnidadProductiva {
+    return UnidadProductiva(
+        id = this.id,
+        nombre = this.nombre,
+        identificadorLocal = this.identificadorLocal,
+        superficie = this.superficie,
+        latitud = this.latitud?.toDoubleOrNull(),
+        longitud = this.longitud?.toDoubleOrNull(),
+        municipioId = this.municipioId,
+        condicionTenenciaId = this.condicionTenenciaId,
+        fuenteAguaId = this.fuenteAguaId,
+        tipoSueloId = this.tipoSueloId,
+        tipoPastoId = this.tipoPastoId
     )
 }
 
 private fun UnidadProductivaEntity.toDomain(): UnidadProductiva {
     return UnidadProductiva(
         id = this.id,
-        nombre = this.nombre ?: ""
+        nombre = this.nombre,
+        identificadorLocal = this.identificadorLocal,
+        superficie = this.superficie,
+        latitud = this.latitud,
+        longitud = this.longitud,
+        municipioId = this.municipioId,
+        condicionTenenciaId = this.condicionTenenciaId,
+        fuenteAguaId = this.fuenteAguaId,
+        tipoSueloId = this.tipoSueloId,
+        tipoPastoId = this.tipoPastoId
     )
 }

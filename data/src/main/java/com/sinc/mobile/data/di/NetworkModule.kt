@@ -5,6 +5,7 @@ import com.sinc.mobile.data.network.AuthInterceptor
 import com.sinc.mobile.data.network.ErrorInterceptor
 import com.sinc.mobile.data.network.api.AuthApiService
 import com.sinc.mobile.data.network.api.MovimientoApiService
+import com.sinc.mobile.data.network.api.UnidadProductivaApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,6 +62,12 @@ object NetworkModule {
     @Singleton
     fun provideMovimientoApiService(retrofit: Retrofit): MovimientoApiService {
         return retrofit.create(MovimientoApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnidadProductivaApiService(retrofit: Retrofit): UnidadProductivaApiService {
+        return retrofit.create(UnidadProductivaApiService::class.java)
     }
 }
 

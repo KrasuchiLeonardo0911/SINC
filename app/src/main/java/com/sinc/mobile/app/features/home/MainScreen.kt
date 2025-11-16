@@ -24,6 +24,10 @@ import com.sinc.mobile.app.ui.components.Sidebar
 import com.sinc.mobile.app.ui.components.TopBar
 import kotlinx.coroutines.launch
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import com.sinc.mobile.app.navigation.Routes
+
 object MainScreenRoutes {
     const val DASHBOARD = "main/dashboard"
     const val MOVIMIENTO = "main/movimiento"
@@ -39,6 +43,17 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentScreen by remember { mutableStateOf(MainScreenRoutes.DASHBOARD) }
+
+    val shouldNavigateToCreateUnidadProductiva by viewModel.shouldNavigateToCreateUnidadProductiva.collectAsState()
+
+    LaunchedEffect(shouldNavigateToCreateUnidadProductiva) {
+        if (shouldNavigateToCreateUnidadProductiva) {
+            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA) {
+                popUpTo(Routes.HOME) { inclusive = true }
+            }
+            viewModel.resetNavigationToCreateUnidadProductiva()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         ModalNavigationDrawer(

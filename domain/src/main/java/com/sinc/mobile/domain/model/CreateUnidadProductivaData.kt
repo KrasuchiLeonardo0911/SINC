@@ -1,12 +1,11 @@
 package com.sinc.mobile.domain.model
 
-data class UnidadProductiva(
-    val id: Int,
+data class CreateUnidadProductivaData(
     val nombre: String,
     val identificadorLocal: String,
     val superficie: Float,
-    val latitud: Double?,
-    val longitud: Double?,
+    val latitud: Float,
+    val longitud: Float,
     val municipioId: Int,
     val condicionTenenciaId: Int?,
     val fuenteAguaId: Int?,

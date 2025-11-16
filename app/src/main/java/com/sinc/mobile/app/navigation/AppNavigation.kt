@@ -11,6 +11,7 @@ import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.maquetas.CuadernoDeCampoMaquetaScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
+import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -20,6 +21,7 @@ object Routes {
     const val CHANGE_PASSWORD = "change_password"
     const val FORGOT_PASSWORD = "forgot_password"
     const val SPLASH = "splash"
+    const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
 }
 
 @Composable
@@ -81,6 +83,16 @@ fun AppNavigation(
                         popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }
+            )
+        }
+        composable(Routes.CREATE_UNIDAD_PRODUCTIVA) {
+            CreateUnidadProductivaScreen(
+                onUnidadProductivaCreated = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.CREATE_UNIDAD_PRODUCTIVA) { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
