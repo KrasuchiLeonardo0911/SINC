@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class UnidadProductivaDto(
     @SerializedName("id") val id: Int,
     @SerializedName("nombre") val nombre: String,
-    @SerializedName("identificador_local") val identificadorLocal: String,
+    @SerializedName("identificador_local") val identificadorLocal: String?,
     @SerializedName("superficie") val superficie: Float,
     @SerializedName("latitud") val latitud: String?,
     @SerializedName("longitud") val longitud: String?,

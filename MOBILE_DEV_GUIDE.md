@@ -184,3 +184,98 @@ Para poblar los dropdowns de `municipio_id`, `condicion_tenencia_id`, `fuente_ag
 3.  Considera la implementación de endpoints para obtener los catálogos de los campos opcionales (`condicion_tenencia_id`, `fuente_agua_id`, etc.) si tu diseño lo requiere.
 
 ¡Mucho éxito con la implementación móvil!
+
+---
+
+## Registro de Cambios - Sesión del 16 de Noviembre de 2025
+
+Esta sección detalla los cambios realizados para implementar la funcionalidad de creación de Unidades Productivas (UPs) y la infraestructura de catálogos, siguiendo la arquitectura limpia del proyecto.
+
+### 1. Implementación de la Lógica de Creación de Unidades Productivas
+
+Se implementó el flujo completo para obtener y crear UPs, abarcando las tres capas de la arquitectura.
+
+#### Capa de Datos (`:data`)
+
+-   **`UnidadProductivaApiService.kt`**:
+    -   Se creó esta nueva interfaz de Retrofit para manejar los endpoints de UPs.
+    -   Se añadieron los métodos `getUnidadesProductivas()` (`GET api/movil/unidades-productivas`) y `createUnidadProductiva()` (`POST api/movil/unidades-productivas`).
+-   **Refactorización de `AuthApiService.kt`**:
+    -   Se eliminó el método `getUnidadesProductivas()` para centralizar la lógica de UPs en su propio servicio.
+-   **DTOs (Data Transfer Objects)**:
+    -   `UnidadProductivaDto.kt`: Se actualizó para incluir todos los campos de una UP (`identificadorLocal`, `superficie`, `municipioId`, etc.).
+    -   `CreateUnidadProductivaRequest.kt`: Se creó este nuevo DTO para modelar el cuerpo de la petición `POST` para crear una UP.
+-   **Inyección de Dependencias (`NetworkModule.kt`)**:
+    -   Se añadió un `provide` para `UnidadProductivaApiService` para que Hilt pueda inyectarla.
+-   **`UnidadProductivaRepositoryImpl.kt`**:
+    -   Se cambió la dependencia de `AuthApiService` a `UnidadProductivaApiService`.
+    -   Se implementó el nuevo método `createUnidadProductiva()`, que mapea el modelo de dominio `CreateUnidadProductivaData` al DTO `CreateUnidadProductivaRequest` antes de llamar a la API.
+    -   Se actualizaron las funciones de mapeo `toEntity()` y `toDomain()` para reflejar los nuevos campos.
+
+#### Capa de Dominio (`:domain`)
+
+-   **Modelos**:
+    -   `UnidadProductiva.kt`: Se actualizó para incluir todos los campos relevantes de una UP.
+    -   `CreateUnidadProductivaData.kt`: Se creó este nuevo modelo para pasar los datos de creación de UP desde la capa de presentación a la de dominio de forma limpia.
+-   **Repositorio (`UnidadProductivaRepository.kt`)**:
+    -   Se actualizó la interfaz para incluir el nuevo método `createUnidadProductiva(data: CreateUnidadProductivaData)`.
+-   **Casos de Uso (`use_case`)**:
+    -   `CreateUnidadProductivaUseCase.kt`: Se creó para encapsular la lógica de creación de una UP.
+    -   `SyncUnidadesProductivasUseCase.kt`: Se creó para manejar la sincronización de UPs.
+
+### 2. Extensión del Sistema de Catálogos
+
+Para poder poblar los dropdowns del nuevo formulario, se extendió el sistema de catálogos existente.
+
+#### Capa de Dominio (`:domain`)
+
+-   **`Catalogos.kt`**: Se extendió el modelo para incluir:
+    -   `municipios: List<Municipio>`
+    -   `condicionesTenencia: List<CondicionTenencia>`
+    -   `fuentesAgua: List<FuenteAgua>`
+    -   `tiposSuelo: List<TipoSuelo>`
+    -   `tiposPasto: List<TipoPasto>`
+-   Se crearon los nuevos modelos de datos correspondientes (`Municipio`, `CondicionTenencia`, etc.).
+
+#### Capa de Datos (`:data`)
+
+-   **`CatalogosDto.kt`**: Se extendió para incluir los nuevos catálogos nulables (`municipios`, `condiciones_tenencia`, etc.) para que coincida con la respuesta de la API.
+-   **Entidades de Room (`entities`)**:
+    -   Se crearon las nuevas entidades: `MunicipioEntity`, `CondicionTenenciaEntity`, `FuenteAguaEntity`, `TipoSueloEntity`, `TipoPastoEntity`.
+-   **DAO (Data Access Object)**:
+    -   Se creó un `CatalogosDao.kt` unificado para manejar las operaciones de base de datos de todos los catálogos.
+-   **Base de Datos**:
+    -   `SincMobileDatabase.kt`: Se actualizaron las `entities` para incluir las nuevas tablas y se reemplazaron los DAOs de catálogos individuales por el `CatalogosDao` unificado.
+    -   `DatabaseModule.kt`: Se actualizó para proveer el `CatalogosDao`.
+-   **`CatalogosRepositoryImpl.kt`**:
+    -   Se refactorizó para usar el `CatalogosDao` unificado.
+    -   Se actualizó el método `getCatalogos()` para usar `combine` con los 9 `Flow`s de catálogos.
+    -   Se actualizó `syncCatalogos()` para manejar las nuevas listas de catálogos (incluyendo la comprobación de nulos).
+
+### 3. Implementación de la Interfaz de Usuario (UI) y Navegación
+
+Se creó la infraestructura de UI y navegación para acceder y mostrar el formulario de creación de UP.
+
+#### Capa de Presentación (`:app`)
+
+-   **Nueva Feature "Campos"**:
+    -   Se crearon `CamposScreen.kt` y `CamposViewModel.kt` en un nuevo paquete `features/campos`.
+    -   `CamposScreen` contiene un botón "Registrar Campo" que navega al formulario de creación.
+-   **Navegación**:
+    -   Se añadió la ruta `Routes.CAMPOS` a `AppNavigation.kt` y `MainScreenRoutes`.
+    -   Se actualizó `Sidebar.kt` para que el ítem "Mis Campos" navegue a la nueva pantalla.
+    -   Se integró `CamposScreen` en el `when` de `MainScreen.kt`.
+-   **Formulario de Creación de UP**:
+    -   `CreateUnidadProductivaViewModel.kt`: Se actualizó para cargar los catálogos necesarios desde el `GetCatalogosUseCase`.
+    -   `CreateUnidadProductivaScreen.kt`: Se rediseñó completamente para usar un `LazyColumn` con `Card`s que agrupan los campos en secciones ("Información Básica", "Ubicación"), similar a la referencia web. Se añadieron `ExposedDropdownMenuBox` para los selectores.
+-   **Lógica de Navegación Condicional**:
+    -   Se implementó la lógica en `MainViewModel.kt` y `MainScreen.kt` para detectar si un usuario no tiene UPs después de la sincronización inicial y, en ese caso, navegarlo automáticamente al formulario de creación.
+
+### 4. Corrección de Bugs
+
+-   **Error 404 en `getUnidadesProductivas`**: Se corrigió un error 404 al no haber añadido el prefijo `api/movil/` a los endpoints en `UnidadProductivaApiService.kt`.
+-   **`NullPointerException` en `syncCatalogos`**: Se solucionó un crash que ocurría si la API no devolvía alguna de las listas de los nuevos catálogos. Se hizo que las listas en `CatalogosDto` fueran nulables y se añadió la comprobación de nulos en `CatalogosRepositoryImpl`.
+-   **Errores de Compilación de Room/Kapt**: Se corrigieron errores de "no such table" ajustando los nombres de las tablas en las queries de `CatalogosDao.kt`.
+-   **Error de `combine` con más de 5 `Flow`s**: Se refactorizó el uso de `combine` en `CatalogosRepositoryImpl.kt` para poder manejar 9 `Flow`s.
+-   **Bug de Navegación "sin retorno"**: Se corrigió un bug que impedía volver atrás desde el formulario de creación de UP, eliminando el `popUpTo { inclusive = true }` de la acción de navegación.
+-   **Bug de Navegación Automática**: Se mejoró la lógica en `MainViewModel.kt` para que la decisión de navegar al formulario de creación se tome después de que la sincronización inicial haya finalizado, evitando la navegación prematura.

@@ -26,12 +26,14 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.navigation.Routes
 
 object MainScreenRoutes {
     const val DASHBOARD = "main/dashboard"
     const val MOVIMIENTO = "main/movimiento"
     const val NOTIFICATIONS = "main/notifications"
+    const val CAMPOS = "main/campos"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,9 +50,7 @@ fun MainScreen(
 
     LaunchedEffect(shouldNavigateToCreateUnidadProductiva) {
         if (shouldNavigateToCreateUnidadProductiva) {
-            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA) {
-                popUpTo(Routes.HOME) { inclusive = true }
-            }
+            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
             viewModel.resetNavigationToCreateUnidadProductiva()
         }
     }
@@ -101,6 +101,12 @@ fun MainScreen(
                     )
                     MainScreenRoutes.MOVIMIENTO -> MovimientoScreen(modifier = modifier)
                     MainScreenRoutes.NOTIFICATIONS -> NotificationsScreen(modifier = modifier)
+                    MainScreenRoutes.CAMPOS -> CamposScreen(
+                        onNavigateToCreateUnidadProductiva = {
+                            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
+                        },
+                        modifier = modifier
+                    )
                 }
             }
         }

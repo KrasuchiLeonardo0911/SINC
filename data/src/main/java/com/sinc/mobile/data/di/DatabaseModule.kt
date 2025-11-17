@@ -3,11 +3,8 @@ package com.sinc.mobile.data.di
 import android.content.Context
 import androidx.room.Room
 import com.sinc.mobile.data.local.SincMobileDatabase
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
+import com.sinc.mobile.data.local.dao.CatalogosDao
 import com.sinc.mobile.data.local.dao.MovimientoPendienteDao
-import com.sinc.mobile.data.local.dao.RazaDao
 import com.sinc.mobile.data.local.dao.UnidadProductivaDao
 import dagger.Module
 import dagger.Provides
@@ -40,26 +37,8 @@ object DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideEspecieDao(database: SincMobileDatabase): EspecieDao {
-        return database.especieDao()
-    }
-
-    @Singleton
-    @Provides
-    fun provideRazaDao(database: SincMobileDatabase): RazaDao {
-        return database.razaDao()
-    }
-
-    @Singleton
-    @Provides
-    fun provideCategoriaAnimalDao(database: SincMobileDatabase): CategoriaAnimalDao {
-        return database.categoriaAnimalDao()
-    }
-
-    @Singleton
-    @Provides
-    fun provideMotivoMovimientoDao(database: SincMobileDatabase): MotivoMovimientoDao {
-        return database.motivoMovimientoDao()
+    fun provideCatalogosDao(database: SincMobileDatabase): CatalogosDao {
+        return database.catalogosDao()
     }
 
     @Singleton

@@ -69,8 +69,11 @@ fun Sidebar(
             SidebarItem(
                 icon = Icons.Outlined.Map,
                 text = "Mis Campos",
-                isSelected = false,
-                onClick = { /* TODO */ }
+                isSelected = currentRoute == MainScreenRoutes.CAMPOS,
+                onClick = {
+                    onNavigate(MainScreenRoutes.CAMPOS)
+                    onCloseDrawer()
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class UnidadProductivaEntity(
     @PrimaryKey val id: Int,
     val nombre: String,
-    val identificadorLocal: String,
+    val identificadorLocal: String?,
     val superficie: Float,
     val latitud: Double?,
     val longitud: Double?,

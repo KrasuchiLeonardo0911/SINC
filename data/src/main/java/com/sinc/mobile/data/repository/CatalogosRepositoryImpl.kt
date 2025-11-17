@@ -1,54 +1,60 @@
 package com.sinc.mobile.data.repository
 
+import com.sinc.mobile.data.local.dao.CatalogosDao
+import com.sinc.mobile.data.local.entities.*
 import com.sinc.mobile.data.network.api.AuthApiService
-import com.sinc.mobile.data.network.dto.CatalogosDto
-import com.sinc.mobile.data.network.dto.CategoriaDto
-import com.sinc.mobile.data.network.dto.EspecieDto
-import com.sinc.mobile.data.network.dto.MotivoMovimientoDto
-import com.sinc.mobile.data.network.dto.RazaDto
+import com.sinc.mobile.data.network.dto.*
 import com.sinc.mobile.data.session.SessionManager
-import com.sinc.mobile.domain.model.Catalogos
-import com.sinc.mobile.domain.model.Categoria
-import com.sinc.mobile.domain.model.Especie
-import com.sinc.mobile.domain.model.MotivoMovimiento
-import com.sinc.mobile.domain.model.Raza
+import com.sinc.mobile.domain.model.*
 import com.sinc.mobile.domain.repository.CatalogosRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import java.io.IOException
 import javax.inject.Inject
 import android.util.Log
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.RazaDao
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
-import com.sinc.mobile.data.local.entities.EspecieEntity
-import com.sinc.mobile.data.local.entities.RazaEntity
-import com.sinc.mobile.data.local.entities.CategoriaAnimalEntity
-import com.sinc.mobile.data.local.entities.MotivoMovimientoEntity
-
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 
 class CatalogosRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val sessionManager: SessionManager,
-    private val especieDao: EspecieDao,
-    private val razaDao: RazaDao,
-    private val categoriaAnimalDao: CategoriaAnimalDao,
-    private val motivoMovimientoDao: MotivoMovimientoDao
+    private val catalogosDao: CatalogosDao
 ) : CatalogosRepository {
 
     override fun getCatalogos(): Flow<Catalogos> {
-        return combine(
-            especieDao.getAllEspecies(),
-            razaDao.getAllRazas(),
-            categoriaAnimalDao.getAllCategorias(),
-            motivoMovimientoDao.getAllMotivosMovimiento()
-        ) { especies, razas, categorias, motivos ->
+        val combinedFlows1 = combine(
+            catalogosDao.getAllEspecies(),
+            catalogosDao.getAllRazas(),
+            catalogosDao.getAllCategorias(),
+            catalogosDao.getAllMotivosMovimiento(),
+            catalogosDao.getAllMunicipios()
+        ) { especies, razas, categorias, motivos, municipios ->
+            Triple(especies, razas, Triple(categorias, motivos, municipios))
+        }
+
+        val combinedFlows2 = combine(
+            catalogosDao.getAllCondicionesTenencia(),
+            catalogosDao.getAllFuentesAgua(),
+            catalogosDao.getAllTiposSuelo(),
+            catalogosDao.getAllTiposPasto()
+        ) { condiciones, fuentes, suelos, pastos ->
+            Pair(condiciones, Triple(fuentes, suelos, pastos))
+        }
+
+        return combine(combinedFlows1, combinedFlows2) { triple1, pair1 ->
+            val (especies, razas, triple2) = triple1
+            val (categorias, motivos, municipios) = triple2
+            val (condiciones, triple3) = pair1
+            val (fuentes, suelos, pastos) = triple3
+
             Catalogos(
                 especies = especies.map { it.toDomain() },
                 razas = razas.map { it.toDomain() },
                 categorias = categorias.map { it.toDomain() },
-                motivosMovimiento = motivos.map { it.toDomain() }
+                motivosMovimiento = motivos.map { it.toDomain() },
+                municipios = municipios.map { it.toDomain() },
+                condicionesTenencia = condiciones.map { it.toDomain() },
+                fuentesAgua = fuentes.map { it.toDomain() },
+                tiposSuelo = suelos.map { it.toDomain() },
+                tiposPasto = pastos.map { it.toDomain() }
             )
         }
     }
@@ -68,17 +74,16 @@ class CatalogosRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val catalogosDto = response.body()
                 if (catalogosDto != null) {
-                    // Clear existing data
-                    especieDao.clearAll()
-                    razaDao.clearAll()
-                    categoriaAnimalDao.clearAll()
-                    motivoMovimientoDao.clearAll()
-
-                    // Insert new data
-                    especieDao.insertAll(catalogosDto.especies.map { it.toEntity() })
-                    razaDao.insertAll(catalogosDto.razas.map { it.toEntity() })
-                    categoriaAnimalDao.insertAll(catalogosDto.categorias.map { it.toEntity() })
-                    motivoMovimientoDao.insertAll(catalogosDto.motivosMovimiento.map { it.toEntity() })
+                    // Insert new data, checking for nulls
+                    catalogosDto.especies?.let { catalogosDao.insertAllEspecies(it.map { it.toEntity() }) }
+                    catalogosDto.razas?.let { catalogosDao.insertAllRazas(it.map { it.toEntity() }) }
+                    catalogosDto.categorias?.let { catalogosDao.insertAllCategorias(it.map { it.toEntity() }) }
+                    catalogosDto.motivosMovimiento?.let { catalogosDao.insertAllMotivosMovimiento(it.map { it.toEntity() }) }
+                    catalogosDto.municipios?.let { catalogosDao.insertAllMunicipios(it.map { it.toEntity() }) }
+                    catalogosDto.condicionesTenencia?.let { catalogosDao.insertAllCondicionesTenencia(it.map { it.toEntity() }) }
+                    catalogosDto.fuentesAgua?.let { catalogosDao.insertAllFuentesAgua(it.map { it.toEntity() }) }
+                    catalogosDto.tiposSuelo?.let { catalogosDao.insertAllTiposSuelo(it.map { it.toEntity() }) }
+                    catalogosDto.tiposPasto?.let { catalogosDao.insertAllTiposPasto(it.map { it.toEntity() }) }
 
                     Log.d("CatalogosRepo", "Sincronización exitosa")
                     Result.success(Unit)
@@ -108,9 +113,19 @@ private fun EspecieEntity.toDomain(): Especie = Especie(id, nombre)
 private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
 private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
 private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
+private fun MunicipioEntity.toDomain(): Municipio = Municipio(id, nombre)
+private fun CondicionTenenciaEntity.toDomain(): CondicionTenencia = CondicionTenencia(id, nombre)
+private fun FuenteAguaEntity.toDomain(): FuenteAgua = FuenteAgua(id, nombre)
+private fun TipoSueloEntity.toDomain(): TipoSuelo = TipoSuelo(id, nombre)
+private fun TipoPastoEntity.toDomain(): TipoPasto = TipoPasto(id, nombre)
 
 // Mappers from DTO to Entity
 private fun EspecieDto.toEntity(): EspecieEntity = EspecieEntity(id, nombre)
 private fun RazaDto.toEntity(): RazaEntity = RazaEntity(id = id, especie_id = especieId, nombre = nombre)
 private fun CategoriaDto.toEntity(): CategoriaAnimalEntity = CategoriaAnimalEntity(id = id, especie_id = especieId, nombre = nombre)
 private fun MotivoMovimientoDto.toEntity(): MotivoMovimientoEntity = MotivoMovimientoEntity(id, nombre, tipo)
+private fun MunicipioDto.toEntity(): MunicipioEntity = MunicipioEntity(id, nombre)
+private fun CondicionTenenciaDto.toEntity(): CondicionTenenciaEntity = CondicionTenenciaEntity(id, nombre)
+private fun FuenteAguaDto.toEntity(): FuenteAguaEntity = FuenteAguaEntity(id, nombre)
+private fun TipoSueloDto.toEntity(): TipoSueloEntity = TipoSueloEntity(id, nombre)
+private fun TipoPastoDto.toEntity(): TipoPastoEntity = TipoPastoEntity(id, nombre)

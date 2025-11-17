@@ -32,22 +32,22 @@ class MainViewModel @Inject constructor(
     private fun loadUnidadesProductivas() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+
             // Primero, intentar sincronizar las UPs desde la API
-            syncUnidadesProductivasUseCase().onFailure { throwable ->
-                _uiState.value = _uiState.value.copy(error = throwable.message)
-            }
+            val syncResult = syncUnidadesProductivasUseCase()
 
             // Luego, observar las UPs desde la base de datos local
             getUnidadesProductivasUseCase().collectLatest { unidades ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     unidadesProductivas = unidades,
-                    error = null
+                    error = syncResult.exceptionOrNull()?.message
                 )
+
+                // Solo navegar si la sincronización falló y no hay UPs locales,
+                // o si la sincronización fue exitosa y el resultado es una lista vacía.
                 if (unidades.isEmpty()) {
                     _shouldNavigateToCreateUnidadProductiva.value = true
-                } else {
-                    _shouldNavigateToCreateUnidadProductiva.value = false
                 }
             }
         }

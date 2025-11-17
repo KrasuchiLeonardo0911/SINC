@@ -4,18 +4,10 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
+import com.sinc.mobile.data.local.dao.CatalogosDao
 import com.sinc.mobile.data.local.dao.MovimientoPendienteDao
-import com.sinc.mobile.data.local.dao.RazaDao
 import com.sinc.mobile.data.local.dao.UnidadProductivaDao
-import com.sinc.mobile.data.local.entities.CategoriaAnimalEntity
-import com.sinc.mobile.data.local.entities.EspecieEntity
-import com.sinc.mobile.data.local.entities.MotivoMovimientoEntity
-import com.sinc.mobile.data.local.entities.MovimientoPendienteEntity
-import com.sinc.mobile.data.local.entities.RazaEntity
-import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
+import com.sinc.mobile.data.local.entities.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -26,7 +18,12 @@ import java.time.format.DateTimeFormatter
         RazaEntity::class,
         CategoriaAnimalEntity::class,
         MotivoMovimientoEntity::class,
-        MovimientoPendienteEntity::class
+        MovimientoPendienteEntity::class,
+        MunicipioEntity::class,
+        CondicionTenenciaEntity::class,
+        FuenteAguaEntity::class,
+        TipoSueloEntity::class,
+        TipoPastoEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -34,10 +31,7 @@ import java.time.format.DateTimeFormatter
 @TypeConverters(Converters::class)
 abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun unidadProductivaDao(): UnidadProductivaDao
-    abstract fun especieDao(): EspecieDao
-    abstract fun razaDao(): RazaDao
-    abstract fun categoriaAnimalDao(): CategoriaAnimalDao
-    abstract fun motivoMovimientoDao(): MotivoMovimientoDao
+    abstract fun catalogosDao(): CatalogosDao
     abstract fun movimientoPendienteDao(): MovimientoPendienteDao
 }
 
