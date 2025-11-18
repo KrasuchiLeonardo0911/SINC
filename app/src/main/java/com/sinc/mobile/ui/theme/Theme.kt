@@ -83,8 +83,8 @@ fun SincMobileTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            window.statusBarColor = Color(0xFFE0E0E0).toArgb() // Un gris claro estándar
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true // Forzar iconos oscuros
         }
     }
 

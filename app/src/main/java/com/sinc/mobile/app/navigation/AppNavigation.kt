@@ -24,6 +24,7 @@ object Routes {
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
     const val CAMPOS = "campos"
+    const val MAQUETA_CREATE_UP = "maqueta_create_up"
 }
 
 @Composable
@@ -102,6 +103,11 @@ fun AppNavigation(
                 onNavigateToCreateUnidadProductiva = {
                     navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
+            )
+        }
+        composable(Routes.MAQUETA_CREATE_UP) {
+            com.sinc.mobile.app.features.maquetas.CreateUpMaquetaScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

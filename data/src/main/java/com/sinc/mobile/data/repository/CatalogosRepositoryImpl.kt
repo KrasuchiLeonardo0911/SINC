@@ -19,6 +19,28 @@ class CatalogosRepositoryImpl @Inject constructor(
     private val catalogosDao: CatalogosDao
 ) : CatalogosRepository {
 
+    // Mappers from Entity to Domain
+    private fun EspecieEntity.toDomain(): Especie = Especie(id, nombre)
+    private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
+    private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
+    private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
+    private fun MunicipioEntity.toDomain(): Municipio = Municipio(id, nombre)
+    private fun CondicionTenenciaEntity.toDomain(): CondicionTenencia = CondicionTenencia(id, nombre)
+    private fun FuenteAguaEntity.toDomain(): FuenteAgua = FuenteAgua(id, nombre)
+    private fun TipoSueloEntity.toDomain(): TipoSuelo = TipoSuelo(id, nombre)
+    private fun TipoPastoEntity.toDomain(): TipoPasto = TipoPasto(id, nombre)
+
+    // Mappers from DTO to Entity
+    private fun EspecieDto.toEntity(): EspecieEntity = EspecieEntity(id, nombre)
+    private fun RazaDto.toEntity(): RazaEntity = RazaEntity(id = id, especie_id = especieId, nombre = nombre)
+    private fun CategoriaDto.toEntity(): CategoriaAnimalEntity = CategoriaAnimalEntity(id = id, especie_id = especieId, nombre = nombre)
+    private fun MotivoMovimientoDto.toEntity(): MotivoMovimientoEntity = MotivoMovimientoEntity(id, nombre, tipo)
+    private fun MunicipioDto.toEntity(): MunicipioEntity = MunicipioEntity(id, nombre)
+    private fun CondicionTenenciaDto.toEntity(): CondicionTenenciaEntity = CondicionTenenciaEntity(id, nombre)
+    private fun FuenteAguaDto.toEntity(): FuenteAguaEntity = FuenteAguaEntity(id, nombre)
+    private fun TipoSueloDto.toEntity(): TipoSueloEntity = TipoSueloEntity(id, nombre)
+    private fun TipoPastoDto.toEntity(): TipoPastoEntity = TipoPastoEntity(id, nombre)
+
     override fun getCatalogos(): Flow<Catalogos> {
         val combinedFlows1 = combine(
             catalogosDao.getAllEspecies(),
@@ -101,31 +123,8 @@ class CatalogosRepositoryImpl @Inject constructor(
             Log.d("CatalogosRepo", "Sincronización fallida: Error de red al sincronizar catálogos: ${e.message}")
             Result.failure(Exception("Error de red al sincronizar catálogos: ${e.message}"))
         } catch (e: Exception) {
-            Log.e("CatalogosRepositoryImpl", "Exception in syncCatalogos", e)
-            Log.d("CatalogosRepo", "Sincronización fallida: Error desconocido al sincronizar catálogos: ${e.message}")
+            Log.e("CatalogosRepositoryImpl", "Sincronización fallida: Error desconocido al sincronizar catálogos: ${e.message}")
             Result.failure(Exception("Error desconocido al sincronizar catálogos: ${e.message}"))
         }
     }
 }
-
-// Mappers from Entity to Domain
-private fun EspecieEntity.toDomain(): Especie = Especie(id, nombre)
-private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
-private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
-private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
-private fun MunicipioEntity.toDomain(): Municipio = Municipio(id, nombre)
-private fun CondicionTenenciaEntity.toDomain(): CondicionTenencia = CondicionTenencia(id, nombre)
-private fun FuenteAguaEntity.toDomain(): FuenteAgua = FuenteAgua(id, nombre)
-private fun TipoSueloEntity.toDomain(): TipoSuelo = TipoSuelo(id, nombre)
-private fun TipoPastoEntity.toDomain(): TipoPasto = TipoPasto(id, nombre)
-
-// Mappers from DTO to Entity
-private fun EspecieDto.toEntity(): EspecieEntity = EspecieEntity(id, nombre)
-private fun RazaDto.toEntity(): RazaEntity = RazaEntity(id = id, especie_id = especieId, nombre = nombre)
-private fun CategoriaDto.toEntity(): CategoriaAnimalEntity = CategoriaAnimalEntity(id = id, especie_id = especieId, nombre = nombre)
-private fun MotivoMovimientoDto.toEntity(): MotivoMovimientoEntity = MotivoMovimientoEntity(id, nombre, tipo)
-private fun MunicipioDto.toEntity(): MunicipioEntity = MunicipioEntity(id, nombre)
-private fun CondicionTenenciaDto.toEntity(): CondicionTenenciaEntity = CondicionTenenciaEntity(id, nombre)
-private fun FuenteAguaDto.toEntity(): FuenteAguaEntity = FuenteAguaEntity(id, nombre)
-private fun TipoSueloDto.toEntity(): TipoSueloEntity = TipoSueloEntity(id, nombre)
-private fun TipoPastoDto.toEntity(): TipoPastoEntity = TipoPastoEntity(id, nombre)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Book
@@ -19,12 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.features.home.MainScreenRoutes
+import com.sinc.mobile.app.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Sidebar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
+    onExternalNavigate: (String) -> Unit,
     onCloseDrawer: () -> Unit
 ) {
     ModalDrawerSheet(
@@ -72,6 +75,15 @@ fun Sidebar(
                 isSelected = currentRoute == MainScreenRoutes.CAMPOS,
                 onClick = {
                     onNavigate(MainScreenRoutes.CAMPOS)
+                    onCloseDrawer()
+                }
+            )
+            SidebarItem(
+                icon = Icons.Outlined.AddCircle,
+                text = "Registrar Campo",
+                isSelected = false,
+                onClick = {
+                    onExternalNavigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                     onCloseDrawer()
                 }
             )

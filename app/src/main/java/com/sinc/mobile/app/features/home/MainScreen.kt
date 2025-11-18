@@ -64,6 +64,9 @@ fun MainScreen(
                     onNavigate = { route ->
                         currentScreen = route
                     },
+                    onExternalNavigate = { route ->
+                        navController.navigate(route)
+                    },
                     onCloseDrawer = {
                         scope.launch {
                             drawerState.close()
@@ -97,7 +100,10 @@ fun MainScreen(
                 val modifier = Modifier.padding(paddingValues)
                 when (currentScreen) {
                     MainScreenRoutes.DASHBOARD -> DashboardScreen(
-                        modifier = modifier
+                        modifier = modifier,
+                        onNavigateToMaquetaCreateUp = {
+                            navController.navigate(Routes.MAQUETA_CREATE_UP)
+                        }
                     )
                     MainScreenRoutes.MOVIMIENTO -> MovimientoScreen(modifier = modifier)
                     MainScreenRoutes.NOTIFICATIONS -> NotificationsScreen(modifier = modifier)

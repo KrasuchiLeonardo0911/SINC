@@ -56,3 +56,4 @@ val colorBorde = Color(0xFFe2e8f0) // slate-200
 val colorFondo = Color(0xFFf8fafc) // slate-50
 val colorTextoPrincipal = Color(0xFF0f172a) // slate-900
 val colorTextoSecundario = Color(0xFF64748b) // slate-500
+val colorBotonSiguiente = Color(0xFF326B41) // Verde específico para el botón Siguiente

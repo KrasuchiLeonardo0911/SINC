@@ -381,3 +381,35 @@ Este archivo documenta los cambios y decisiones importantes tomadas durante el d
   -   **Detalles**: Se cambió la URL base de la API en `NetworkModule.kt` a `http://10.0.2.2:8000/` para facilitar las pruebas locales con el servidor Laravel en un emulador de Android.
 
 ---
+### 16 de Noviembre de 2025
+
+-   **Hito**: Implementación de la Gestión de Unidades Productivas (UPs) y Extensión del Sistema de Catálogos.
+-   **Detalles**:
+  -   **Capa de Datos (`:data`)**:
+    -   Creación de `UnidadProductivaApiService.kt` para endpoints de UPs.
+    -   Refactorización de `AuthApiService.kt` (eliminación de `getUnidadesProductivas`).
+    -   Actualización de `NetworkModule.kt` para proveer `UnidadProductivaApiService`.
+    -   Actualización de `UnidadProductivaDto.kt` y creación de `CreateUnidadProductivaRequest.kt`.
+    -   Actualización de `UnidadProductivaRepositoryImpl.kt` (inyección, nuevos métodos, mapeos).
+    -   Creación de nuevas entidades de Room (`MunicipioEntity`, `CondicionTenenciaEntity`, `FuenteAguaEntity`, `TipoSueloEntity`, `TipoPastoEntity`).
+    -   Creación de `CatalogosDao.kt` unificado.
+    -   Actualización de `SincMobileDatabase.kt` y `DatabaseModule.kt` para usar el nuevo `CatalogosDao` y las nuevas entidades.
+    -   Actualización de `CatalogosRepositoryImpl.kt` para manejar los nuevos catálogos.
+  -   **Capa de Dominio (`:domain`)**:
+    -   Actualización de `UnidadProductiva.kt` y creación de `CreateUnidadProductivaData.kt`.
+    -   Actualización de `UnidadProductivaRepository.kt` (interfaz).
+    -   Creación de `CreateUnidadProductivaUseCase.kt` y `SyncUnidadesProductivasUseCase.kt`.
+    -   Extensión del modelo `Catalogos.kt` con los nuevos tipos de catálogos.
+  -   **Capa de Presentación (`:app`)**:
+    -   Creación de la feature "Campos" (`CamposScreen.kt`, `CamposViewModel.kt`).
+    -   Integración de "Campos" en la navegación (`AppNavigation.kt`, `MainScreen.kt`, `Sidebar.kt`).
+    -   Creación de `CreateUnidadProductivaScreen.kt` y `CreateUnidadProductivaViewModel.kt`.
+    -   Implementación de la lógica de navegación condicional para usuarios sin UPs.
+    -   Rediseño inicial del formulario de creación de UP con secciones y dropdowns.
+-   **Corrección de Bugs**:
+  -   Error 404 en `getUnidadesProductivas` (endpoints en `UnidadProductivaApiService.kt`).
+  -   `NullPointerException` en `syncCatalogos` (listas nulables en `CatalogosDto.kt` y manejo en `CatalogosRepositoryImpl.kt`).
+  -   Errores de compilación de Room/Kapt (nombres de tablas en `CatalogosDao.kt`).
+  -   Error de `combine` con más de 5 `Flow`s en `CatalogosRepositoryImpl.kt`.
+  -   Bug de navegación "sin retorno" y navegación automática al formulario de creación de UP (`MainScreen.kt`, `MainViewModel.kt`).
+-   **Estado**: La infraestructura para la gestión de UPs y catálogos está implementada y el formulario de creación de UP ha sido rediseñado.
