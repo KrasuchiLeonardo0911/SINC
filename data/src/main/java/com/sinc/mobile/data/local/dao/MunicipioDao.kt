@@ -4,14 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.sinc.mobile.data.local.entities.RazaEntity
+import com.sinc.mobile.data.local.entities.MunicipioEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface RazaDao {
+interface MunicipioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAllRazas(razas: List<RazaEntity>)
+    suspend fun insertAllMunicipios(municipios: List<MunicipioEntity>)
 
-    @Query("SELECT * FROM razas")
-    fun getAllRazas(): Flow<List<RazaEntity>>
+    @Query("SELECT * FROM municipios")
+    fun getAllMunicipios(): Flow<List<MunicipioEntity>>
 }

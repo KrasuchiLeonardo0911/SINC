@@ -1,6 +1,6 @@
 package com.sinc.mobile.data.repository
 
-import com.sinc.mobile.data.local.dao.CatalogosDao
+import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.local.entities.*
 import com.sinc.mobile.data.network.api.AuthApiService
 import com.sinc.mobile.data.network.dto.*
@@ -16,7 +16,15 @@ import android.util.Log
 class CatalogosRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val sessionManager: SessionManager,
-    private val catalogosDao: CatalogosDao
+    private val especieDao: EspecieDao,
+    private val razaDao: RazaDao,
+    private val categoriaAnimalDao: CategoriaAnimalDao,
+    private val motivoMovimientoDao: MotivoMovimientoDao,
+    private val municipioDao: MunicipioDao,
+    private val condicionTenenciaDao: CondicionTenenciaDao,
+    private val fuenteAguaDao: FuenteAguaDao,
+    private val tipoSueloDao: TipoSueloDao,
+    private val tipoPastoDao: TipoPastoDao
 ) : CatalogosRepository {
 
     // Mappers from Entity to Domain
@@ -43,20 +51,20 @@ class CatalogosRepositoryImpl @Inject constructor(
 
     override fun getCatalogos(): Flow<Catalogos> {
         val combinedFlows1 = combine(
-            catalogosDao.getAllEspecies(),
-            catalogosDao.getAllRazas(),
-            catalogosDao.getAllCategorias(),
-            catalogosDao.getAllMotivosMovimiento(),
-            catalogosDao.getAllMunicipios()
+            especieDao.getAllEspecies(),
+            razaDao.getAllRazas(),
+            categoriaAnimalDao.getAllCategorias(),
+            motivoMovimientoDao.getAllMotivosMovimiento(),
+            municipioDao.getAllMunicipios()
         ) { especies, razas, categorias, motivos, municipios ->
             Triple(especies, razas, Triple(categorias, motivos, municipios))
         }
 
         val combinedFlows2 = combine(
-            catalogosDao.getAllCondicionesTenencia(),
-            catalogosDao.getAllFuentesAgua(),
-            catalogosDao.getAllTiposSuelo(),
-            catalogosDao.getAllTiposPasto()
+            condicionTenenciaDao.getAllCondicionesTenencia(),
+            fuenteAguaDao.getAllFuentesAgua(),
+            tipoSueloDao.getAllTiposSuelo(),
+            tipoPastoDao.getAllTiposPasto()
         ) { condiciones, fuentes, suelos, pastos ->
             Pair(condiciones, Triple(fuentes, suelos, pastos))
         }
@@ -97,15 +105,15 @@ class CatalogosRepositoryImpl @Inject constructor(
                 val catalogosDto = response.body()
                 if (catalogosDto != null) {
                     // Insert new data, checking for nulls
-                    catalogosDto.especies?.let { catalogosDao.insertAllEspecies(it.map { it.toEntity() }) }
-                    catalogosDto.razas?.let { catalogosDao.insertAllRazas(it.map { it.toEntity() }) }
-                    catalogosDto.categorias?.let { catalogosDao.insertAllCategorias(it.map { it.toEntity() }) }
-                    catalogosDto.motivosMovimiento?.let { catalogosDao.insertAllMotivosMovimiento(it.map { it.toEntity() }) }
-                    catalogosDto.municipios?.let { catalogosDao.insertAllMunicipios(it.map { it.toEntity() }) }
-                    catalogosDto.condicionesTenencia?.let { catalogosDao.insertAllCondicionesTenencia(it.map { it.toEntity() }) }
-                    catalogosDto.fuentesAgua?.let { catalogosDao.insertAllFuentesAgua(it.map { it.toEntity() }) }
-                    catalogosDto.tiposSuelo?.let { catalogosDao.insertAllTiposSuelo(it.map { it.toEntity() }) }
-                    catalogosDto.tiposPasto?.let { catalogosDao.insertAllTiposPasto(it.map { it.toEntity() }) }
+                    catalogosDto.especies?.let { especieDao.insertAllEspecies(it.map { it.toEntity() }) }
+                    catalogosDto.razas?.let { razaDao.insertAllRazas(it.map { it.toEntity() }) }
+                    catalogosDto.categorias?.let { categoriaAnimalDao.insertAllCategorias(it.map { it.toEntity() }) }
+                    catalogosDto.motivosMovimiento?.let { motivoMovimientoDao.insertAllMotivosMovimiento(it.map { it.toEntity() }) }
+                    catalogosDto.municipios?.let { municipioDao.insertAllMunicipios(it.map { it.toEntity() }) }
+                    catalogosDto.condicionesTenencia?.let { condicionTenenciaDao.insertAllCondicionesTenencia(it.map { it.toEntity() }) }
+                    catalogosDto.fuentesAgua?.let { fuenteAguaDao.insertAllFuentesAgua(it.map { it.toEntity() }) }
+                    catalogosDto.tiposSuelo?.let { tipoSueloDao.insertAllTiposSuelo(it.map { it.toEntity() }) }
+                    catalogosDto.tiposPasto?.let { tipoPastoDao.insertAllTiposPasto(it.map { it.toEntity() }) }
 
                     Log.d("CatalogosRepo", "Sincronización exitosa")
                     Result.success(Unit)

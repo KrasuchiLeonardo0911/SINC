@@ -4,14 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.sinc.mobile.data.local.entities.RazaEntity
+import com.sinc.mobile.data.local.entities.TipoPastoEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface RazaDao {
+interface TipoPastoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAllRazas(razas: List<RazaEntity>)
+    suspend fun insertAllTiposPasto(tipos: List<TipoPastoEntity>)
 
-    @Query("SELECT * FROM razas")
-    fun getAllRazas(): Flow<List<RazaEntity>>
+    @Query("SELECT * FROM tipos_pasto")
+    fun getAllTiposPasto(): Flow<List<TipoPastoEntity>>
 }

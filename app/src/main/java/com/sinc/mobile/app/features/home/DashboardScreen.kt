@@ -22,8 +22,7 @@ import com.sinc.mobile.ui.theme.*
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel(),
-    onNavigateToMaquetaCreateUp: () -> Unit
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
     Column(
         modifier = modifier
@@ -72,10 +71,6 @@ fun DashboardScreen(
                     color = colorTextoSecundario
                 )
             }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onNavigateToMaquetaCreateUp) {
-            Text("Ir a Maqueta (Crear UP)")
         }
     }
 }

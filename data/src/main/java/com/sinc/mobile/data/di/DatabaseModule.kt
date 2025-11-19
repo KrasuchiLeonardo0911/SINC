@@ -3,8 +3,16 @@ package com.sinc.mobile.data.di
 import android.content.Context
 import androidx.room.Room
 import com.sinc.mobile.data.local.SincMobileDatabase
-import com.sinc.mobile.data.local.dao.CatalogosDao
+import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
+import com.sinc.mobile.data.local.dao.CondicionTenenciaDao
+import com.sinc.mobile.data.local.dao.EspecieDao
+import com.sinc.mobile.data.local.dao.FuenteAguaDao
+import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
 import com.sinc.mobile.data.local.dao.MovimientoPendienteDao
+import com.sinc.mobile.data.local.dao.MunicipioDao
+import com.sinc.mobile.data.local.dao.RazaDao
+import com.sinc.mobile.data.local.dao.TipoPastoDao
+import com.sinc.mobile.data.local.dao.TipoSueloDao
 import com.sinc.mobile.data.local.dao.UnidadProductivaDao
 import dagger.Module
 import dagger.Provides
@@ -37,13 +45,63 @@ object DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideCatalogosDao(database: SincMobileDatabase): CatalogosDao {
-        return database.catalogosDao()
+    fun provideMovimientoPendienteDao(database: SincMobileDatabase): MovimientoPendienteDao {
+        return database.movimientoPendienteDao()
+    }
+
+    // --- Proveedores de DAOs de Catálogos ---
+
+    @Singleton
+    @Provides
+    fun provideEspecieDao(database: SincMobileDatabase): EspecieDao {
+        return database.especieDao()
     }
 
     @Singleton
     @Provides
-    fun provideMovimientoPendienteDao(database: SincMobileDatabase): MovimientoPendienteDao {
-        return database.movimientoPendienteDao()
+    fun provideRazaDao(database: SincMobileDatabase): RazaDao {
+        return database.razaDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideCategoriaAnimalDao(database: SincMobileDatabase): CategoriaAnimalDao {
+        return database.categoriaAnimalDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideMotivoMovimientoDao(database: SincMobileDatabase): MotivoMovimientoDao {
+        return database.motivoMovimientoDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideMunicipioDao(database: SincMobileDatabase): MunicipioDao {
+        return database.municipioDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideCondicionTenenciaDao(database: SincMobileDatabase): CondicionTenenciaDao {
+        return database.condicionTenenciaDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideFuenteAguaDao(database: SincMobileDatabase): FuenteAguaDao {
+        return database.fuenteAguaDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideTipoSueloDao(database: SincMobileDatabase): TipoSueloDao {
+        return database.tipoSueloDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideTipoPastoDao(database: SincMobileDatabase): TipoPastoDao {
+        return database.tipoPastoDao()
     }
 }

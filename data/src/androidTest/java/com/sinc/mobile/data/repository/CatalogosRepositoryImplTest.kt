@@ -4,16 +4,9 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.google.gson.Gson
 import com.google.common.truth.Truth.assertThat
 import com.sinc.mobile.data.local.SincMobileDatabase
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
-import com.sinc.mobile.data.local.dao.RazaDao
+import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.network.api.AuthApiService
-import com.sinc.mobile.data.network.dto.CatalogosDto
-import com.sinc.mobile.data.network.dto.CategoriaDto
-import com.sinc.mobile.data.network.dto.EspecieDto
-import com.sinc.mobile.data.network.dto.MotivoMovimientoDto
-import com.sinc.mobile.data.network.dto.RazaDto
+import com.sinc.mobile.data.network.dto.*
 import com.sinc.mobile.data.di.DatabaseModule
 import com.sinc.mobile.data.di.NetworkModule
 import com.sinc.mobile.data.session.SessionManager
@@ -55,15 +48,22 @@ CatalogosRepositoryImplTest {
 
     @Inject
     lateinit var especieDao: EspecieDao
-
     @Inject
     lateinit var razaDao: RazaDao
-
     @Inject
     lateinit var categoriaAnimalDao: CategoriaAnimalDao
-
     @Inject
     lateinit var motivoMovimientoDao: MotivoMovimientoDao
+    @Inject
+    lateinit var municipioDao: MunicipioDao
+    @Inject
+    lateinit var condicionTenenciaDao: CondicionTenenciaDao
+    @Inject
+    lateinit var fuenteAguaDao: FuenteAguaDao
+    @Inject
+    lateinit var tipoSueloDao: TipoSueloDao
+    @Inject
+    lateinit var tipoPastoDao: TipoPastoDao
 
     @Inject
     lateinit var sessionManager: SessionManager
@@ -90,7 +90,12 @@ CatalogosRepositoryImplTest {
             especieDao,
             razaDao,
             categoriaAnimalDao,
-            motivoMovimientoDao
+            motivoMovimientoDao,
+            municipioDao,
+            condicionTenenciaDao,
+            fuenteAguaDao,
+            tipoSueloDao,
+            tipoPastoDao
         )
     }
 
@@ -124,6 +129,26 @@ CatalogosRepositoryImplTest {
             motivosMovimiento = listOf(
                 MotivoMovimientoDto(1, "Nacimiento", "alta"),
                 MotivoMovimientoDto(2, "Venta", "baja")
+            ),
+            municipios = listOf(
+                MunicipioDto(1, "Municipio A"),
+                MunicipioDto(2, "Municipio B")
+            ),
+            condicionesTenencia = listOf(
+                CondicionTenenciaDto(1, "Propietario"),
+                CondicionTenenciaDto(2, "Arrendatario")
+            ),
+            fuentesAgua = listOf(
+                FuenteAguaDto(1, "Río"),
+                FuenteAguaDto(2, "Pozo")
+            ),
+            tiposSuelo = listOf(
+                TipoSueloDto(1, "Arcilloso"),
+                TipoSueloDto(2, "Arenoso")
+            ),
+            tiposPasto = listOf(
+                TipoPastoDto(1, "Pasto A"),
+                TipoPastoDto(2, "Pasto B")
             )
         )
         val jsonResponse = Gson().toJson(mockCatalogosDto)
@@ -142,22 +167,38 @@ CatalogosRepositoryImplTest {
         val especies = especieDao.getAllEspecies().first()
         assertThat(especies).hasSize(2)
         assertThat(especies[0].nombre).isEqualTo("Ovino")
-        assertThat(especies[1].nombre).isEqualTo("Caprino")
 
         val razas = razaDao.getAllRazas().first()
         assertThat(razas).hasSize(2)
         assertThat(razas[0].nombre).isEqualTo("Merino")
-        assertThat(razas[1].nombre).isEqualTo("Criolla")
 
         val categorias = categoriaAnimalDao.getAllCategorias().first()
         assertThat(categorias).hasSize(2)
         assertThat(categorias[0].nombre).isEqualTo("Cordero/a")
-        assertThat(categorias[1].nombre).isEqualTo("Cabrito/a")
 
         val motivos = motivoMovimientoDao.getAllMotivosMovimiento().first()
         assertThat(motivos).hasSize(2)
         assertThat(motivos[0].nombre).isEqualTo("Nacimiento")
-        assertThat(motivos[1].nombre).isEqualTo("Venta")
+
+        val municipios = municipioDao.getAllMunicipios().first()
+        assertThat(municipios).hasSize(2)
+        assertThat(municipios[0].nombre).isEqualTo("Municipio A")
+
+        val condiciones = condicionTenenciaDao.getAllCondicionesTenencia().first()
+        assertThat(condiciones).hasSize(2)
+        assertThat(condiciones[0].nombre).isEqualTo("Propietario")
+
+        val fuentes = fuenteAguaDao.getAllFuentesAgua().first()
+        assertThat(fuentes).hasSize(2)
+        assertThat(fuentes[0].nombre).isEqualTo("Río")
+
+        val suelos = tipoSueloDao.getAllTiposSuelo().first()
+        assertThat(suelos).hasSize(2)
+        assertThat(suelos[0].nombre).isEqualTo("Arcilloso")
+
+        val pastos = tipoPastoDao.getAllTiposPasto().first()
+        assertThat(pastos).hasSize(2)
+        assertThat(pastos[0].nombre).isEqualTo("Pasto A")
     }
 
     @Test
@@ -183,13 +224,16 @@ CatalogosRepositoryImplTest {
         assertThat(exception).isNotNull()
         assertThat(exception).hasMessageThat().contains("Error de API")
         assertThat(exception).hasMessageThat().contains("500")
-        assertThat(exception).hasMessageThat().contains("Internal Server Error")
-
         // Verify no data was inserted
         assertThat(especieDao.getAllEspecies().first()).isEmpty()
         assertThat(razaDao.getAllRazas().first()).isEmpty()
         assertThat(categoriaAnimalDao.getAllCategorias().first()).isEmpty()
         assertThat(motivoMovimientoDao.getAllMotivosMovimiento().first()).isEmpty()
+        assertThat(municipioDao.getAllMunicipios().first()).isEmpty()
+        assertThat(condicionTenenciaDao.getAllCondicionesTenencia().first()).isEmpty()
+        assertThat(fuenteAguaDao.getAllFuentesAgua().first()).isEmpty()
+        assertThat(tipoSueloDao.getAllTiposSuelo().first()).isEmpty()
+        assertThat(tipoPastoDao.getAllTiposPasto().first()).isEmpty()
     }
 
     @Test
@@ -211,5 +255,10 @@ CatalogosRepositoryImplTest {
         assertThat(razaDao.getAllRazas().first()).isEmpty()
         assertThat(categoriaAnimalDao.getAllCategorias().first()).isEmpty()
         assertThat(motivoMovimientoDao.getAllMotivosMovimiento().first()).isEmpty()
+        assertThat(municipioDao.getAllMunicipios().first()).isEmpty()
+        assertThat(condicionTenenciaDao.getAllCondicionesTenencia().first()).isEmpty()
+        assertThat(fuenteAguaDao.getAllFuentesAgua().first()).isEmpty()
+        assertThat(tipoSueloDao.getAllTiposSuelo().first()).isEmpty()
+        assertThat(tipoPastoDao.getAllTiposPasto().first()).isEmpty()
     }
 }

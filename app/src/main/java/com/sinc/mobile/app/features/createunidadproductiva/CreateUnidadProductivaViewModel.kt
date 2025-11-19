@@ -1,103 +1,72 @@
 package com.sinc.mobile.app.features.createunidadproductiva
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.sinc.mobile.domain.model.Catalogos
-import com.sinc.mobile.domain.model.CondicionTenencia
-import com.sinc.mobile.domain.model.Municipio
-import com.sinc.mobile.domain.model.Paraje
-import com.sinc.mobile.domain.use_case.GetCatalogosUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class CreateUnidadProductivaViewModel @Inject constructor(
-    private val getCatalogosUseCase: GetCatalogosUseCase
-) : ViewModel() {
+data class CreateUnidadProductivaState(
+    val currentStep: Int = 1,
+    val showExitDialog: Boolean = false,
+
+    // Step 2 State
+    val nombre: String = "",
+    val rnspa: String = "",
+    val superficie: String = "",
+
+    // Step 3 State
+    val condicionTenencia: String = ""
+)
+
+class CreateUnidadProductivaViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUnidadProductivaState())
-    val uiState: StateFlow<CreateUnidadProductivaState> = _uiState.asStateFlow()
+    val uiState = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            getCatalogosUseCase().collectLatest { catalogos ->
-                _uiState.update { it.copy(catalogos = catalogos, isLoading = false) }
-            }
-        }
-    }
+    // Hardcoded options for tenancy condition
+    val tenenciaOptions = listOf(
+        "Propietario",
+        "Arrendatario",
+        "Aparcero",
+        "Ocupante precario",
+        "Otro"
+    )
 
     fun onNextStep() {
-        // TODO: Add validation
-        _uiState.update { currentState ->
-            val nextStep = (currentState.currentStep + 1).coerceAtMost(3)
-            currentState.copy(currentStep = nextStep)
+        if (_uiState.value.currentStep < 3) {
+            _uiState.update { it.copy(currentStep = it.currentStep + 1) }
         }
     }
 
     fun onPreviousStep() {
-        _uiState.update { currentState ->
-            val prevStep = (currentState.currentStep - 1).coerceAtLeast(1)
-            currentState.copy(currentStep = prevStep)
+        if (_uiState.value.currentStep > 1) {
+            _uiState.update { it.copy(currentStep = it.currentStep - 1) }
         }
     }
 
-    fun onStepSelected(step: Int) {
-        _uiState.update { it.copy(currentStep = step) }
+    fun onExitRequest() {
+        _uiState.update { it.copy(showExitDialog = true) }
     }
 
-    fun onNombreChange(nombre: String) {
-        _uiState.update { it.copy(nombre = nombre) }
+    fun onExitDialogDismiss() {
+        _uiState.update { it.copy(showExitDialog = false) }
     }
 
-    fun onIdentificadorLocalChange(identificador: String) {
-        _uiState.update { it.copy(identificadorLocal = identificador) }
+    // --- Step 2 Handlers ---
+    fun onNombreChange(newValue: String) {
+        _uiState.update { it.copy(nombre = newValue) }
     }
 
-    fun onSuperficieChange(superficie: String) {
-        _uiState.update { it.copy(superficie = superficie) }
+    fun onRnspaChange(newValue: String) {
+        _uiState.update { it.copy(rnspa = newValue) }
     }
 
-    fun onMunicipioSelected(municipio: Municipio) {
-        _uiState.update { it.copy(selectedMunicipio = municipio, selectedParaje = null) }
-        // TODO: Filter parajes from uiState.catalogos
+    fun onSuperficieChange(newValue: String) {
+        _uiState.update { it.copy(superficie = newValue) }
     }
 
-    fun onParajeSelected(paraje: Paraje) {
-        _uiState.update { it.copy(selectedParaje = paraje) }
-    }
-
-    fun onCondicionTenenciaSelected(condicion: CondicionTenencia) {
-        _uiState.update { it.copy(selectedCondicionTenencia = condicion) }
-    }
-
-    fun onHabitaChange(habita: Boolean) {
-        _uiState.update { it.copy(habita = habita) }
+    // --- Step 3 Handlers ---
+    fun onCondicionTenenciaChange(newValue: String) {
+        _uiState.update { it.copy(condicionTenencia = newValue) }
     }
 }
-
-data class CreateUnidadProductivaState(
-    val currentStep: Int = 1,
-
-    // Step 1 Fields
-    val nombre: String = "",
-    val identificadorLocal: String = "",
-    val superficie: String = "",
-    val selectedMunicipio: Municipio? = null,
-    val selectedParaje: Paraje? = null,
-    val selectedCondicionTenencia: CondicionTenencia? = null,
-    val habita: Boolean = false,
-
-    // Data
-    val catalogos: Catalogos? = null,
-
-    // Loading/Error states
-    val isLoading: Boolean = false,
-    val error: String? = null
-)

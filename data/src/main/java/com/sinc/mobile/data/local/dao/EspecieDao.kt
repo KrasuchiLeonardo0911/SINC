@@ -10,11 +10,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EspecieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(especies: List<EspecieEntity>)
+    suspend fun insertAllEspecies(especies: List<EspecieEntity>)
 
     @Query("SELECT * FROM especies")
     fun getAllEspecies(): Flow<List<EspecieEntity>>
-
-    @Query("DELETE FROM especies")
-    suspend fun clearAll()
 }
