@@ -1,70 +1,121 @@
 package com.sinc.mobile.app.features.createunidadproductiva
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.createunidadproductiva.components.BottomNavBar
 import com.sinc.mobile.app.features.createunidadproductiva.components.ProgressBar
 import com.sinc.mobile.app.features.createunidadproductiva.components.Step1Ubicacion
 import com.sinc.mobile.app.features.createunidadproductiva.components.Step2FormularioBasico
 import com.sinc.mobile.app.features.createunidadproductiva.components.Step3FormularioOpcional
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
-import com.sinc.mobile.ui.theme.colorBotonSiguiente
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.sinc.mobile.ui.theme.md_theme_light_primary
+import androidx.compose.material3.ButtonDefaults
+import com.sinc.mobile.ui.theme.colorBotonSiguiente
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateUnidadProductivaScreen(
-    viewModel: CreateUnidadProductivaViewModel = viewModel(),
+    viewModel: CreateUnidadProductivaViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentStep = uiState.currentStep
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            viewModel.onPermissionResult(isGranted)
+        }
+    )
+
+    val bottomSheetState = rememberModalBottomSheetState()
+
+    if (uiState.showPermissionBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = viewModel::onPermissionBottomSheetDismissed,
+            sheetState = bottomSheetState,
+            containerColor = Color.White,
+            scrimColor = Color.Black.copy(alpha = 0.6f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    "Permiso de Ubicación",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = md_theme_light_primary
+                )
+                Text(
+                    "Para registrar la ubicación de su campo, necesitamos acceder a la ubicación de su dispositivo. Solo se utilizará cuando presione el botón \"Usar mi ubicación actual\".",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                Button(
+                    onClick = {
+                        viewModel.onPermissionBottomSheetDismissed()
+                        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente)
+                ) {
+                    Text("Aceptar")
+                }
+            }
+        }
+    }
+
     val titles = listOf(
-        "Seleccionar ubicación", // Título corregido para el paso 1
-        "Ubicación guardada",    // Título corregido para el paso 2
-        "Datos básicos guardados" // Título corregido para el paso 3
+        "Seleccionar ubicación",
+        "Ubicación guardada",
+        "Datos básicos guardados"
     )
 
     val subtitles = listOf(
-        "Buscando en el mapa", // Subtítulo corregido para el paso 1
-        "Completando datos básicos", // Subtítulo corregido para el paso 2
-        "Último paso, seleccione una opción" // Subtítulo para el paso 3 (queda igual)
+        "Buscando en el mapa",
+        "Completando datos básicos",
+        "Último paso, seleccione una opción"
     )
 
     ConfirmationDialog(
@@ -82,22 +133,22 @@ fun CreateUnidadProductivaScreen(
         containerColor = Color.White,
         bottomBar = {
             BottomNavBar(
+                modifier = Modifier.navigationBarsPadding(),
                 currentStep = currentStep,
                 onPrevious = viewModel::onPreviousStep,
                 onNext = viewModel::onNextStep
             )
         }
-    ) { paddingValues ->
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(it)
                 .padding(vertical = 16.dp)
         ) {
-            // 1. Icono de Salir
             IconButton(
                 onClick = viewModel::onExitRequest,
-                modifier = Modifier.padding(horizontal = 4.dp) // Padding reducido para alinear
+                modifier = Modifier.padding(horizontal = 4.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -109,16 +160,14 @@ fun CreateUnidadProductivaScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp) // Padding general
+                    .padding(horizontal = 16.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 2. Barra de Progreso
                 ProgressBar(currentStep = currentStep)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 3. Títulos
                 Text(
                     text = titles[currentStep - 1],
                     style = MaterialTheme.typography.headlineSmall.copy(
@@ -131,24 +180,33 @@ fun CreateUnidadProductivaScreen(
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color.DarkGray)
                 )
 
-                // 4. Contenido del paso
                 Box(modifier = Modifier.weight(1f)) {
-                                    when (currentStep) {
-                                        1 -> Step1Ubicacion(onNext = viewModel::onNextStep)
-                                        2 -> Step2FormularioBasico(
-                                            nombre = uiState.nombre,
-                                            onNombreChange = viewModel::onNombreChange,
-                                            rnspa = uiState.rnspa,
-                                            onRnspaChange = viewModel::onRnspaChange,
-                                            superficie = uiState.superficie,
-                                            onSuperficieChange = viewModel::onSuperficieChange
-                                        )
-                                        3 -> Step3FormularioOpcional(
-                                            selectedOption = uiState.condicionTenencia,
-                                            options = viewModel.tenenciaOptions,
-                                            onOptionSelected = viewModel::onCondicionTenenciaChange
-                                        )
-                                    }
+                    when (currentStep) {
+                                                                1 -> Step1Ubicacion(
+                                                                    isMapVisible = uiState.isMapVisible,
+                                                                    selectedLocation = uiState.selectedLocation,
+                                                                    locationError = uiState.locationError,
+                                                                    onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
+                                                                                                                onSearchOnMap = viewModel::onSearchOnMapClicked,
+                                                                                                                                                            onMapDismissed = viewModel::onMapDismissed,
+                                                                                                                                                            animateToLocation = uiState.animateToLocation,
+                                                                                                                                                            onAnimationCompleted = viewModel::onMapAnimationCompleted,
+                                                                                                                                                            onConfirmLocation = viewModel::onMapLocationSelected,
+                                                                                                                                                            isFetchingLocation = uiState.isFetchingLocation
+                                                                                                                                                        )
+                                                                                                                                                        2 -> Step2FormularioBasico(
+                                                                                                                                                            nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,
+                            rnspa = uiState.rnspa,
+                            onRnspaChange = viewModel::onRnspaChange,
+                            superficie = uiState.superficie,
+                            onSuperficieChange = viewModel::onSuperficieChange
+                        )
+                        3 -> Step3FormularioOpcional(
+                            selectedOption = uiState.condicionTenencia,
+                            options = viewModel.tenenciaOptions,
+                            onOptionSelected = viewModel::onCondicionTenenciaChange
+                        )
+                    }
                 }
             }
         }

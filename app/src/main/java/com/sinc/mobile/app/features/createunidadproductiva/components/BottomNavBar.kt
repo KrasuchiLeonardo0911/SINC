@@ -22,12 +22,13 @@ import com.sinc.mobile.ui.theme.colorBotonSiguiente
 
 @Composable
 fun BottomNavBar(
+    modifier: Modifier = Modifier,
     currentStep: Int,
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
