@@ -130,11 +130,21 @@ private fun MapDialog(
     var mapCenter by remember { mutableStateOf(initialCenter) }
     val bottomSheetState = rememberBottomSheetScaffoldState()
 
+    LaunchedEffect(selectedMunicipio) {
+        if (selectedMunicipio != null) {
+            bottomSheetState.bottomSheetState.partialExpand()
+        }
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false // Make the dialog edge-to-edge
+        )
     ) {
         BottomSheetScaffold(
+            modifier = Modifier.imePadding(), // Apply IME padding to the whole scaffold
             scaffoldState = bottomSheetState,
             sheetPeekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp,
             sheetContainerColor = Color.White, // Set background color to white
@@ -153,6 +163,7 @@ private fun MapDialog(
                 }
             }
         ) {
+            val peekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp
             Box(modifier = Modifier.fillMaxSize()) {
                 OsmdroidMapView(
                     modifier = Modifier.fillMaxSize(),
@@ -166,9 +177,7 @@ private fun MapDialog(
                     },
                     tileSource = TileSourceFactory.MAPNIK,
                     initialZoom = 9.0,
-                    polygons = selectedMunicipio?.poligono?.let { poligono ->
-                        listOf(poligono.map { GeoPoint(it.latitude, it.longitude) })
-                    } ?: emptyList()
+                    selectedMunicipio = selectedMunicipio
                 )
 
                 // Close button
@@ -192,7 +201,7 @@ private fun MapDialog(
                     onClick = { onConfirmLocation(mapCenter) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 80.dp) // Adjust padding to be above the sheet
+                        .padding(bottom = peekHeight + 16.dp) // Dynamic padding
                         .fillMaxWidth(0.8f),
                     colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
                     enabled = !isFetchingLocation
@@ -253,16 +262,21 @@ private fun SearchableSheetContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .navigationBarsPadding()
+            .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Custom Drag Handle
         Row(
+            
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
+
+
 
         ) {
             Box(

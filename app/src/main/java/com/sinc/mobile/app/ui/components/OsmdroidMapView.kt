@@ -7,6 +7,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.config.Configuration
@@ -33,7 +34,7 @@ fun OsmdroidMapView(
     onMapMove: ((GeoPoint) -> Unit)? = null,
     tileSource: ITileSource = TileSourceFactory.MAPNIK,
     initialZoom: Double = 12.0,
-    polygons: List<List<GeoPoint>> = emptyList() // New parameter for drawing polygons
+    selectedMunicipio: com.sinc.mobile.domain.model.Municipio? // New parameter
 ) {
     val context = LocalContext.current
     val mapView = remember {
@@ -50,31 +51,45 @@ fun OsmdroidMapView(
 
     LaunchedEffect(animateToLocation) {
         if (animateToLocation != null) {
-            // 1. Jump to the intermediate zoom level without animation
-            mapView.controller.setZoom(15.0)
-            mapView.controller.setCenter(animateToLocation)
-            mapView.invalidate()
+            // This effect is for animating to a single point (e.g., user's current location)
+            // It should only run when polygons are not being handled.
+            if (selectedMunicipio == null) {
+                // 1. Jump to the intermediate zoom level without animation
+                mapView.controller.setZoom(15.0)
+                mapView.controller.setCenter(animateToLocation)
+                mapView.invalidate()
 
-            delay(200) // Brief delay to allow rendering
+                delay(200) // Brief delay to allow rendering
 
-            // 2. Animate to the final zoom level
-            mapView.controller.animateTo(animateToLocation, 17.0, 1500L)
-            mapView.invalidate() // Force a redraw after animation
-            delay(100)
-            onAnimationCompleted()
+                // 2. Animate to the final zoom level
+                mapView.controller.animateTo(animateToLocation, 17.0, 1500L)
+                mapView.invalidate() // Force a redraw after animation
+                delay(100)
+                onAnimationCompleted()
+            }
         }
     }
 
-    LaunchedEffect(polygons) {
+    LaunchedEffect(selectedMunicipio) {
+        Log.d("OsmdroidMapView", "Municipio effect triggered. New municipio: ${selectedMunicipio?.nombre}")
         mapView.overlays.clear() // Clear existing overlays
-        mapView.overlays.addAll(polygons.map { geoPoints ->
-            val polygon = Polygon()
-            polygon.points = geoPoints
-            polygon.fillColor = AndroidColor.argb(75, 100, 100, 200) // Semi-transparent blue
-            polygon.strokeColor = AndroidColor.rgb(0, 0, 150)
-            polygon.strokeWidth = 3f
-            polygon
-        })
+        val polygonPoints = selectedMunicipio?.poligono?.map { GeoPoint(it.latitude, it.longitude) }
+
+        if (!polygonPoints.isNullOrEmpty()) {
+            val polygonOverlay = Polygon().apply {
+                points = polygonPoints
+                fillColor = AndroidColor.argb(75, 100, 100, 200) // Semi-transparent blue
+                strokeColor = AndroidColor.rgb(0, 0, 150)
+                strokeWidth = 3f
+            }
+            mapView.overlays.add(polygonOverlay)
+            Log.d("OsmdroidMapView", "Polygon added to map. Bounds: ${polygonOverlay.bounds}")
+
+            // After a short delay, zoom to the bounding box of the polygon
+            delay(200)
+            mapView.zoomToBoundingBox(polygonOverlay.bounds, true, 100) // true for animated, 100 for padding
+            onAnimationCompleted()
+        }
         mapView.invalidate()
     }
 

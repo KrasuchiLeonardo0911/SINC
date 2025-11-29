@@ -15,6 +15,10 @@ import android.util.Log
 
 import com.sinc.mobile.domain.model.DomainGeoPoint
 import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 
 class CatalogosRepositoryImpl @Inject constructor(
@@ -37,6 +41,32 @@ class CatalogosRepositoryImpl @Inject constructor(
     private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
     private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
     private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
+
+    /**
+     * Finds the first coordinate ring (an array of [lon, lat] pairs) in a GeoJSON coordinates structure.
+     * It recursively traverses the JSON arrays until it finds an array whose direct children are
+     * arrays of numbers (the coordinate pairs).
+     */
+    private fun findCoordinateRing(element: JsonElement?): JsonArray? {
+        if (element !is JsonArray || element.size() == 0) return null
+
+        val firstChild = element[0]
+        if (firstChild !is JsonArray || firstChild.size() == 0) return null
+
+        val firstGrandchild = firstChild[0]
+        // If the first grandchild is NOT an array, it must be a coordinate number.
+        // This means the `firstChild` is the coordinate pair `[lon, lat]`.
+        // Therefore, the current `element` is the ring (the array of pairs).
+        if (!firstGrandchild.isJsonArray) {
+            return element
+        }
+
+        // Otherwise, the grandchild is another array (e.g., a coordinate pair),
+        // which means the child is a ring, and the current element is a list of rings (a polygon)
+        // or a list of polygons. We need to go deeper.
+        return findCoordinateRing(firstChild)
+    }
+
     private fun MunicipioEntity.toDomain(): Municipio {
         val centroide = if (latitud != null && longitud != null) {
             DomainGeoPoint(latitud, longitud)
@@ -44,17 +74,28 @@ class CatalogosRepositoryImpl @Inject constructor(
 
         val poligono = geojson_boundary?.let { json ->
             try {
-                val type = object : TypeToken<List<List<List<Double>>>>() {}.type
-                val geoJsonCoords: List<List<List<Double>>> = gson.fromJson(json, type)
-                // Assuming it's a Polygon, take the first ring of the first polygon
-                geoJsonCoords.firstOrNull()?.firstOrNull()?.mapNotNull { rawCoords ->
-                    val coords = rawCoords as? List<Double> // Explicitly cast to List<Double>
-                    if (coords != null && coords.size >= 2) {
-                        DomainGeoPoint(coords[1], coords[0]) // GeoJSON is [lon, lat], DomainGeoPoint is (lat, lon)
+                val jsonElement = JsonParser.parseString(json)
+                if (!jsonElement.isJsonObject) {
+                    Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: Not a JSON Object.")
+                    return@let null
+                }
+                val jsonObject = jsonElement.asJsonObject
+                val coordinates = jsonObject.getAsJsonArray("coordinates")
+
+                // This will find the array that contains the coordinate PAIRS.
+                // For a Polygon, it will be the first and only ring.
+                // For a MultiPolygon, it will be the first ring of the first polygon.
+                val exteriorRing = findCoordinateRing(coordinates)
+
+                exteriorRing?.mapNotNull { element ->
+                    val rawCoords = element.asJsonArray
+                    if (rawCoords.size() >= 2) {
+                        DomainGeoPoint(rawCoords[1].asDouble, rawCoords[0].asDouble)
                     } else null
                 }
             } catch (e: Exception) {
                 Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: ${e.message}")
+                Log.d("CatalogosRepo", "Problematic JSON: $json")
                 null
             }
         }
