@@ -1,85 +1,74 @@
 package com.sinc.mobile.app.features.createunidadproductiva.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sinc.mobile.app.ui.components.OsmdroidMapView
+import com.sinc.mobile.domain.model.DomainGeoPoint
 import com.sinc.mobile.domain.model.LocationError
+import com.sinc.mobile.domain.model.Municipio
 import com.sinc.mobile.ui.theme.colorBotonSiguiente
 import com.sinc.mobile.ui.theme.md_theme_light_primary
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.tileprovider.tilesource.XYTileSource
-import java.util.Locale
+import org.osmdroid.util.GeoPoint
+
+enum class MapMode {
+    CURRENT_LOCATION,
+    SEARCH_ON_MAP
+}
 
 @Composable
 fun Step1Ubicacion(
     isMapVisible: Boolean,
-    selectedLocation: GeoPoint?,
+    mapMode: MapMode,
+    selectedLocation: DomainGeoPoint?,
     locationError: LocationError?,
     onUseCurrentLocation: () -> Unit,
     onSearchOnMap: () -> Unit,
     onMapDismissed: () -> Unit,
-    animateToLocation: GeoPoint?,
+    animateToLocation: DomainGeoPoint?,
     onAnimationCompleted: () -> Unit,
     onConfirmLocation: (GeoPoint) -> Unit,
-    isFetchingLocation: Boolean
+    isFetchingLocation: Boolean,
+    municipios: List<Municipio>,
+    selectedMunicipio: Municipio?,
+    onMunicipioSelected: (Municipio) -> Unit
 ) {
     if (isMapVisible) {
         MapDialog(
+            mapMode = mapMode,
             onDismiss = onMapDismissed,
             initialCenter = GeoPoint(-26.58116, -54.86023), // Misiones coordinates
             animateToLocation = animateToLocation,
             onAnimationCompleted = onAnimationCompleted,
             onConfirmLocation = onConfirmLocation,
-            isFetchingLocation = isFetchingLocation
+            isFetchingLocation = isFetchingLocation,
+            municipios = municipios,
+            selectedMunicipio = selectedMunicipio,
+            onMunicipioSelected = onMunicipioSelected
         )
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -89,25 +78,19 @@ fun Step1Ubicacion(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-
         Spacer(modifier = Modifier.height(32.dp))
-
         ActionButton(
             text = "Usar mi ubicación actual",
             legend = "La app tomará las coordenadas del GPS",
             onClick = onUseCurrentLocation
         )
-
         Spacer(modifier = Modifier.height(24.dp))
-
         ActionButton(
             text = "Buscar en el mapa",
             legend = "Mover un marcador a la ubicación deseada",
             onClick = onSearchOnMap
         )
-
         Spacer(modifier = Modifier.height(32.dp))
-
         if (locationError != null) {
             Text(
                 text = locationError.toUserFriendlyMessage(),
@@ -133,89 +116,62 @@ private fun LocationError.toUserFriendlyMessage(): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MapDialog(
+    mapMode: MapMode,
     onDismiss: () -> Unit,
     initialCenter: GeoPoint,
-    animateToLocation: GeoPoint?,
+    animateToLocation: DomainGeoPoint?,
     onAnimationCompleted: () -> Unit,
     onConfirmLocation: (GeoPoint) -> Unit,
-    isFetchingLocation: Boolean
+    isFetchingLocation: Boolean,
+    municipios: List<Municipio>,
+    selectedMunicipio: Municipio?,
+    onMunicipioSelected: (Municipio) -> Unit
 ) {
     var mapCenter by remember { mutableStateOf(initialCenter) }
+    val bottomSheetState = rememberBottomSheetScaffoldState()
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Scaffold(
-            bottomBar = {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
-                    shadowElevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Ubicación",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colorBotonSiguiente,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = buildAnnotatedString {
-                                append("Presione el botón ")
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append("Guardar Ubicación")
-                                }
-                                append(" para confirmar o ")
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append("deslice el mapa")
-                                }
-                                append(" y utilice los controles de zoom para precisar mejor.")
-                            },
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 20.sp
-                            )
-                        )
-                        Button(
-                            onClick = { onConfirmLocation(mapCenter) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
-                            enabled = !isFetchingLocation
-                        ) {
-                            Text("Guardar Ubicación")
-                        }
-                    }
+        BottomSheetScaffold(
+            scaffoldState = bottomSheetState,
+            sheetPeekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp,
+            sheetContainerColor = Color.White, // Set background color to white
+            sheetDragHandle = null, // Disable the default drag handle
+            sheetContent = {
+                if (mapMode == MapMode.SEARCH_ON_MAP) {
+                    SearchableSheetContent(
+                        modifier = Modifier.fillMaxHeight(0.5f), // Ocupa la mitad de la pantalla
+                        municipios = municipios,
+                        selectedMunicipio = selectedMunicipio,
+                        onMunicipioSelected = onMunicipioSelected
+                    )
+                } else {
+                    // Empty content for other modes
+                    Box(modifier = Modifier.height(1.dp))
                 }
             }
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 OsmdroidMapView(
                     modifier = Modifier.fillMaxSize(),
                     initialCenter = initialCenter,
                     onMapReady = {},
-                    animateToLocation = animateToLocation,
-                    jumpToLocation = null, // We pass null here for now
+                    animateToLocation = animateToLocation?.let { GeoPoint(it.latitude, it.longitude) },
+                    jumpToLocation = null,
                     onAnimationCompleted = onAnimationCompleted,
                     onMapMove = { newCenter ->
                         mapCenter = newCenter
                     },
                     tileSource = TileSourceFactory.MAPNIK,
                     initialZoom = 9.0,
-                    polygons = emptyList() // We pass an empty list for now
+                    polygons = selectedMunicipio?.poligono?.let { poligono ->
+                        listOf(poligono.map { GeoPoint(it.latitude, it.longitude) })
+                    } ?: emptyList()
                 )
 
+                // Close button
                 IconButton(
                     onClick = onDismiss,
                     modifier = Modifier
@@ -231,6 +187,20 @@ private fun MapDialog(
                     )
                 }
 
+                // Save Location Button
+                Button(
+                    onClick = { onConfirmLocation(mapCenter) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp) // Adjust padding to be above the sheet
+                        .fillMaxWidth(0.8f),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
+                    enabled = !isFetchingLocation
+                ) {
+                    Text("Guardar Ubicación")
+                }
+
+                // Central Marker
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Marcador",
@@ -240,6 +210,7 @@ private fun MapDialog(
                     tint = md_theme_light_primary
                 )
 
+                // Loading indicator
                 if (isFetchingLocation) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -260,6 +231,94 @@ private fun MapDialog(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchableSheetContent(
+    modifier: Modifier = Modifier,
+    municipios: List<Municipio>,
+    selectedMunicipio: Municipio?,
+    onMunicipioSelected: (Municipio) -> Unit
+) {
+    var searchText by remember { mutableStateOf("") }
+
+    LaunchedEffect(selectedMunicipio) {
+        searchText = selectedMunicipio?.nombre ?: ""
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Custom Drag Handle
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(32.dp)
+                    .height(4.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), RoundedCornerShape(2.dp))
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Deslice para buscar municipios",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp)) // Added Spacer
+
+        // Content for the expanded state
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = { Text("Escriba el nombre del municipio") },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Buscar",
+                    tint = Color.Gray
+                )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorBotonSiguiente,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = colorBotonSiguiente
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val filteredMunicipios = if (searchText.isNotEmpty()) {
+            municipios.filter {
+                it.nombre.contains(searchText, ignoreCase = true)
+            }
+        } else {
+            emptyList()
+        }
+
+        LazyColumn(modifier = Modifier.weight(1f)) { // Use weight to fill remaining space
+            items(filteredMunicipios) { municipio ->
+                DropdownMenuItem(
+                    text = { Text(municipio.nombre) },
+                    onClick = { onMunicipioSelected(municipio) }
+                )
+                HorizontalDivider()
             }
         }
     }

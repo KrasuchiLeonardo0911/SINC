@@ -108,6 +108,7 @@ fun CreateUnidadProductivaScreen(
                 Button(
                     onClick = {
 
+
                         viewModel.onPermissionBottomSheetDismissed()
                         permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                     },
@@ -198,6 +199,7 @@ fun CreateUnidadProductivaScreen(
                     when (currentStep) {
                                                                 1 -> Step1Ubicacion(
                                                                     isMapVisible = uiState.isMapVisible,
+                                                                    mapMode = uiState.mapMode,
                                                                     selectedLocation = uiState.selectedLocation,
                                                                     locationError = uiState.locationError,
                                                                     onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
@@ -206,7 +208,10 @@ fun CreateUnidadProductivaScreen(
                                                                     animateToLocation = uiState.animateToLocation,
                                                                     onAnimationCompleted = viewModel::onMapAnimationCompleted,
                                                                     onConfirmLocation = viewModel::onMapLocationSelected,
-                                                                    isFetchingLocation = uiState.isFetchingLocation
+                                                                    isFetchingLocation = uiState.isFetchingLocation,
+                                                                    municipios = uiState.municipios,
+                                                                    selectedMunicipio = uiState.selectedMunicipio,
+                                                                    onMunicipioSelected = viewModel::onMunicipioSelected
                                                                 )
                                                                                                                                                         2 -> Step2FormularioBasico(
                                                                                                                                                             nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,

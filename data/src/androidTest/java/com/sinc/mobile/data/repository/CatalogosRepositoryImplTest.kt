@@ -131,8 +131,8 @@ CatalogosRepositoryImplTest {
                 MotivoMovimientoDto(2, "Venta", "baja")
             ),
             municipios = listOf(
-                MunicipioDto(1, "Municipio A"),
-                MunicipioDto(2, "Municipio B")
+                MunicipioDto(1, "Municipio A", -27.36, -55.89, "{\"type\":\"Polygon\",\"coordinates\":[]}"),
+                MunicipioDto(2, "Municipio B", -27.45, -55.95, "{\"type\":\"Polygon\",\"coordinates\":[]}")
             ),
             condicionesTenencia = listOf(
                 CondicionTenenciaDto(1, "Propietario"),
@@ -183,6 +183,9 @@ CatalogosRepositoryImplTest {
         val municipios = municipioDao.getAllMunicipios().first()
         assertThat(municipios).hasSize(2)
         assertThat(municipios[0].nombre).isEqualTo("Municipio A")
+        assertThat(municipios[0].latitud).isEqualTo(-27.36)
+        assertThat(municipios[0].longitud).isEqualTo(-55.89)
+        assertThat(municipios[0].geojson_boundary).isEqualTo("{\"type\":\"Polygon\",\"coordinates\":[]}")
 
         val condiciones = condicionTenenciaDao.getAllCondicionesTenencia().first()
         assertThat(condiciones).hasSize(2)

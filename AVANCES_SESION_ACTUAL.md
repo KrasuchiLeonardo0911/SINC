@@ -39,3 +39,32 @@ Se realizaron numerosos ajustes para mejorar la experiencia de usuario en la pan
 
 - **Superposición de UI:** Se corrigió un error visual donde los botones de navegación del formulario ("Anterior" y "Siguiente") se superponían con la barra de navegación del sistema Android. Se solucionó aplicando `navigationBarsPadding`.
 - **Errores de Compilación:** Se resolvieron múltiples errores de compilación causados por errores de sintaxis durante las modificaciones del código.
+
+---
+
+## Avances de la Sesión Actual (28 de Noviembre de 2025)
+
+### Refinamiento de Transiciones y UI/UX
+
+*   **Animación de la barra de progreso:** Se ajustó la duración de la animación a 500ms en `ProgressBar.kt` para una transición más suave.
+*   **Transición al paso 2:** Se añadió un retraso de 500ms en `CreateUnidadProductivaViewModel.kt` después de seleccionar la ubicación en el mapa para una transición más fluida al siguiente paso.
+
+### Implementación de Búsqueda de Municipios (Intento Limpio)
+
+*   **Modelos de Datos:** Se verificó que `Municipio.kt` (en `:domain`) y `MunicipioEntity.kt` (en `:data`) estuvieran actualizados con `id`, `centroide`, `poligono`, `latitud`, `longitud` y `geojson_boundary`.
+*   **DTO:** Se verificó que `CatalogosDto.kt` (en `:data`) estuviera actualizado con los campos `latitud`, `longitud` y `geojsonBoundary` en `MunicipioDto`.
+*   **Repositorio:** Se verificó que `CatalogosRepositoryImpl.kt` (en `:data`) estuviera actualizado para manejar la inyección de `Gson` y la conversión de `geojson_boundary` a `DomainGeoPoint`s.
+*   **ViewModel:** Se actualizó `CreateUnidadProductivaViewModel.kt` para inyectar `CatalogosRepository`, cargar municipios, usar `DomainGeoPoint` y manejar `onMunicipioSelected`.
+*   **UI (`Step1Ubicacion.kt`):**
+    *   Se corrigió la conversión del polígono para `OsmdroidMapView` para que se dibuje correctamente.
+    *   Se reestructuró el `MapDialog` para usar un `BottomSheetScaffold` con un `SearchableSheetContent` expandible/colapsable para la búsqueda de municipios.
+    *   El `bottomBar` ahora se adapta al `MapMode` (ubicación actual o búsqueda en el mapa), mostrando el buscador solo cuando se selecciona "Buscar en el mapa".
+    *   El botón "Guardar Ubicación" se movió para estar siempre visible en el mapa, fuera del `BottomSheet`.
+
+### Corrección de Errores de Compilación durante la Implementación
+
+*   **`Overload resolution ambiguity` en `Step1Ubicacion.kt`:** Resuelto eliminando la función `ActionButton` duplicada.
+*   **`Unresolved reference 'outlinedTextFieldColors'` en `Step1Ubicacion.kt`:** Resuelto usando `OutlinedTextFieldDefaults.colors`.
+*   **`Unresolved reference 'LazyColumn'` y `items` en `Step1Ubicacion.kt`:** Resuelto añadiendo las importaciones necesarias.
+*   **`[Hilt] @HiltViewModel is only supported on types that subclass androidx.lifecycle.ViewModel.`:** Resuelto mediante limpieza y reconstrucción del proyecto.
+*   **Errores de parámetros en `CreateUnidadProductivaScreen.kt`:** Resueltos al sincronizar los parámetros pasados a `Step1Ubicacion` con la firma actualizada.

@@ -2,7 +2,11 @@ package com.sinc.mobile.app.features.createunidadproductiva
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sinc.mobile.app.features.createunidadproductiva.components.MapMode
+import com.sinc.mobile.domain.model.DomainGeoPoint
 import com.sinc.mobile.domain.model.LocationError
+import com.sinc.mobile.domain.model.Municipio
+import com.sinc.mobile.domain.repository.CatalogosRepository
 import com.sinc.mobile.domain.use_case.GetCurrentLocationUseCase
 import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,11 +23,14 @@ data class CreateUnidadProductivaState(
 
     // Step 1 State
     val isMapVisible: Boolean = false,
-    val selectedLocation: GeoPoint? = null,
+    val mapMode: MapMode = MapMode.SEARCH_ON_MAP,
+    val selectedLocation: DomainGeoPoint? = null,
     val locationError: LocationError? = null,
     val showPermissionBottomSheet: Boolean = false,
-    val animateToLocation: GeoPoint? = null,
+    val animateToLocation: DomainGeoPoint? = null,
     val isFetchingLocation: Boolean = false,
+    val municipios: List<Municipio> = emptyList(),
+    val selectedMunicipio: Municipio? = null,
 
     // Step 2 State
     val nombre: String = "",
@@ -36,7 +43,8 @@ data class CreateUnidadProductivaState(
 
 @HiltViewModel
 class CreateUnidadProductivaViewModel @Inject constructor(
-    private val getCurrentLocationUseCase: GetCurrentLocationUseCase
+    private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
+    private val catalogosRepository: CatalogosRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUnidadProductivaState())
@@ -49,6 +57,28 @@ class CreateUnidadProductivaViewModel @Inject constructor(
         "Ocupante precario",
         "Otro"
     )
+
+    init {
+        loadMunicipios()
+    }
+
+    private fun loadMunicipios() {
+        viewModelScope.launch {
+            catalogosRepository.getCatalogos().collect { catalogos ->
+                _uiState.update { it.copy(municipios = catalogos.municipios) }
+            }
+        }
+    }
+
+    fun onMunicipioSelected(municipio: Municipio) {
+        _uiState.update {
+            it.copy(
+                selectedMunicipio = municipio,
+                isMapVisible = true,
+                animateToLocation = municipio.centroide
+            )
+        }
+    }
 
     fun onNextStep() {
         if (_uiState.value.currentStep < 3) {
@@ -71,7 +101,13 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     }
 
     fun onUseCurrentLocationClicked() {
-        _uiState.update { it.copy(locationError = null, showPermissionBottomSheet = true) }
+        _uiState.update {
+            it.copy(
+                locationError = null,
+                showPermissionBottomSheet = true,
+                mapMode = MapMode.CURRENT_LOCATION
+            )
+        }
     }
 
     fun onPermissionBottomSheetDismissed() {
@@ -92,9 +128,8 @@ class CreateUnidadProductivaViewModel @Inject constructor(
             val startTime = System.currentTimeMillis()
             val result = getCurrentLocationUseCase()
 
-            var newLocation: GeoPoint? = null
             if (result is Result.Success) {
-                newLocation = GeoPoint(result.data.latitude, result.data.longitude)
+                val newLocation = DomainGeoPoint(result.data.latitude, result.data.longitude)
                 _uiState.update { it.copy(selectedLocation = newLocation) }
             } else if (result is Result.Failure) {
                 _uiState.update {
@@ -122,11 +157,16 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     }
 
     fun onSearchOnMapClicked() {
-        _uiState.update { it.copy(isMapVisible = true) }
+        _uiState.update {
+            it.copy(
+                isMapVisible = true,
+                mapMode = MapMode.SEARCH_ON_MAP
+            )
+        }
     }
 
     fun onMapDismissed() {
-        _uiState.update { it.copy(isMapVisible = false) }
+        _uiState.update { it.copy(isMapVisible = false, selectedMunicipio = null) }
     }
 
     fun onMapAnimationCompleted() {
@@ -134,14 +174,14 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     }
 
     fun onMapLocationSelected(location: GeoPoint) {
-        viewModelScope.launch { // Launch a coroutine to use delay
+        viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    selectedLocation = location,
+                    selectedLocation = DomainGeoPoint(location.latitude, location.longitude),
                     isMapVisible = false
                 )
             }
-            kotlinx.coroutines.delay(500L) // Small delay for smoother transition
+            kotlinx.coroutines.delay(500L)
             _uiState.update { it.copy(currentStep = 2) }
         }
     }

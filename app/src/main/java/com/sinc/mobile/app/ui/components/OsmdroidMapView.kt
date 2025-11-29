@@ -83,6 +83,7 @@ fun OsmdroidMapView(
             mapView.apply {
                 setTileSource(tileSource)
                 setMultiTouchControls(true)
+                setBuiltInZoomControls(false) // Add this line
                 controller.setZoom(initialZoom)
                 controller.setCenter(initialCenter)
                 onMapReady(this)
