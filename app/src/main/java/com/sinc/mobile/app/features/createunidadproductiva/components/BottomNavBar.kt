@@ -44,18 +44,20 @@ fun BottomNavBar(
                 Text("Anterior")
             }
         } else {
-            Spacer(modifier = Modifier) // Ocupa el espacio para mantener el botón de siguiente a la derecha
+            Spacer(modifier = Modifier.weight(1f)) // Ocupa el espacio para mantener el botón de siguiente a la derecha
         }
 
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente) // Aplicar el nuevo color
-        ) {
-            Text(
-                text = if (currentStep < 3) "Siguiente" else "Finalizar",
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+        if (currentStep > 1) { // Only show "Siguiente" button if not on the first step
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente) // Aplicar el nuevo color
+            ) {
+                Text(
+                    text = if (currentStep < 3) "Siguiente" else "Finalizar",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
     }
 }

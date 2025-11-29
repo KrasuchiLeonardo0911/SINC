@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
@@ -26,8 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,13 +53,6 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.tileprovider.tilesource.XYTileSource
 import java.util.Locale
 
-// Define the ESRI World Imagery tile source
-private val ESRI_WORLD_IMAGERY = object : XYTileSource(
-    "Esri World Imagery",
-    0, 19, 256, ".jpg",
-    arrayOf("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/")
-) { }
-
 @Composable
 fun Step1Ubicacion(
     isMapVisible: Boolean,
@@ -72,16 +64,16 @@ fun Step1Ubicacion(
     animateToLocation: GeoPoint?,
     onAnimationCompleted: () -> Unit,
     onConfirmLocation: (GeoPoint) -> Unit,
-    isFetchingLocation: Boolean // New parameter
+    isFetchingLocation: Boolean
 ) {
     if (isMapVisible) {
         MapDialog(
             onDismiss = onMapDismissed,
-            initialCenter = GeoPoint(-26.58116, -54.86023), // User-provided Misiones coordinates
+            initialCenter = GeoPoint(-26.58116, -54.86023), // Misiones coordinates
             animateToLocation = animateToLocation,
             onAnimationCompleted = onAnimationCompleted,
             onConfirmLocation = onConfirmLocation,
-            isFetchingLocation = isFetchingLocation // Pass new parameter
+            isFetchingLocation = isFetchingLocation
         )
     }
 
@@ -146,7 +138,7 @@ private fun MapDialog(
     animateToLocation: GeoPoint?,
     onAnimationCompleted: () -> Unit,
     onConfirmLocation: (GeoPoint) -> Unit,
-    isFetchingLocation: Boolean // New parameter
+    isFetchingLocation: Boolean
 ) {
     var mapCenter by remember { mutableStateOf(initialCenter) }
 
@@ -155,23 +147,7 @@ private fun MapDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Seleccione la ubicación") },
-                    navigationIcon = {
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, contentDescription = "Cerrar mapa")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            },
             bottomBar = {
-                // New Bottom Sheet style
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = Color.White,
@@ -187,7 +163,7 @@ private fun MapDialog(
                         Text(
                             text = "Ubicación",
                             style = MaterialTheme.typography.titleMedium,
-                            color = colorBotonSiguiente, // Green color
+                            color = colorBotonSiguiente,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
@@ -230,15 +206,31 @@ private fun MapDialog(
                     initialCenter = initialCenter,
                     onMapReady = {},
                     animateToLocation = animateToLocation,
+                    jumpToLocation = null, // We pass null here for now
                     onAnimationCompleted = onAnimationCompleted,
                     onMapMove = { newCenter ->
                         mapCenter = newCenter
                     },
                     tileSource = TileSourceFactory.MAPNIK,
-                    initialZoom = 18.0
+                    initialZoom = 9.0,
+                    polygons = emptyList() // We pass an empty list for now
                 )
 
-                // Central Marker Icon
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(50))
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Cerrar mapa",
+                        tint = md_theme_light_primary
+                    )
+                }
+
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Marcador",
@@ -248,7 +240,6 @@ private fun MapDialog(
                     tint = md_theme_light_primary
                 )
 
-                // New Loading Card
                 if (isFetchingLocation) {
                     Box(
                         modifier = Modifier.fillMaxSize(),

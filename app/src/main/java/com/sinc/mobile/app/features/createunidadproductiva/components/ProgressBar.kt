@@ -1,11 +1,14 @@
 package com.sinc.mobile.app.features.createunidadproductiva.components
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -14,6 +17,12 @@ import com.sinc.mobile.ui.theme.md_theme_light_primary
 
 @Composable
 fun ProgressBar(currentStep: Int) {
+    val progress by animateFloatAsState(
+        targetValue = currentStep / 3f,
+        animationSpec = tween(durationMillis = 500), // Added animation spec
+        label = "ProgressBarAnimation"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -23,7 +32,7 @@ fun ProgressBar(currentStep: Int) {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(currentStep / 3f)
+                .fillMaxWidth(progress)
                 .height(8.dp)
                 .background(md_theme_light_primary, shape = RoundedCornerShape(4.dp))
         )

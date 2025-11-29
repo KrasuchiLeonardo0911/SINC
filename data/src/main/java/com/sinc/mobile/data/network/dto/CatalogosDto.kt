@@ -39,7 +39,10 @@ data class MotivoMovimientoDto(
 
 data class MunicipioDto(
     val id: Int,
-    val nombre: String
+    val nombre: String,
+    val latitud: Double?,
+    val longitud: Double?,
+    @SerializedName("geojson_boundary") val geojsonBoundary: String?
 )
 
 data class CondicionTenenciaDto(

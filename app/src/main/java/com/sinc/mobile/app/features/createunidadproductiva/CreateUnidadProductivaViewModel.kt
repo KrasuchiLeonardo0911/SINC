@@ -23,7 +23,7 @@ data class CreateUnidadProductivaState(
     val locationError: LocationError? = null,
     val showPermissionBottomSheet: Boolean = false,
     val animateToLocation: GeoPoint? = null,
-    val isFetchingLocation: Boolean = false, // New state for loading indicator
+    val isFetchingLocation: Boolean = false,
 
     // Step 2 State
     val nombre: String = "",
@@ -42,7 +42,6 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CreateUnidadProductivaState())
     val uiState = _uiState.asStateFlow()
 
-    // Hardcoded options for tenancy condition
     val tenenciaOptions = listOf(
         "Propietario",
         "Arrendatario",
@@ -71,9 +70,8 @@ class CreateUnidadProductivaViewModel @Inject constructor(
         _uiState.update { it.copy(showExitDialog = false) }
     }
 
-    // --- Step 1 Handlers ---
     fun onUseCurrentLocationClicked() {
-        _uiState.update { it.copy(locationError = null, showPermissionBottomSheet = true) } // Clear previous errors and show sheet
+        _uiState.update { it.copy(locationError = null, showPermissionBottomSheet = true) }
     }
 
     fun onPermissionBottomSheetDismissed() {
@@ -82,7 +80,6 @@ class CreateUnidadProductivaViewModel @Inject constructor(
 
     fun onPermissionResult(isGranted: Boolean) {
         if (isGranted) {
-            // Show map centered on Misiones with loading indicator
             _uiState.update { it.copy(isMapVisible = true, isFetchingLocation = true) }
             fetchCurrentLocation()
         } else {
@@ -94,30 +91,31 @@ class CreateUnidadProductivaViewModel @Inject constructor(
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             val result = getCurrentLocationUseCase()
-            val duration = System.currentTimeMillis() - startTime
 
-            if (duration < 2000) { // Increased delay to 2 seconds
+            var newLocation: GeoPoint? = null
+            if (result is Result.Success) {
+                newLocation = GeoPoint(result.data.latitude, result.data.longitude)
+                _uiState.update { it.copy(selectedLocation = newLocation) }
+            } else if (result is Result.Failure) {
+                _uiState.update {
+                    it.copy(
+                        locationError = result.error,
+                        isFetchingLocation = false
+                    )
+                }
+            }
+
+            val duration = System.currentTimeMillis() - startTime
+            if (duration < 2000) {
                 kotlinx.coroutines.delay(2000 - duration)
             }
 
-            when (result) {
-                is Result.Success -> {
-                    val newLocation = GeoPoint(result.data.latitude, result.data.longitude)
-                    _uiState.update {
-                        it.copy(
-                            selectedLocation = newLocation,
-                            animateToLocation = newLocation, // Re-enabled animation
-                            isFetchingLocation = false // Hide loading
-                        )
-                    }
-                }
-                is Result.Failure -> {
-                    _uiState.update {
-                        it.copy(
-                            locationError = result.error,
-                            isFetchingLocation = false // Hide loading
-                        )
-                    }
+            if (_uiState.value.locationError == null) {
+                _uiState.update {
+                    it.copy(
+                        animateToLocation = it.selectedLocation,
+                        isFetchingLocation = false
+                    )
                 }
             }
         }
@@ -136,10 +134,18 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     }
 
     fun onMapLocationSelected(location: GeoPoint) {
-        _uiState.update { it.copy(selectedLocation = location, isMapVisible = false) }
+        viewModelScope.launch { // Launch a coroutine to use delay
+            _uiState.update {
+                it.copy(
+                    selectedLocation = location,
+                    isMapVisible = false
+                )
+            }
+            kotlinx.coroutines.delay(500L) // Small delay for smoother transition
+            _uiState.update { it.copy(currentStep = 2) }
+        }
     }
 
-    // --- Step 2 Handlers ---
     fun onNombreChange(newValue: String) {
         _uiState.update { it.copy(nombre = newValue) }
     }
@@ -152,7 +158,6 @@ class CreateUnidadProductivaViewModel @Inject constructor(
         _uiState.update { it.copy(superficie = newValue) }
     }
 
-    // --- Step 3 Handlers ---
     fun onCondicionTenenciaChange(newValue: String) {
         _uiState.update { it.copy(condicionTenencia = newValue) }
     }

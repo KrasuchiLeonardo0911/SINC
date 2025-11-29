@@ -34,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.createunidadproductiva.components.BottomNavBar
@@ -76,24 +79,35 @@ fun CreateUnidadProductivaScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()),
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     "Permiso de Ubicación",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = md_theme_light_primary
+                    color = colorBotonSiguiente // Changed to green
                 )
                 Text(
-                    "Para registrar la ubicación de su campo, necesitamos acceder a la ubicación de su dispositivo. Solo se utilizará cuando presione el botón \"Usar mi ubicación actual\".",
+                    buildAnnotatedString {
+                        append("Para registrar la ubicación de su campo, necesitamos acceder a la ubicación de su dispositivo. Esta se utilizará ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append("únicamente para marcar su posición en el mapa")
+                        }
+                        append(" cuando presione el botón ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append("\"Usar mi ubicación actual\"")
+                        }
+                        append(".")
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
                 Button(
                     onClick = {
+
                         viewModel.onPermissionBottomSheetDismissed()
                         permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                     },
@@ -187,13 +201,13 @@ fun CreateUnidadProductivaScreen(
                                                                     selectedLocation = uiState.selectedLocation,
                                                                     locationError = uiState.locationError,
                                                                     onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
-                                                                                                                onSearchOnMap = viewModel::onSearchOnMapClicked,
-                                                                                                                                                            onMapDismissed = viewModel::onMapDismissed,
-                                                                                                                                                            animateToLocation = uiState.animateToLocation,
-                                                                                                                                                            onAnimationCompleted = viewModel::onMapAnimationCompleted,
-                                                                                                                                                            onConfirmLocation = viewModel::onMapLocationSelected,
-                                                                                                                                                            isFetchingLocation = uiState.isFetchingLocation
-                                                                                                                                                        )
+                                                                    onSearchOnMap = viewModel::onSearchOnMapClicked,
+                                                                    onMapDismissed = viewModel::onMapDismissed,
+                                                                    animateToLocation = uiState.animateToLocation,
+                                                                    onAnimationCompleted = viewModel::onMapAnimationCompleted,
+                                                                    onConfirmLocation = viewModel::onMapLocationSelected,
+                                                                    isFetchingLocation = uiState.isFetchingLocation
+                                                                )
                                                                                                                                                         2 -> Step2FormularioBasico(
                                                                                                                                                             nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,
                             rnspa = uiState.rnspa,

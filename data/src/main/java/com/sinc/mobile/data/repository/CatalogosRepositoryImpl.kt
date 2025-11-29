@@ -13,6 +13,10 @@ import java.io.IOException
 import javax.inject.Inject
 import android.util.Log
 
+import com.sinc.mobile.domain.model.DomainGeoPoint
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+
 class CatalogosRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val sessionManager: SessionManager,
@@ -24,7 +28,8 @@ class CatalogosRepositoryImpl @Inject constructor(
     private val condicionTenenciaDao: CondicionTenenciaDao,
     private val fuenteAguaDao: FuenteAguaDao,
     private val tipoSueloDao: TipoSueloDao,
-    private val tipoPastoDao: TipoPastoDao
+    private val tipoPastoDao: TipoPastoDao,
+    private val gson: Gson // Inject Gson
 ) : CatalogosRepository {
 
     // Mappers from Entity to Domain
@@ -32,7 +37,29 @@ class CatalogosRepositoryImpl @Inject constructor(
     private fun RazaEntity.toDomain(): Raza = Raza(id, nombre, especie_id)
     private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
     private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
-    private fun MunicipioEntity.toDomain(): Municipio = Municipio(id, nombre)
+    private fun MunicipioEntity.toDomain(): Municipio {
+        val centroide = if (latitud != null && longitud != null) {
+            DomainGeoPoint(latitud, longitud)
+        } else null
+
+        val poligono = geojson_boundary?.let { json ->
+            try {
+                val type = object : TypeToken<List<List<List<Double>>>>() {}.type
+                val geoJsonCoords: List<List<List<Double>>> = gson.fromJson(json, type)
+                // Assuming it's a Polygon, take the first ring of the first polygon
+                geoJsonCoords.firstOrNull()?.firstOrNull()?.mapNotNull { rawCoords ->
+                    val coords = rawCoords as? List<Double> // Explicitly cast to List<Double>
+                    if (coords != null && coords.size >= 2) {
+                        DomainGeoPoint(coords[1], coords[0]) // GeoJSON is [lon, lat], DomainGeoPoint is (lat, lon)
+                    } else null
+                }
+            } catch (e: Exception) {
+                Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: ${e.message}")
+                null
+            }
+        }
+        return Municipio(id, nombre, centroide, poligono)
+    }
     private fun CondicionTenenciaEntity.toDomain(): CondicionTenencia = CondicionTenencia(id, nombre)
     private fun FuenteAguaEntity.toDomain(): FuenteAgua = FuenteAgua(id, nombre)
     private fun TipoSueloEntity.toDomain(): TipoSuelo = TipoSuelo(id, nombre)
@@ -43,7 +70,7 @@ class CatalogosRepositoryImpl @Inject constructor(
     private fun RazaDto.toEntity(): RazaEntity = RazaEntity(id = id, especie_id = especieId, nombre = nombre)
     private fun CategoriaDto.toEntity(): CategoriaAnimalEntity = CategoriaAnimalEntity(id = id, especie_id = especieId, nombre = nombre)
     private fun MotivoMovimientoDto.toEntity(): MotivoMovimientoEntity = MotivoMovimientoEntity(id, nombre, tipo)
-    private fun MunicipioDto.toEntity(): MunicipioEntity = MunicipioEntity(id, nombre)
+    private fun MunicipioDto.toEntity(): MunicipioEntity = MunicipioEntity(id, nombre, latitud, longitud, geojsonBoundary)
     private fun CondicionTenenciaDto.toEntity(): CondicionTenenciaEntity = CondicionTenenciaEntity(id, nombre)
     private fun FuenteAguaDto.toEntity(): FuenteAguaEntity = FuenteAguaEntity(id, nombre)
     private fun TipoSueloDto.toEntity(): TipoSueloEntity = TipoSueloEntity(id, nombre)
