@@ -50,6 +50,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import com.sinc.mobile.ui.theme.md_theme_light_primary
 import androidx.compose.material3.ButtonDefaults
 import com.sinc.mobile.ui.theme.colorBotonSiguiente
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.sinc.mobile.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -67,7 +72,13 @@ fun CreateUnidadProductivaScreen(
         }
     )
 
-    val bottomSheetState = rememberModalBottomSheetState()
+
+
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.location_map))
 
     if (uiState.showPermissionBottomSheet) {
         ModalBottomSheet(
@@ -89,6 +100,11 @@ fun CreateUnidadProductivaScreen(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colorBotonSiguiente // Changed to green
+                )
+                LottieAnimation(
+                    composition = composition,
+                    modifier = Modifier.size(200.dp),
+                    iterations = LottieConstants.IterateForever
                 )
                 Text(
                     buildAnnotatedString {
@@ -197,24 +213,24 @@ fun CreateUnidadProductivaScreen(
 
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentStep) {
-                                                                1 -> Step1Ubicacion(
-                                                                    isMapVisible = uiState.isMapVisible,
-                                                                    mapMode = uiState.mapMode,
-                                                                    selectedLocation = uiState.selectedLocation,
-                                                                    locationError = uiState.locationError,
-                                                                    onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
-                                                                    onSearchOnMap = viewModel::onSearchOnMapClicked,
-                                                                    onMapDismissed = viewModel::onMapDismissed,
-                                                                    animateToLocation = uiState.animateToLocation,
-                                                                    onAnimationCompleted = viewModel::onMapAnimationCompleted,
-                                                                    onConfirmLocation = viewModel::onMapLocationSelected,
-                                                                    isFetchingLocation = uiState.isFetchingLocation,
-                                                                    municipios = uiState.municipios,
-                                                                    selectedMunicipio = uiState.selectedMunicipio,
-                                                                    onMunicipioSelected = viewModel::onMunicipioSelected
-                                                                )
-                                                                                                                                                        2 -> Step2FormularioBasico(
-                                                                                                                                                            nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,
+                        1 -> Step1Ubicacion(
+                            isMapVisible = uiState.isMapVisible,
+                            mapMode = uiState.mapMode,
+                            selectedLocation = uiState.selectedLocation,
+                            locationError = uiState.locationError,
+                            onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
+                            onSearchOnMap = viewModel::onSearchOnMapClicked,
+                            onMapDismissed = viewModel::onMapDismissed,
+                            animateToLocation = uiState.animateToLocation,
+                            onAnimationCompleted = viewModel::onMapAnimationCompleted,
+                            onConfirmLocation = viewModel::onMapLocationSelected,
+                            isFetchingLocation = uiState.isFetchingLocation,
+                            municipios = uiState.municipios,
+                            selectedMunicipio = uiState.selectedMunicipio,
+                            onMunicipioSelected = viewModel::onMunicipioSelected
+                        )
+                        2 -> Step2FormularioBasico(
+                            nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,
                             rnspa = uiState.rnspa,
                             onRnspaChange = viewModel::onRnspaChange,
                             superficie = uiState.superficie,

@@ -84,6 +84,9 @@ dependencies {
     // Material Icons Extended
     implementation(libs.androidx.compose.material.icons.extended)
 
+    // Lottie for animations
+    implementation(libs.lottie.compose)
+
     // osmdroid for OpenStreetMap
     implementation(libs.osmdroid)
     implementation(libs.androidx.preference)
@@ -95,3 +98,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+// Force IDE sync

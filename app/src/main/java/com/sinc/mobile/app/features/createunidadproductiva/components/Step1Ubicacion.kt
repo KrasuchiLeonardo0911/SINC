@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +28,7 @@ import com.sinc.mobile.domain.model.LocationError
 import com.sinc.mobile.domain.model.Municipio
 import com.sinc.mobile.ui.theme.colorBotonSiguiente
 import com.sinc.mobile.ui.theme.md_theme_light_primary
+import kotlinx.coroutines.launch
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import androidx.compose.foundation.layout.WindowInsets
@@ -132,9 +134,12 @@ private fun MapDialog(
 ) {
     var mapCenter by remember { mutableStateOf(initialCenter) }
     val bottomSheetState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
+    var isSearchActive by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedMunicipio) {
         if (selectedMunicipio != null) {
+            isSearchActive = false // Collapse when a selection is made
             bottomSheetState.bottomSheetState.partialExpand()
         }
     }
@@ -156,10 +161,16 @@ private fun MapDialog(
                 sheetContent = {
                     if (mapMode == MapMode.SEARCH_ON_MAP) {
                         SearchableSheetContent(
-                            modifier = Modifier.fillMaxHeight(0.5f), // Ocupa la mitad de la pantalla
+                            modifier = if (isSearchActive) Modifier.fillMaxHeight() else Modifier.fillMaxHeight(0.5f),
                             municipios = municipios,
                             selectedMunicipio = selectedMunicipio,
-                            onMunicipioSelected = onMunicipioSelected
+                            onMunicipioSelected = onMunicipioSelected,
+                            onSearchFocus = {
+                                isSearchActive = true
+                                scope.launch {
+                                    bottomSheetState.bottomSheetState.expand()
+                                }
+                            }
                         )
                     } else {
                         // Empty content for other modes
@@ -256,7 +267,8 @@ private fun SearchableSheetContent(
     modifier: Modifier = Modifier,
     municipios: List<Municipio>,
     selectedMunicipio: Municipio?,
-    onMunicipioSelected: (Municipio) -> Unit
+    onMunicipioSelected: (Municipio) -> Unit,
+    onSearchFocus: () -> Unit
 ) {
     var searchText by remember { mutableStateOf("") }
 
@@ -300,7 +312,13 @@ private fun SearchableSheetContent(
             value = searchText,
             onValueChange = { searchText = it },
             label = { Text("Escriba el nombre del municipio") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged {
+                    if (it.isFocused) {
+                        onSearchFocus()
+                    }
+                },
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
