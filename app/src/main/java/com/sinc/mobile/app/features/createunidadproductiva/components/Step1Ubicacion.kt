@@ -29,6 +29,8 @@ import com.sinc.mobile.ui.theme.colorBotonSiguiente
 import com.sinc.mobile.ui.theme.md_theme_light_primary
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing // Added for contentWindowInsets
 
 enum class MapMode {
     CURRENT_LOCATION,
@@ -100,6 +102,7 @@ fun Step1Ubicacion(
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
+        
     }
 }
 
@@ -140,102 +143,104 @@ private fun MapDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false // Make the dialog edge-to-edge
+            decorFitsSystemWindows = false
         )
     ) {
-        BottomSheetScaffold(
-            modifier = Modifier.imePadding(), // Apply IME padding to the whole scaffold
-            scaffoldState = bottomSheetState,
-            sheetPeekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp,
-            sheetContainerColor = Color.White, // Set background color to white
-            sheetDragHandle = null, // Disable the default drag handle
-            sheetContent = {
-                if (mapMode == MapMode.SEARCH_ON_MAP) {
-                    SearchableSheetContent(
-                        modifier = Modifier.fillMaxHeight(0.5f), // Ocupa la mitad de la pantalla
-                        municipios = municipios,
-                        selectedMunicipio = selectedMunicipio,
-                        onMunicipioSelected = onMunicipioSelected
-                    )
-                } else {
-                    // Empty content for other modes
-                    Box(modifier = Modifier.height(1.dp))
+        Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
+            BottomSheetScaffold(
+                modifier = Modifier.imePadding(),
+                scaffoldState = bottomSheetState,
+                sheetPeekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp,
+                sheetContainerColor = Color.White, // Set background color to white
+                sheetDragHandle = null, // Disable the default drag handle
+                sheetContent = {
+                    if (mapMode == MapMode.SEARCH_ON_MAP) {
+                        SearchableSheetContent(
+                            modifier = Modifier.fillMaxHeight(0.5f), // Ocupa la mitad de la pantalla
+                            municipios = municipios,
+                            selectedMunicipio = selectedMunicipio,
+                            onMunicipioSelected = onMunicipioSelected
+                        )
+                    } else {
+                        // Empty content for other modes
+                        Box(modifier = Modifier.height(1.dp))
+                    }
                 }
-            }
-        ) {
-            val peekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp
-            Box(modifier = Modifier.fillMaxSize()) {
-                OsmdroidMapView(
-                    modifier = Modifier.fillMaxSize(),
-                    initialCenter = initialCenter,
-                    onMapReady = {},
-                    animateToLocation = animateToLocation?.let { GeoPoint(it.latitude, it.longitude) },
-                    jumpToLocation = null,
-                    onAnimationCompleted = onAnimationCompleted,
-                    onMapMove = { newCenter ->
-                        mapCenter = newCenter
-                    },
-                    tileSource = TileSourceFactory.MAPNIK,
-                    initialZoom = 9.0,
-                    selectedMunicipio = selectedMunicipio
-                )
+            ) {
+                val peekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp
+                Box(modifier = Modifier.fillMaxSize()) {
+                    OsmdroidMapView(
+                        modifier = Modifier.fillMaxSize(),
+                        initialCenter = initialCenter,
+                        onMapReady = {},
+                        animateToLocation = animateToLocation?.let { GeoPoint(it.latitude, it.longitude) },
+                        jumpToLocation = null,
+                        onAnimationCompleted = onAnimationCompleted,
+                        onMapMove = { newCenter ->
+                            mapCenter = newCenter
+                        },
+                        tileSource = TileSourceFactory.MAPNIK,
+                        initialZoom = 9.0,
+                        selectedMunicipio = selectedMunicipio
+                    )
 
-                // Close button
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(50))
-                        .size(40.dp)
-                ) {
+                    // Close button
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(50))
+                            .size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar mapa",
+                            tint = md_theme_light_primary
+                        )
+                    }
+
+                    // Save Location Button
+                    Button(
+                        onClick = { onConfirmLocation(mapCenter) },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = peekHeight + 16.dp) // Dynamic padding
+                            .fillMaxWidth(0.8f),
+                        colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
+                        enabled = !isFetchingLocation
+                    ) {
+                        Text("Guardar Ubicación")
+                    }
+
+                    // Central Marker
                     Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Cerrar mapa",
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Marcador",
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(40.dp),
                         tint = md_theme_light_primary
                     )
-                }
 
-                // Save Location Button
-                Button(
-                    onClick = { onConfirmLocation(mapCenter) },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = peekHeight + 16.dp) // Dynamic padding
-                        .fillMaxWidth(0.8f),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
-                    enabled = !isFetchingLocation
-                ) {
-                    Text("Guardar Ubicación")
-                }
-
-                // Central Marker
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Marcador",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(40.dp),
-                    tint = md_theme_light_primary
-                )
-
-                // Loading indicator
-                if (isFetchingLocation) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    // Loading indicator
+                    if (isFetchingLocation) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                             ) {
-                                CircularProgressIndicator(color = md_theme_light_primary)
-                                Text("Cargando...")
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    CircularProgressIndicator(color = md_theme_light_primary)
+                                    Text("Cargando...")
+                                }
                             }
                         }
                     }
@@ -263,21 +268,16 @@ private fun SearchableSheetContent(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .navigationBarsPadding()
             .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Custom Drag Handle
         Row(
-            
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
-
-
-
         ) {
             Box(
                 modifier = Modifier
