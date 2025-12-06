@@ -50,6 +50,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import com.sinc.mobile.ui.theme.md_theme_light_primary
 import androidx.compose.material3.ButtonDefaults
 import com.sinc.mobile.ui.theme.colorBotonSiguiente
+import com.sinc.mobile.app.features.createunidadproductiva.components.RnspaRequestModal
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -72,7 +73,22 @@ fun CreateUnidadProductivaScreen(
         }
     )
 
-
+    RnspaRequestModal(
+        show = uiState.showRnspaRequestModal,
+        onDismiss = viewModel::onDismissRnspaRequestModal,
+        onSubmit = viewModel::onSubmitRnspaRequest,
+        municipio = uiState.rnspaRequestMunicipio,
+        onMunicipioChange = viewModel::onRnspaRequestMunicipioChange,
+        paraje = uiState.rnspaRequestParaje,
+        onParajeChange = viewModel::onRnspaRequestParajeChange,
+        direccion = uiState.rnspaRequestDireccion,
+        onDireccionChange = viewModel::onRnspaRequestDireccionChange,
+        infoAdicional = uiState.rnspaRequestInfoAdicional,
+        onInfoAdicionalChange = viewModel::onRnspaRequestInfoAdicionalChange,
+        isLoading = uiState.rnspaRequestLoading,
+        result = uiState.rnspaRequestResult,
+        identifierLabel = uiState.selectedIdentifierConfig?.type?.uppercase() ?: "Identificador"
+    )
 
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -230,11 +246,18 @@ fun CreateUnidadProductivaScreen(
                             onMunicipioSelected = viewModel::onMunicipioSelected
                         )
                         2 -> Step2FormularioBasico(
-                            nombre = uiState.nombre,                            onNombreChange = viewModel::onNombreChange,
-                            rnspa = uiState.rnspa,
-                            onRnspaChange = viewModel::onRnspaChange,
+                            nombre = uiState.nombre,
+                            onNombreChange = viewModel::onNombreChange,
+                            nombreError = uiState.nombreError,
+                            identifierValue = uiState.identifierValue,
+                            onIdentifierValueChange = viewModel::onIdentifierValueChange,
+                            identifierError = uiState.identifierError,
+                            selectedIdentifierConfig = uiState.selectedIdentifierConfig,
+                            identifierFormatInfo = uiState.identifierFormatInfo,
+                            onIdentifierHelpClick = viewModel::onShowRnspaRequestModal,
                             superficie = uiState.superficie,
-                            onSuperficieChange = viewModel::onSuperficieChange
+                            onSuperficieChange = viewModel::onSuperficieChange,
+                            superficieError = uiState.superficieError
                         )
                         3 -> Step3FormularioOpcional(
                             selectedOption = uiState.condicionTenencia,

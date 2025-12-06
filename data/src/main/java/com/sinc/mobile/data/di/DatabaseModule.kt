@@ -104,4 +104,10 @@ object DatabaseModule {
     fun provideTipoPastoDao(database: SincMobileDatabase): TipoPastoDao {
         return database.tipoPastoDao()
     }
+
+    @Singleton
+    @Provides
+    fun provideIdentifierConfigDao(database: SincMobileDatabase): com.sinc.mobile.data.local.dao.IdentifierConfigDao {
+        return database.identifierConfigDao()
+    }
 }

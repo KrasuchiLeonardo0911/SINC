@@ -65,3 +65,4 @@ La pantalla principal, `MainScreen`, actúa como el contenedor principal de la a
 - **`ModalNavigationDrawer`**: El `Scaffold` está envuelto en un `ModalNavigationDrawer` para proveer el menú lateral (`Sidebar`) como una forma de navegación secundaria.
 
 - **Navegación Interna**: Se eliminó el `NavHost` anidado para prevenir bugs de estado. La navegación entre las pantallas contenidas en `MainScreen` se gestiona con una variable de estado simple (`currentScreen`), lo que resulta en una arquitectura más estable y predecible para este caso de uso.
+

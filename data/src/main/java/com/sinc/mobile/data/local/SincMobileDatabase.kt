@@ -15,6 +15,7 @@ import com.sinc.mobile.data.local.dao.RazaDao
 import com.sinc.mobile.data.local.dao.TipoPastoDao
 import com.sinc.mobile.data.local.dao.TipoSueloDao
 import com.sinc.mobile.data.local.dao.UnidadProductivaDao
+import com.sinc.mobile.data.local.entity.IdentifierConfigEntity
 import com.sinc.mobile.data.local.entities.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -31,7 +32,8 @@ import java.time.format.DateTimeFormatter
         CondicionTenenciaEntity::class,
         FuenteAguaEntity::class,
         TipoSueloEntity::class,
-        TipoPastoEntity::class
+        TipoPastoEntity::class,
+        IdentifierConfigEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -51,6 +53,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun fuenteAguaDao(): FuenteAguaDao
     abstract fun tipoSueloDao(): TipoSueloDao
     abstract fun tipoPastoDao(): TipoPastoDao
+    abstract fun identifierConfigDao(): com.sinc.mobile.data.local.dao.IdentifierConfigDao
 }
 
 class Converters {
