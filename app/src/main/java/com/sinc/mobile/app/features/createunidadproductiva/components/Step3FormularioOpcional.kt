@@ -23,7 +23,8 @@ import androidx.compose.ui.unit.dp
 fun Step3FormularioOpcional(
     selectedOption: String,
     options: List<String>,
-    onOptionSelected: (String) -> Unit
+    onOptionSelected: (String) -> Unit,
+    condicionTenenciaError: String?
 ) {
     Column(
         modifier = Modifier
@@ -61,6 +62,16 @@ fun Step3FormularioOpcional(
                     )
                 }
             }
+        }
+        if (condicionTenenciaError != null) {
+            Text(
+                text = condicionTenenciaError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 8.dp)
+            )
         }
         Spacer(modifier = Modifier.height(24.dp))
     }

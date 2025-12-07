@@ -45,6 +45,8 @@ fun Step1Ubicacion(
     mapMode: MapMode,
     selectedLocation: DomainGeoPoint?,
     locationError: LocationError?,
+    mapErrorMessage: String?,
+    onClearMapErrorMessage: () -> Unit,
     onUseCurrentLocation: () -> Unit,
     onSearchOnMap: () -> Unit,
     onMapDismissed: () -> Unit,
@@ -67,7 +69,9 @@ fun Step1Ubicacion(
             isFetchingLocation = isFetchingLocation,
             municipios = municipios,
             selectedMunicipio = selectedMunicipio,
-            onMunicipioSelected = onMunicipioSelected
+            onMunicipioSelected = onMunicipioSelected,
+            mapErrorMessage = mapErrorMessage,
+            onClearMapErrorMessage = onClearMapErrorMessage
         )
     }
 
@@ -130,12 +134,23 @@ private fun MapDialog(
     isFetchingLocation: Boolean,
     municipios: List<Municipio>,
     selectedMunicipio: Municipio?,
-    onMunicipioSelected: (Municipio) -> Unit
+    onMunicipioSelected: (Municipio) -> Unit,
+    mapErrorMessage: String?,
+    onClearMapErrorMessage: () -> Unit
 ) {
     var mapCenter by remember { mutableStateOf(initialCenter) }
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
     var isSearchActive by remember { mutableStateOf(false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(mapErrorMessage) {
+        mapErrorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onClearMapErrorMessage()
+        }
+    }
 
     LaunchedEffect(selectedMunicipio) {
         if (selectedMunicipio != null) {
@@ -158,6 +173,7 @@ private fun MapDialog(
                 sheetPeekHeight = if (mapMode == MapMode.SEARCH_ON_MAP) 40.dp else 0.dp,
                 sheetContainerColor = Color.White, // Set background color to white
                 sheetDragHandle = null, // Disable the default drag handle
+                snackbarHost = { SnackbarHost(snackbarHostState) }, // Add SnackbarHost
                 sheetContent = {
                     if (mapMode == MapMode.SEARCH_ON_MAP) {
                         SearchableSheetContent(

@@ -1,19 +1,21 @@
 package com.sinc.mobile.data.repository
 
+import com.sinc.mobile.data.local.dao.UnidadProductivaDao
+import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
 import com.sinc.mobile.data.network.api.UnidadProductivaApiService
 import com.sinc.mobile.data.network.dto.request.CreateUnidadProductivaRequest
 import com.sinc.mobile.data.network.dto.response.UnidadProductivaDto
-import com.sinc.mobile.domain.model.UnidadProductiva
-import com.sinc.mobile.domain.model.CreateUnidadProductivaData
-import com.sinc.mobile.domain.repository.UnidadProductivaRepository
-import java.io.IOException
-import javax.inject.Inject
-
-import com.sinc.mobile.data.local.dao.UnidadProductivaDao
-import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
 import com.sinc.mobile.data.session.SessionManager
+import com.sinc.mobile.domain.model.CreateUnidadProductivaData
+import com.sinc.mobile.domain.model.GenericError
+import com.sinc.mobile.domain.model.UnidadProductiva
+import com.sinc.mobile.domain.repository.UnidadProductivaRepository
+import com.sinc.mobile.domain.util.Error
+import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.IOException
+import javax.inject.Inject
 
 class UnidadProductivaRepositoryImpl @Inject constructor(
     private val unidadProductivaApiService: UnidadProductivaApiService,
@@ -27,35 +29,28 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncUnidadesProductivas(): Result<Unit> {
-        val authToken = sessionManager.getAuthToken()
-            ?: return Result.failure(Exception("No hay token de autenticación disponible para sincronizar unidades productivas."))
-
+    override suspend fun syncUnidadesProductivas(): Result<Unit, Error> {
         return try {
             val response = unidadProductivaApiService.getUnidadesProductivas()
             if (response.isSuccessful) {
                 val dtos = response.body()
                 if (dtos != null) {
                     unidadProductivaDao.clearAndInsert(dtos.map { it.toEntity() })
-                    Result.success(Unit)
+                    Result.Success(Unit)
                 } else {
-                    Result.failure(Exception("El cuerpo de la respuesta de unidades productivas es nulo"))
+                    Result.Failure(GenericError("El cuerpo de la respuesta de unidades productivas es nulo"))
                 }
             } else {
-                // Reutilizar el manejo de errores si es posible, o crear uno específico
-                Result.failure(Exception("Error de API al sincronizar unidades productivas: ${response.code()} - ${response.message()}"))
+                Result.Failure(GenericError("Error de API al sincronizar unidades productivas: ${response.code()} - ${response.message()}"))
             }
         } catch (e: IOException) {
-            Result.failure(e)
+            Result.Failure(GenericError("Error de red: ${e.message}"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Failure(GenericError("Error inesperado: ${e.message}"))
         }
     }
 
-    override suspend fun createUnidadProductiva(data: CreateUnidadProductivaData): Result<UnidadProductiva> {
-        val authToken = sessionManager.getAuthToken()
-            ?: return Result.failure(Exception("No hay token de autenticación disponible para crear unidades productivas."))
-
+    override suspend fun createUnidadProductiva(data: CreateUnidadProductivaData): Result<UnidadProductiva, Error> {
         val request = CreateUnidadProductivaRequest(
             nombre = data.nombre,
             identificadorLocal = data.identificadorLocal,
@@ -74,19 +69,18 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val dto = response.body()
                 if (dto != null) {
-                    // Opcional: Insertar la nueva UP en la base de datos local inmediatamente
                     unidadProductivaDao.insertUnidadProductiva(dto.toEntity())
-                    Result.success(dto.toDomain())
+                    Result.Success(dto.toDomain())
                 } else {
-                    Result.failure(Exception("El cuerpo de la respuesta de creación de unidad productiva es nulo"))
+                    Result.Failure(GenericError("El cuerpo de la respuesta de creación de unidad productiva es nulo"))
                 }
             } else {
-                Result.failure(Exception("Error de API al crear unidad productiva: ${response.code()} - ${response.message()}"))
+                Result.Failure(GenericError("Error de API al crear unidad productiva: ${response.code()} - ${response.message()}"))
             }
         } catch (e: IOException) {
-            Result.failure(e)
+            Result.Failure(GenericError("Error de red: ${e.message}"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Failure(GenericError("Error inesperado: ${e.message}"))
         }
     }
 }

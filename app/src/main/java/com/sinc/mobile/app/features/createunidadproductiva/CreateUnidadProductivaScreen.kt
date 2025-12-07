@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,32 +35,32 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.app.features.createunidadproductiva.components.BottomNavBar
-import com.sinc.mobile.app.features.createunidadproductiva.components.ProgressBar
-import com.sinc.mobile.app.features.createunidadproductiva.components.Step1Ubicacion
-import com.sinc.mobile.app.features.createunidadproductiva.components.Step2FormularioBasico
-import com.sinc.mobile.app.features.createunidadproductiva.components.Step3FormularioOpcional
-import com.sinc.mobile.app.ui.components.ConfirmationDialog
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.navigationBarsPadding
-import com.sinc.mobile.ui.theme.md_theme_light_primary
-import androidx.compose.material3.ButtonDefaults
-import com.sinc.mobile.ui.theme.colorBotonSiguiente
-import com.sinc.mobile.app.features.createunidadproductiva.components.RnspaRequestModal
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.sinc.mobile.R
+import com.sinc.mobile.app.features.createunidadproductiva.components.BottomNavBar
+import com.sinc.mobile.app.features.createunidadproductiva.components.ProgressBar
+import com.sinc.mobile.app.features.createunidadproductiva.components.RnspaRequestModal
+import com.sinc.mobile.app.features.createunidadproductiva.components.Step1Ubicacion
+import com.sinc.mobile.app.features.createunidadproductiva.components.Step2FormularioBasico
+import com.sinc.mobile.app.features.createunidadproductiva.components.Step3FormularioOpcional
+import com.sinc.mobile.app.ui.components.ConfirmationDialog
+import com.sinc.mobile.app.ui.components.LoadingOverlay
+import com.sinc.mobile.domain.model.GenericError
+import com.sinc.mobile.ui.theme.colorBotonSiguiente
+import com.sinc.mobile.ui.theme.md_theme_light_primary
+import androidx.compose.foundation.layout.navigationBarsPadding
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateUnidadProductivaScreen(
     viewModel: CreateUnidadProductivaViewModel = hiltViewModel(),
@@ -72,6 +75,23 @@ fun CreateUnidadProductivaScreen(
             viewModel.onPermissionResult(isGranted)
         }
     )
+
+    // --- DIALOGS AND OVERLAYS ---
+    LoadingOverlay(isLoading = uiState.isSubmitting, message = "Guardando Unidad Productiva...")
+
+    val submissionResult = uiState.submissionResult
+    if (submissionResult != null) {
+        SubmissionResultDialog(
+            result = submissionResult,
+            onDismiss = {
+                viewModel.clearSubmissionResult()
+                // Only navigate back on success
+                if (submissionResult is com.sinc.mobile.domain.util.Result.Success) {
+                    onNavigateBack()
+                }
+            }
+        )
+    }
 
     RnspaRequestModal(
         show = uiState.showRnspaRequestModal,
@@ -90,10 +110,7 @@ fun CreateUnidadProductivaScreen(
         identifierLabel = uiState.selectedIdentifierConfig?.type?.uppercase() ?: "Identificador"
     )
 
-    val bottomSheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
-
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.location_map))
 
     if (uiState.showPermissionBottomSheet) {
@@ -139,10 +156,8 @@ fun CreateUnidadProductivaScreen(
                 )
                 Button(
                     onClick = {
-
-
                         viewModel.onPermissionBottomSheetDismissed()
-                        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente)
@@ -153,17 +168,8 @@ fun CreateUnidadProductivaScreen(
         }
     }
 
-    val titles = listOf(
-        "Seleccionar ubicación",
-        "Ubicación guardada",
-        "Datos básicos guardados"
-    )
-
-    val subtitles = listOf(
-        "Buscando en el mapa",
-        "Completando datos básicos",
-        "Último paso, seleccione una opción"
-    )
+    val titles = listOf("Seleccionar ubicación", "Ubicación guardada", "Datos básicos guardados")
+    val subtitles = listOf("Buscando en el mapa", "Completando datos básicos", "Último paso, seleccione una opción")
 
     ConfirmationDialog(
         showDialog = uiState.showExitDialog,
@@ -210,17 +216,11 @@ fun CreateUnidadProductivaScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
-
                 ProgressBar(currentStep = currentStep)
-
                 Spacer(modifier = Modifier.height(24.dp))
-
                 Text(
                     text = titles[currentStep - 1],
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        color = md_theme_light_primary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.headlineSmall.copy(color = md_theme_light_primary, fontWeight = FontWeight.Bold)
                 )
                 Text(
                     text = subtitles[currentStep - 1],
@@ -234,6 +234,8 @@ fun CreateUnidadProductivaScreen(
                             mapMode = uiState.mapMode,
                             selectedLocation = uiState.selectedLocation,
                             locationError = uiState.locationError,
+                            mapErrorMessage = uiState.mapErrorMessage,
+                            onClearMapErrorMessage = viewModel::clearMapErrorMessage,
                             onUseCurrentLocation = viewModel::onUseCurrentLocationClicked,
                             onSearchOnMap = viewModel::onSearchOnMapClicked,
                             onMapDismissed = viewModel::onMapDismissed,
@@ -262,11 +264,45 @@ fun CreateUnidadProductivaScreen(
                         3 -> Step3FormularioOpcional(
                             selectedOption = uiState.condicionTenencia,
                             options = viewModel.tenenciaOptions,
-                            onOptionSelected = viewModel::onCondicionTenenciaChange
+                            onOptionSelected = viewModel::onCondicionTenenciaChange,
+                            condicionTenenciaError = uiState.condicionTenenciaError
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SubmissionResultDialog(
+    result: com.sinc.mobile.domain.util.Result<com.sinc.mobile.domain.model.UnidadProductiva, com.sinc.mobile.domain.util.Error>,
+    onDismiss: () -> Unit
+) {
+    val title: String
+    val message: String
+
+    when (result) {
+        is com.sinc.mobile.domain.util.Result.Success -> {
+            title = "Éxito"
+            message = "La unidad productiva se ha guardado correctamente."
+        }
+        is com.sinc.mobile.domain.util.Result.Failure -> {
+            title = "Error"
+            val error = result.error as? GenericError
+            message = error?.message ?: "Ocurrió un error desconocido al guardar los datos."
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = { Text(text = message) },
+        containerColor = MaterialTheme.colorScheme.surface, // Set background to surface color (white by default in light theme)
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Aceptar")
+            }
+        }
+    )
 }

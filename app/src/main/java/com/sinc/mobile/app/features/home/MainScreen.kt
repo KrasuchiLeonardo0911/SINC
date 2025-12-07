@@ -46,10 +46,10 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     var currentScreen by remember { mutableStateOf(MainScreenRoutes.DASHBOARD) }
 
-    val shouldNavigateToCreateUnidadProductiva by viewModel.shouldNavigateToCreateUnidadProductiva.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(shouldNavigateToCreateUnidadProductiva) {
-        if (shouldNavigateToCreateUnidadProductiva) {
+    LaunchedEffect(uiState.shouldNavigateToCreateUnidadProductiva) {
+        if (uiState.shouldNavigateToCreateUnidadProductiva) {
             navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
             viewModel.resetNavigationToCreateUnidadProductiva()
         }

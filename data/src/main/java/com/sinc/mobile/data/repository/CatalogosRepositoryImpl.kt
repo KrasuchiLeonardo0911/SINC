@@ -157,13 +157,10 @@ class CatalogosRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncCatalogos(): Result<Unit> {
+    override suspend fun syncCatalogos(): com.sinc.mobile.domain.util.Result<Unit, com.sinc.mobile.domain.util.Error> {
         Log.d("CatalogosRepo", "Iniciando syncCatalogos")
         val authToken = sessionManager.getAuthToken()
-        if (authToken == null) {
-            Log.d("CatalogosRepo", "No hay token de autenticación disponible.")
-            return Result.failure(Exception("No hay token de autenticación disponible para sincronizar catálogos."))
-        }
+            ?: return com.sinc.mobile.domain.util.Result.Failure(GenericError("No hay token de autenticación disponible para sincronizar catálogos."))
 
         return try {
             Log.d("CatalogosRepo", "Realizando llamada a la API para catálogos")
@@ -184,23 +181,23 @@ class CatalogosRepositoryImpl @Inject constructor(
                     catalogosDto.tiposPasto?.let { tipoPastoDao.insertAllTiposPasto(it.map { it.toEntity() }) }
 
                     Log.d("CatalogosRepo", "Sincronización exitosa")
-                    Result.success(Unit)
+                    com.sinc.mobile.domain.util.Result.Success(Unit)
                 } else {
                     Log.d("CatalogosRepo", "Sincronización fallida: El cuerpo de la respuesta de catálogos es nulo durante la sincronización.")
-                    Result.failure(Exception("El cuerpo de la respuesta de catálogos es nulo durante la sincronización."))
+                    com.sinc.mobile.domain.util.Result.Failure(GenericError("El cuerpo de la respuesta de catálogos es nulo durante la sincronización."))
                 }
             } else {
                 val errorBody = response.errorBody()?.string() ?: "Cuerpo de error vacío"
                 Log.d("CatalogosRepo", "Sincronización fallida: Error de API al sincronizar catálogos: ${response.code()} - $errorBody")
-                Result.failure(Exception("Error de API al sincronizar catálogos: ${response.code()} - $errorBody"))
+                com.sinc.mobile.domain.util.Result.Failure(GenericError("Error de API al sincronizar catálogos: ${response.code()} - $errorBody"))
             }
         } catch (e: IOException) {
             Log.e("CatalogosRepositoryImpl", "IOException in syncCatalogos", e)
             Log.d("CatalogosRepo", "Sincronización fallida: Error de red al sincronizar catálogos: ${e.message}")
-            Result.failure(Exception("Error de red al sincronizar catálogos: ${e.message}"))
+            com.sinc.mobile.domain.util.Result.Failure(GenericError("Error de red al sincronizar catálogos: ${e.message}"))
         } catch (e: Exception) {
             Log.e("CatalogosRepositoryImpl", "Sincronización fallida: Error desconocido al sincronizar catálogos: ${e.message}")
-            Result.failure(Exception("Error desconocido al sincronizar catálogos: ${e.message}"))
+            com.sinc.mobile.domain.util.Result.Failure(GenericError("Error desconocido al sincronizar catálogos: ${e.message}"))
         }
     }
 }

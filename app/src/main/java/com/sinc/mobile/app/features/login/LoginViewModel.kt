@@ -38,27 +38,31 @@ class LoginViewModel @Inject constructor(
 
     fun onLoginClick(email: String, password: String) {
         viewModelScope.launch {
-            _state.value = LoginState(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true, error = null) // Clear previous errors
 
             when (val result = loginUseCase(email, password)) {
                 is AuthResult.Success -> {
-                    _state.value = LoginState(isSyncing = true)
+                    _state.value = _state.value.copy(isLoading = false, isSyncing = true) // Update state correctly
                     val syncResult = syncDataUseCase()
-                    if (syncResult.isSuccess) {
-                        _state.value = LoginState()
+                    if (syncResult is com.sinc.mobile.domain.util.Result.Success) {
+                        _state.value = _state.value.copy(isSyncing = false) // Clear syncing state
                         _navigationEvent.emit(NavigationEvent.NavigateToHome)
-                    } else {
-                        _state.value = LoginState(error = syncResult.exceptionOrNull()?.message ?: "Error durante la sincronización.")
+                    } else if (syncResult is com.sinc.mobile.domain.util.Result.Failure) {
+                        _state.value = _state.value.copy(
+                            isSyncing = false,
+                            error = (syncResult.error as? com.sinc.mobile.domain.model.GenericError)?.message
+                                ?: "Error durante la sincronización."
+                        )
                     }
                 }
                 is AuthResult.InvalidCredentials -> {
-                    _state.value = LoginState(error = "Credenciales inválidas.")
+                    _state.value = _state.value.copy(isLoading = false, error = "Credenciales inválidas.")
                 }
                 is AuthResult.NetworkError -> {
-                    _state.value = LoginState(error = "Error de red. Revisa tu conexión.")
+                    _state.value = _state.value.copy(isLoading = false, error = "Error de red. Revisa tu conexión.")
                 }
                 is AuthResult.UnknownError -> {
-                    _state.value = LoginState(error = result.message)
+                    _state.value = _state.value.copy(isLoading = false, error = result.message)
                 }
             }
         }
