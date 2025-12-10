@@ -19,7 +19,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.sinc.mobile.app.features.movimiento.MovimientoScreen
 import com.sinc.mobile.app.ui.components.BottomNavBar
-import com.sinc.mobile.app.ui.components.GlobalBanner
 import com.sinc.mobile.app.ui.components.Sidebar
 import com.sinc.mobile.app.ui.components.TopBar
 import kotlinx.coroutines.launch
@@ -114,6 +113,6 @@ fun MainScreen(
             }
         }
 
-        GlobalBanner()
+
     }
 }

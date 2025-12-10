@@ -58,7 +58,7 @@ object BannerManager {
 @Composable
 fun GlobalBanner(
     modifier: Modifier = Modifier,
-    durationMillis: Long = 3000
+    durationMillis: Long = 5000
 ) {
     val managerBanner = BannerManager.bannerData
     var bannerToRender by remember { mutableStateOf(managerBanner) }

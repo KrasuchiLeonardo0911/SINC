@@ -17,6 +17,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.R
+import com.sinc.mobile.app.ui.components.BannerManager
+import com.sinc.mobile.app.ui.components.BannerType
+import com.sinc.mobile.app.ui.components.LoadingOverlay
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -30,6 +33,16 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Use LoadingOverlay for a better user experience
+    val isLoadingOverlayVisible = state.isLoading || state.isSyncing
+    val loadingMessage = when {
+        state.isLoading -> "Iniciando sesión..."
+        state.isSyncing -> "Cargando sus datos..."
+        else -> null
+    }
+
+    LoadingOverlay(isLoading = isLoadingOverlayVisible, message = loadingMessage)
+
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collectLatest {
             when(it) {
@@ -37,6 +50,13 @@ fun LoginScreen(
                     onLoginSuccess()
                 }
             }
+        }
+    }
+
+    // Show errors in a banner for better visibility and timed dismissal
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            BannerManager.show(it, BannerType.ERROR)
         }
     }
 
@@ -91,25 +111,13 @@ fun LoginScreen(
             Button(
                 onClick = { viewModel.onLoginClick(email, password) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading && !state.isSyncing
+                enabled = !isLoadingOverlayVisible // Simplified condition
             ) {
                 Text("Login")
             }
 
             TextButton(onClick = onNavigateToForgotPassword) {
                 Text("¿Olvidaste tu contraseña?")
-            }
-
-            if (state.isLoading) {
-                CircularProgressIndicator()
-            }
-
-            if (state.isSyncing) {
-                Text("Sincronizando datos...")
-            }
-
-            state.error?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
             }
         }
     }

@@ -13,6 +13,8 @@ import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.navigation.NavigationCommand
 import com.sinc.mobile.domain.navigation.NavigationManager
 import com.sinc.mobile.ui.theme.SincMobileTheme
+import androidx.compose.foundation.layout.Box
+import com.sinc.mobile.app.ui.components.GlobalBanner
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
@@ -51,7 +53,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                AppNavigation(navController, startDestination = startDestination)
+                Box {
+                    AppNavigation(navController, startDestination = startDestination)
+                    GlobalBanner()
+                }
             }
         }
     }

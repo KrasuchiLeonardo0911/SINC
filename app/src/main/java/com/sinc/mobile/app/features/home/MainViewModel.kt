@@ -44,7 +44,7 @@ class MainViewModel @Inject constructor(
                     isLoading = false,
                     unidadesProductivas = unidades,
                     error = errorMsg,
-                    shouldNavigateToCreateUnidadProductiva = unidades.isEmpty()
+                    shouldNavigateToCreateUnidadProductiva = false // Always navigate to home, user can go to create UP manually
                 ) }
             }
         }
