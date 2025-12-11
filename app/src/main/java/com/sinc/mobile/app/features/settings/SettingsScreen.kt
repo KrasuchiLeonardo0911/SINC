@@ -1,54 +1,40 @@
 package com.sinc.mobile.app.features.settings
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Phone
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
+import com.sinc.mobile.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
-    onNavigateToJournalMaqueta: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -56,9 +42,7 @@ fun SettingsScreen(
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collectLatest { event ->
             when (event) {
-                is SettingsViewModel.NavigationEvent.NavigateToLogin -> {
-                    onNavigateToLogin()
-                }
+                is SettingsViewModel.NavigationEvent.NavigateToLogin -> onNavigateToLogin()
             }
         }
     }
@@ -76,127 +60,222 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text("Configuración")
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CozyLightGray)
+            .padding(horizontal = 16.dp)
+    ) {
+        // Header
+        Text(
+            text = "Configuración",
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = CozyTextMain,
+                fontSize = 32.sp
+            ),
+            modifier = Modifier.padding(top = 32.dp, bottom = 24.dp)
+        )
+
+        // Profile Card
+        ProfileCard(
+            name = "Jose Maria", // Hardcoded for now
+            onEditClick = { /* TODO: Navigate to profile edit screen */ }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Settings Items
+        var notificationsEnabled by remember { mutableStateOf(true) }
+
+        SettingsSection {
+            SettingsItem(
+                title = "Cuenta",
+                icon = Icons.Outlined.Person,
+                iconBackgroundColor = CozyLavender,
+                onClick = onNavigateToChangePassword // Reuse change password screen for "Account"
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            SettingsItem(
+                title = "Notificaciones",
+                icon = Icons.Outlined.Notifications,
+                iconBackgroundColor = CozyMint
             ) {
-                SettingsCard(
-                    title = "Cuenta",
-                    items = listOf(
-                        "Contraseña" to Icons.Outlined.Lock,
-                        "Correo" to Icons.Outlined.Email,
-                        "Teléfono" to Icons.Outlined.Phone
-                    ),
-                    onClick = { itemTitle ->
-                        if (itemTitle == "Contraseña") {
-                            onNavigateToChangePassword()
-                        }
-                        // TODO: Handle other items
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsCard(
-                    title = "Sesión",
-                    items = listOf(
-                        "Cerrar Sesión" to Icons.AutoMirrored.Outlined.ExitToApp
-                    ),
-                    onClick = { itemTitle ->
-                        if (itemTitle == "Cerrar Sesión") {
-                            showLogoutDialog = true
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsCard(
-                    title = "Maquetas",
-                    items = listOf(
-                        "Journal Maqueta" to Icons.Outlined.Person // Placeholder icon
-                    ),
-                    onClick = {
-                        onNavigateToJournalMaqueta()
-                    }
+                CozySwitch(
+                    checked = notificationsEnabled,
+                    onCheckedChange = { notificationsEnabled = it }
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        SettingsSection {
+            SettingsItem(
+                title = "Ayuda",
+                icon = Icons.Outlined.HelpOutline,
+                iconBackgroundColor = CozyPink,
+                onClick = { /* TODO */ }
+            )
+            SettingsItem(
+                title = "Cerrar Sesión",
+                icon = Icons.AutoMirrored.Outlined.ExitToApp,
+                iconBackgroundColor = CozyPink.copy(alpha = 0.5f),
+                isLogout = true,
+                onClick = { showLogoutDialog = true }
+            )
         }
     }
 }
 
 @Composable
-fun SettingsCard(
-    title: String,
-    items: List<Pair<String, ImageVector>>,
-    onClick: (String) -> Unit
-) {
+fun ProfileCard(name: String, onEditClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = CozyWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            items.forEach { (itemTitle, icon) ->
-                val isLogout = itemTitle == "Cerrar Sesión"
-                val contentColor = if (isLogout) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onClick(itemTitle) }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = itemTitle,
-                        modifier = Modifier.size(24.dp),
-                        tint = contentColor
-                    )
-                    Text(
-                        text = itemTitle,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = contentColor
-                    )
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEditClick() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(CozyLightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "User Avatar",
+                    tint = CozyTextSecondary,
+                    modifier = Modifier.size(32.dp)
+                )
             }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = CozyTextMain)
+                )
+                Text(
+                    text = "Editar perfil",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = CozyTextSecondary)
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Editar perfil",
+                tint = CozyIconGray
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsSection(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = CozyWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun SettingsItem(
+    title: String,
+    icon: ImageVector,
+    iconBackgroundColor: Color,
+    isLogout: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null
+) {
+    val contentColor = if (isLogout) md_theme_light_error else CozyTextMain
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(iconBackgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = contentColor,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold, color = contentColor),
+            modifier = Modifier.weight(1f)
+        )
+        if (trailingContent != null) {
+            trailingContent()
+        } else if (onClick != null && !isLogout) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = CozyIconGray
+            )
+        }
+    }
+}
+
+@Composable
+fun CozySwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    width: Dp = 52.dp,
+    height: Dp = 32.dp,
+    thumbPadding: Dp = 4.dp
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val horizontalBias by animateFloatAsState(targetValue = if (checked) 1f else -1f)
+
+    Box(
+        modifier = modifier
+            .size(width = width, height = height)
+            .clip(CircleShape)
+            .background(if (checked) CozyYellow else CozyDivider)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { onCheckedChange(!checked) },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(thumbPadding)
+                .fillMaxSize()
+                .align(BiasAlignment(horizontalBias = horizontalBias, verticalBias = 0f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(height - (thumbPadding * 2))
+                    .clip(CircleShape)
+                    .background(Color.White)
+            )
         }
     }
 }

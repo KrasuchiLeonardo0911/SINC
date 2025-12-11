@@ -15,29 +15,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.compose.ui.graphics.Color
+import com.sinc.mobile.ui.theme.*
 
 private val LightColors = lightColorScheme(
-    primary = colorTextoPrincipal,
+    primary = CozyTextMain,
     onPrimary = Color.White,
-    secondary = colorTextoSecundario,
+    secondary = CozyTextSecondary,
     onSecondary = Color.White,
-    tertiary = colorAlta,
+    tertiary = CozyMint,
     onTertiary = Color.White,
-    error = colorBaja,
+    error = md_theme_light_error,
     onError = Color.White,
-    background = colorFondo,
-    onBackground = colorTextoPrincipal,
-    surface = colorSuperficie,
-    onSurface = colorTextoPrincipal,
-    outline = colorBorde,
-    primaryContainer = colorFondo,
-    onPrimaryContainer = colorTextoPrincipal,
-    secondaryContainer = colorFondo,
-    onSecondaryContainer = colorTextoSecundario,
-    tertiaryContainer = colorFondo,
-    onTertiaryContainer = colorAlta,
-    surfaceVariant = colorFondo,
-    onSurfaceVariant = colorTextoSecundario,
+    background = CozyLightGray,
+    onBackground = CozyTextMain,
+    surface = CozyWhite,
+    onSurface = CozyTextMain,
+    outline = CozyDivider,
+    primaryContainer = CozyLightGray,
+    onPrimaryContainer = CozyTextMain,
+    secondaryContainer = CozyLightGray,
+    onSecondaryContainer = CozyTextSecondary,
+    tertiaryContainer = CozyLightGray,
+    onTertiaryContainer = CozyMint,
+    surfaceVariant = CozyLightGray,
+    onSurfaceVariant = CozyTextSecondary,
 )
 
 

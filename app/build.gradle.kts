@@ -82,7 +82,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-placeholder-material3:0.32.0")
 
     // Material Icons Extended
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Lottie for animations
     implementation(libs.lottie.compose)

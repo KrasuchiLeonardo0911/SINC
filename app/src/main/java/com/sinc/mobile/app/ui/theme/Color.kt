@@ -1,34 +1,37 @@
-package com.sinc.mobile.ui.theme
+package com.sinc.mobile.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// --- Nueva Paleta de Colores Unificada "Cozy" ---
+// --- Paleta de Colores del Ejemplo de Maqueta (Restaurada) ---
+val colorAlta = Color(0xFF10b981) // emerald-500
+val colorBaja = Color(0xFFf43f5e) // rose-500
+val colorSuperficie = Color.White
+val colorBorde = Color(0xFFe2e8f0) // slate-200
+val colorFondo = Color(0xFFf8fafc) // slate-50
+val colorTextoPrincipal = Color(0xFF0f172a) // slate-900
+val colorTextoSecundario = Color(0xFF64748b) // slate-500
+val colorBotonSiguiente = Color(0xFF326B41) // Verde específico para el botón Siguiente
 
-// Colores de la Maqueta Original (ahora parte del tema)
-val SoftGray = Color(0xFFF5F5F7)      // Usado como fondo en Journal
+
+// --- Nueva Paleta de Colores Unificada "Cozy" ---
+val SoftGray = Color(0xFFF5F5F7)
 val PalePink = Color(0xFFFFE0E0)
 val SoftLilac = Color(0xFFE9D5FF)
 val MintGreen = Color(0xFFD1FAE5)
 val DarkerGray = Color(0xFF8A8A8E)
+val CozyYellow = Color(0xFFFFC72C)
+val CozyLavender = Color(0xFFE8DEFF)
+val CozyMint = Color(0xFFDFF9EC)
+val CozyPink = Color(0xFFFFF0F5)
+val CozyLightGray = Color(0xFFF5F5F7)
+val CozyWhite = Color(0xFFFFFFFF)
+val CozyDivider = Color(0xFFEAEAEA)
+val CozyIconGray = Color(0xFFBDBDBD)
+val CozyTextMain = Color(0xFF1A1A1A)
+val CozyTextSecondary = Color(0xFF8A8A8E)
 
-// Colores del Nuevo Tema "Cozy"
-val CozyYellow = Color(0xFFFFC72C)      // Amarillo Caléndula (reemplaza AccentOrange)
-val CozyLavender = Color(0xFFE8DEFF)    // Lavanda Suave
-val CozyMint = Color(0xFFDFF9EC)        // Menta Pálido
-val CozyPink = Color(0xFFFFF0F5)         // Rosa Pálido (para fondos de icono)
-val CozyLightGray = Color(0xFFF5F5F7)  // Fondo general (mismo que SoftGray)
-val CozyWhite = Color(0xFFFFFFFF)        // Fondo de tarjetas
-val CozyDivider = Color(0xFFEAEAEA)      // Divisores
-val CozyIconGray = Color(0xFFBDBDBD)      // Iconos inactivos / chevrons
-val CozyTextMain = Color(0xFF1A1A1A)      // Texto principal
-val CozyTextSecondary = Color(0xFF8A8A8E) // Texto secundario (mismo que DarkerGray)
 
-// Nuevos colores para el rediseño "Soft UI" de MovimientoScreen
-val OffWhite = Color(0xFFF9F8F6)
-val PastelGreen = Color(0xFFE8F5E9)
-val WarmGray = Color(0xFF8C8A80) // Nuevo color para subtítulos sutiles
-
-// --- Paleta de colores principal del tema (existente, se puede eliminar gradualmente) ---
+// --- Paleta de colores principal del tema (existente) ---
 val md_theme_light_primary = Color(0xFF8C2218)
 val md_theme_light_onPrimary = Color(0xFFFFFFFF)
 val md_theme_light_primaryContainer = Color(0xFFFFDAD5)
@@ -72,13 +75,3 @@ val md_theme_dark_onSurface = Color(0xFFD0C4C2)
 val md_theme_dark_surfaceVariant = Color(0xFF534341)
 val md_theme_dark_onSurfaceVariant = Color(0xFFD8C2BF)
 val md_theme_dark_outline = Color(0xFFA08C8A)
-
-// Mapeo de colores antiguos a la nueva paleta "Cozy" o a colores de Material Design
-val colorBotonSiguiente = CozyYellow
-val colorFondo = CozyLightGray
-val colorTextoPrincipal = CozyTextMain
-val colorSuperficie = CozyWhite
-val colorBorde = CozyDivider
-val colorAlta = CozyMint
-val colorBaja = md_theme_light_error
-val colorTextoSecundario = CozyTextSecondary

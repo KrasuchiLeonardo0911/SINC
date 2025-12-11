@@ -6,9 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
 import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
-import com.sinc.mobile.app.features.home.MainScreen
+import com.sinc.mobile.app.features.home.journalscreen.MainJournalScreen
 import com.sinc.mobile.app.features.login.LoginScreen
-import com.sinc.mobile.app.features.maquetas.CuadernoDeCampoMaquetaScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.features.campos.CamposScreen
@@ -24,7 +23,6 @@ object Routes {
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
     const val CAMPOS = "campos"
-    const val JOURNAL_MAQUETA = "journal_maqueta"
 }
 
 @Composable
@@ -49,10 +47,10 @@ fun AppNavigation(
             )
         }
         composable(Routes.HOME) {
-            MainScreen(navController = navController)
+            MainJournalScreen(navController = navController)
         }
         composable(Routes.MOVIMIENTO) {
-            MovimientoScreen()
+            MovimientoScreen(navController = navController)
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(
@@ -62,8 +60,7 @@ fun AppNavigation(
                         popUpTo(Routes.HOME) { inclusive = true } // Pop up to home to clear backstack
                     }
                 },
-                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
-                onNavigateToJournalMaqueta = { navController.navigate(Routes.JOURNAL_MAQUETA) }
+                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) }
             )
         }
         composable(Routes.CHANGE_PASSWORD) {
@@ -100,9 +97,6 @@ fun AppNavigation(
                     navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
             )
-        }
-        composable(Routes.JOURNAL_MAQUETA) {
-            com.sinc.mobile.app.features.maquetas.JournalScreen()
         }
     }
 }
