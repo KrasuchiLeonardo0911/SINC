@@ -5,14 +5,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.Analytics
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -45,7 +45,7 @@ fun Sidebar(
                 }
             )
             SidebarItem(
-                icon = Icons.Outlined.AccountCircle,
+                icon = Icons.Outlined.Person,
                 text = "Mi Perfil",
                 isSelected = false,
                 onClick = { /* TODO */ }
@@ -55,7 +55,7 @@ fun Sidebar(
 
             SidebarSection(title = "Gestión Productiva")
             SidebarItem(
-                icon = Icons.Outlined.Book,
+                icon = Icons.Outlined.MenuBook,
                 text = "Cuaderno de Campo",
                 isSelected = currentRoute == MainScreenRoutes.MOVIMIENTO,
                 onClick = {
@@ -70,7 +70,7 @@ fun Sidebar(
                 onClick = { /* TODO */ }
             )
             SidebarItem(
-                icon = Icons.Outlined.Map,
+                icon = Icons.Outlined.LocationOn,
                 text = "Mis Campos",
                 isSelected = currentRoute == MainScreenRoutes.CAMPOS,
                 onClick = {
@@ -79,7 +79,7 @@ fun Sidebar(
                 }
             )
             SidebarItem(
-                icon = Icons.Outlined.AddCircle,
+                icon = Icons.Outlined.AddCircleOutline,
                 text = "Registrar Campo",
                 isSelected = false,
                 onClick = {
@@ -92,13 +92,13 @@ fun Sidebar(
 
             SidebarSection(title = "Análisis y Datos")
             SidebarItem(
-                icon = Icons.Outlined.Analytics,
+                icon = Icons.Outlined.BarChart,
                 text = "Estadísticas",
                 isSelected = false,
                 onClick = { /* TODO */ }
             )
             SidebarItem(
-                icon = Icons.Outlined.PictureAsPdf,
+                icon = Icons.Outlined.Article,
                 text = "Reportes",
                 isSelected = false,
                 onClick = { /* TODO */ }

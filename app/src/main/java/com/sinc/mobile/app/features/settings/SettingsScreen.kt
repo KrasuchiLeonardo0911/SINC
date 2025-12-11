@@ -48,6 +48,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
+    onNavigateToJournalMaqueta: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -135,6 +136,16 @@ fun SettingsScreen(
                         if (itemTitle == "Cerrar Sesión") {
                             showLogoutDialog = true
                         }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsCard(
+                    title = "Maquetas",
+                    items = listOf(
+                        "Journal Maqueta" to Icons.Outlined.Person // Placeholder icon
+                    ),
+                    onClick = {
+                        onNavigateToJournalMaqueta()
                     }
                 )
             }

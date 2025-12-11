@@ -1,19 +1,19 @@
 package com.sinc.mobile.app.ui.components
 
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.features.home.MainScreenRoutes
 
 private data class BottomNavItem(
@@ -28,9 +28,9 @@ fun BottomNavBar(
     onNavigate: (String) -> Unit
 ) {
     val bottomNavItems = listOf(
-        BottomNavItem("Inicio", Icons.Outlined.Home, MainScreenRoutes.DASHBOARD),
-        BottomNavItem("Cuaderno", Icons.Outlined.Book, MainScreenRoutes.MOVIMIENTO),
-        BottomNavItem("Notificaciones", Icons.Outlined.Notifications, MainScreenRoutes.NOTIFICATIONS)
+        BottomNavItem("Inicio", Icons.Default.Home, MainScreenRoutes.DASHBOARD),
+        BottomNavItem("Cuaderno", Icons.Default.MenuBook, MainScreenRoutes.MOVIMIENTO),
+        BottomNavItem("Notificaciones", Icons.Default.Notifications, MainScreenRoutes.NOTIFICATIONS)
     )
 
     NavigationBar(

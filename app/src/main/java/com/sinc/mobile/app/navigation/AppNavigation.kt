@@ -24,6 +24,7 @@ object Routes {
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
     const val CAMPOS = "campos"
+    const val JOURNAL_MAQUETA = "journal_maqueta"
 }
 
 @Composable
@@ -61,7 +62,8 @@ fun AppNavigation(
                         popUpTo(Routes.HOME) { inclusive = true } // Pop up to home to clear backstack
                     }
                 },
-                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) }
+                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
+                onNavigateToJournalMaqueta = { navController.navigate(Routes.JOURNAL_MAQUETA) }
             )
         }
         composable(Routes.CHANGE_PASSWORD) {
@@ -98,6 +100,9 @@ fun AppNavigation(
                     navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
             )
+        }
+        composable(Routes.JOURNAL_MAQUETA) {
+            com.sinc.mobile.app.features.maquetas.JournalScreen()
         }
     }
 }
