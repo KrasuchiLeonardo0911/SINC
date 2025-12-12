@@ -42,6 +42,8 @@ data class MovimientoState(
     // Step Selections
     val selectedUnidad: UnidadProductiva? = null,
     val selectedAction: String? = null, // "alta" or "baja"
+    val isUnidadSelectedLoading: Boolean = false,
+
 
     // UI State
     val isSaving: Boolean = false,
@@ -94,12 +96,14 @@ class MovimientoViewModel @Inject constructor(
     }
 
     fun onUnidadSelected(unidad: UnidadProductiva) {
-        _state.value = _state.value.copy(
-            selectedUnidad = unidad,
-            selectedAction = null,
-            saveError = null
-        )
-        formManager = null // Resetea el form manager
+        viewModelScope.launch {
+            if (state.value.selectedUnidad == unidad) return@launch
+
+            _state.value = _state.value.copy(selectedUnidad = unidad, isUnidadSelectedLoading = true)
+            kotlinx.coroutines.delay(500)
+            _state.value = _state.value.copy(isUnidadSelectedLoading = false,  selectedAction = null, saveError = null)
+            formManager = null // Resetea el form manager
+        }
     }
 
     fun onActionSelected(action: String) {

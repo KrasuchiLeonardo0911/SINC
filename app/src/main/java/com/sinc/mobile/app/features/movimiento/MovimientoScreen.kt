@@ -65,7 +65,7 @@ fun MovimientoScreen(
             // --- 0. Título de la Pantalla ---
             item {
                 Text(
-                    text = "Movimientos",
+                    text = "Registrar Stock",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = CozyTextMain,
@@ -82,13 +82,13 @@ fun MovimientoScreen(
                 )
             }
 
-            // --- A. Estado Vacío (cuando no hay campo seleccionado) ---
+            // --- Content ---
             if (state.selectedUnidad == null) {
                 item {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 128.dp) // Ajustado el padding superior a 128.dp
+                            .padding(top = 128.dp)
                             .padding(horizontal = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -117,8 +117,14 @@ fun MovimientoScreen(
                         )
                     }
                 }
+            } else if (state.isUnidadSelectedLoading) {
+                item {
+                    MovimientoSkeletonLoader()
+                }
             } else {
-                // ... (el resto de la lógica de la pantalla se mantiene igual)
+                item {
+                    MovimientoForm()
+                }
             }
         }
     }
