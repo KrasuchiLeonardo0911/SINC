@@ -6,6 +6,7 @@ import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -26,6 +27,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.sinc.mobile.ui.theme.*
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+
+// ... (other imports)
 
 private enum class FormDropdownState { Collapsed, Expanded }
 
@@ -89,6 +94,9 @@ fun <T> FormDropdown(
                 onDismissRequest = { currentState = FormDropdownState.Collapsed }
             ) {
                 val dropdownShape = RoundedCornerShape(28.dp)
+
+// ... (inside FormDropdown composable)
+
                 Card(
                     modifier = Modifier
                         .width(with(density) { anchorSize.width.toDp() })
@@ -97,11 +105,10 @@ fun <T> FormDropdown(
                     colors = CardDefaults.cardColors(containerColor = PaleWarmGray)
                 ) {
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = screenHeight / 2 - 20.dp),
+                        modifier = Modifier.heightIn(max = 184.dp), // Aprox 3 items
                         contentPadding = PaddingValues(8.dp)
                     ) {
-                        items(items.size) { index ->
-                            val item = items[index]
+                        items(items) { item ->
                             val isSelected = item == selectedItem
                             
                             Card(
@@ -125,7 +132,7 @@ fun <T> FormDropdown(
                                         text = itemToString(item),
                                         color = if (isSelected) CozyTextMain else InactiveGray,
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                        fontSize = 16.sp, // Revertido
+                                        fontSize = 16.sp,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }

@@ -122,8 +122,19 @@ fun MovimientoScreen(
                     MovimientoSkeletonLoader()
                 }
             } else {
-                item {
-                    MovimientoForm()
+                viewModel.formManager?.let { fm ->
+                    item {
+                        MovimientoForm(
+                            formState = fm.formState.value,
+                            onEspecieSelected = fm::onEspecieSelected,
+                            onCategoriaSelected = fm::onCategoriaSelected,
+                            onRazaSelected = fm::onRazaSelected,
+                            onMotivoSelected = fm::onMotivoSelected,
+                            onCantidadChanged = fm::onCantidadChanged,
+                            onSave = viewModel::saveMovement,
+                            isSaving = state.isSaving
+                        )
+                    }
                 }
             }
         }

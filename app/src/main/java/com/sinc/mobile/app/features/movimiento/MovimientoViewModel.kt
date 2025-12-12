@@ -99,27 +99,13 @@ class MovimientoViewModel @Inject constructor(
         viewModelScope.launch {
             if (state.value.selectedUnidad == unidad) return@launch
 
-            _state.value = _state.value.copy(selectedUnidad = unidad, isUnidadSelectedLoading = true)
-            kotlinx.coroutines.delay(500)
-            _state.value = _state.value.copy(isUnidadSelectedLoading = false,  selectedAction = null, saveError = null)
-            formManager = null // Resetea el form manager
-        }
-    }
-
-    fun onActionSelected(action: String) {
-        // Si se pulsa la misma acción o la acción está vacía (desde el botón 'X'), se cierra.
-        if (action == state.value.selectedAction || action.isBlank()) {
-            dismissForm()
-            return
-        }
-
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isFormLoading = true, selectedAction = action)
-            formManager = MovimientoFormManager(state.value.catalogos, action)
+            _state.value = _state.value.copy(selectedUnidad = unidad, isUnidadSelectedLoading = true, selectedAction = null, saveError = null)
+            
+            // Create the form manager immediately
+            formManager = MovimientoFormManager(state.value.catalogos)
 
             kotlinx.coroutines.delay(500)
-
-            _state.value = _state.value.copy(isFormLoading = false)
+            _state.value = _state.value.copy(isUnidadSelectedLoading = false)
         }
     }
 

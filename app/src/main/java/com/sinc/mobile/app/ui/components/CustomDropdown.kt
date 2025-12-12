@@ -128,7 +128,7 @@ fun <T> CustomDropdown(
                         colors = CardDefaults.cardColors(containerColor = PaleWarmGray)
                     ) {
                         LazyColumn(
-                            modifier = Modifier.heightIn(max = screenHeight / 2 - 20.dp), // Límite a mitad de pantalla con margen
+                            modifier = Modifier.heightIn(max = 184.dp), // Aprox 3 items
                             contentPadding = PaddingValues(8.dp)
                         ) {
                             items(items.size) { index ->
@@ -137,8 +137,8 @@ fun <T> CustomDropdown(
 
                                 // Cápsula para cada opción
                                 Card(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), // Más margen
-                                    shape = RoundedCornerShape(28.dp), // Más redondeado
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(28.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (isSelected) AccentYellow else CozyWhite
                                     )
@@ -151,7 +151,7 @@ fun <T> CustomDropdown(
                                                 onItemSelected(item)
                                                 currentState = DropdownState.Collapsed
                                             }
-                                            .padding(horizontal = 16.dp, vertical = 6.dp) // Píldoras más chicas
+                                            .padding(horizontal = 16.dp, vertical = 6.dp)
                                     ) {
                                         itemLeadingIcon(item, isSelected)
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -159,7 +159,7 @@ fun <T> CustomDropdown(
                                             text = getItemName(item),
                                             color = if (isSelected) CozyTextMain else InactiveGray,
                                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                            fontSize = 16.sp, // Fuente más grande
+                                            fontSize = 16.sp,
                                             modifier = Modifier.weight(1f)
                                         )
                                     }

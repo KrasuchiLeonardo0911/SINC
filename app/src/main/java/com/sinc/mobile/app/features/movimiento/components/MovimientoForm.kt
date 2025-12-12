@@ -11,72 +11,85 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sinc.mobile.app.features.movimiento.MovimientoFormState
 import com.sinc.mobile.app.ui.components.FormDropdown
 import com.sinc.mobile.app.ui.components.FormFieldWrapper
+import com.sinc.mobile.domain.model.Categoria
+import com.sinc.mobile.domain.model.Especie
+import com.sinc.mobile.domain.model.MotivoMovimiento
+import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.ui.theme.AccentYellow
 import com.sinc.mobile.ui.theme.SincMobileTheme
 
 @Composable
 fun MovimientoForm(
-    modifier: Modifier = Modifier
-    // TODO: Add back state and event handlers
+    modifier: Modifier = Modifier,
+    formState: MovimientoFormState,
+    onEspecieSelected: (Especie) -> Unit,
+    onCategoriaSelected: (Categoria) -> Unit,
+    onRazaSelected: (Raza) -> Unit,
+    onMotivoSelected: (MotivoMovimiento) -> Unit,
+    onCantidadChanged: (String) -> Unit,
+    onSave: () -> Unit,
+    isSaving: Boolean,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp) // Original spacing
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // --- Especie ---
         FormFieldWrapper(label = "Especie") { modifier ->
-            FormDropdown<String>(
-                items = listOf("Ovino", "Caprino", "Bovino"),
-                selectedItem = "Ovino",
-                onItemSelected = { /*TODO*/ },
-                itemToString = { it },
+            FormDropdown(
+                items = formState.filteredEspecies,
+                selectedItem = formState.selectedEspecie,
+                onItemSelected = onEspecieSelected,
+                itemToString = { it.nombre },
                 modifier = modifier
             )
         }
 
         // --- Categoria ---
         FormFieldWrapper(label = "Categoría") { modifier ->
-            FormDropdown<String>(
-                items = listOf("Cordero", "Oveja", "Carnero"),
-                selectedItem = null,
-                onItemSelected = { /*TODO*/ },
-                itemToString = { it },
+            FormDropdown(
+                items = formState.filteredCategorias,
+                selectedItem = formState.selectedCategoria,
+                onItemSelected = onCategoriaSelected,
+                itemToString = { it.nombre },
                 placeholder = "Seleccionar categoría",
-                modifier = modifier
+                modifier = modifier,
+                enabled = formState.selectedEspecie != null
             )
         }
-        
+
         // --- Raza ---
         FormFieldWrapper(label = "Raza") { modifier ->
-            FormDropdown<String>(
-                items = listOf("Merino", "Corriedale", "Pampinta"),
-                selectedItem = null,
-                onItemSelected = { /*TODO*/ },
-                itemToString = { it },
+            FormDropdown(
+                items = formState.filteredRazas,
+                selectedItem = formState.selectedRaza,
+                onItemSelected = onRazaSelected,
+                itemToString = { it.nombre },
                 placeholder = "Seleccionar raza",
-                modifier = modifier
+                modifier = modifier,
+                enabled = formState.selectedEspecie != null
             )
         }
 
         // --- Motivo ---
         FormFieldWrapper(label = "Motivo") { modifier ->
-            FormDropdown<String>(
-                items = listOf("Nacimiento", "Compra", "Traslado"),
-                selectedItem = "Nacimiento",
-                onItemSelected = { /*TODO*/ },
-                itemToString = { it },
+            FormDropdown(
+                items = formState.filteredMotivos,
+                selectedItem = formState.selectedMotivo,
+                onItemSelected = onMotivoSelected,
+                itemToString = { it.nombre },
                 modifier = modifier
             )
         }
-        
+
         // --- Cantidad ---
         FormFieldWrapper(label = "Cantidad") { modifier ->
-            var cantidad by remember { mutableStateOf("1") }
             OutlinedTextField(
-                value = cantidad,
-                onValueChange = { cantidad = it },
+                value = formState.cantidad,
+                onValueChange = onCantidadChanged,
                 modifier = modifier,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -88,39 +101,37 @@ fun MovimientoForm(
                 placeholder = { Text("0") },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
-                    fontSize = 16.sp, // Original font size
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
             )
         }
 
-        Spacer(Modifier.height(8.dp)) // Original spacing
+        Spacer(Modifier.height(8.dp))
 
         // --- Botón de Guardar ---
         Button(
-            onClick = { /* TODO */ },
+            onClick = onSave,
+            enabled = formState.isFormValid && !isSaving,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp), // Original height
-            shape = ButtonDefaults.shape, // Original shape
+                .height(56.dp),
+            shape = ButtonDefaults.shape,
             colors = ButtonDefaults.buttonColors(containerColor = AccentYellow)
         ) {
-            Text(
-                text = "Guardar",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp, // Original font size
-                color = Color.Black // Texto negro
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
-@Composable
-fun MovimientoFormPreview() {
-    SincMobileTheme {
-        Box(Modifier.padding(16.dp)) {
-            MovimientoForm()
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.Black
+                )
+            } else {
+                Text(
+                    text = "Guardar",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+            }
         }
     }
 }

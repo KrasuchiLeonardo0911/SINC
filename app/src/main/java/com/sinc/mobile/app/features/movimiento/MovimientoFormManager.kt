@@ -25,22 +25,16 @@ data class MovimientoFormState(
 )
 
 class MovimientoFormManager(
-    private val catalogos: Catalogos?,
-    private val action: String?
+    private val catalogos: Catalogos?
 ) {
     private val _formState = mutableStateOf(MovimientoFormState())
     val formState: State<MovimientoFormState> = _formState
 
     init {
-        action?.let {
-            val filteredMotivos = catalogos?.motivosMovimiento?.filter {
-                it.tipo.equals(action, ignoreCase = true)
-            } ?: emptyList()
-            _formState.value = _formState.value.copy(
-                filteredMotivos = filteredMotivos,
-                filteredEspecies = catalogos?.especies ?: emptyList()
-            )
-        }
+        _formState.value = _formState.value.copy(
+            filteredMotivos = catalogos?.motivosMovimiento ?: emptyList(),
+            filteredEspecies = catalogos?.especies ?: emptyList()
+        )
     }
 
     fun onEspecieSelected(especie: Especie) {
