@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soft UI Dropdown</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-color: #F9F8F6; /* Color de fondo de la pantalla */
+    --card-white: #FFFFFF;
+    --text-dark: #333333;
+    --text-gray: #888888;
+    --accent-green-bg: #D7F0E5; /* Fondo círculo verde */
+    --accent-green-icon: #4CAF50; /* Icono verde */
+    --selected-bg: #C8F0D6; /* Fondo de la opción seleccionada */
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --border-radius: 24px; /* Radio de las esquinas */
+    --transition-speed: 0.3s;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+    min-height: 100vh;
+  }
+
+  /* Contenedor principal del componente */
+  .dropdown-wrapper {
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+  }
+
+  /* --- EL GATILLO (Trigger) --- */
+  .dropdown-trigger {
+    background-color: var(--card-white);
+    border-radius: var(--border-radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    z-index: 2; /* Para que quede por encima del menú al cerrarse */
+    position: relative;
+  }
+
+  /* Estilos cuando está activo */
+  .dropdown-wrapper.active .dropdown-trigger {
+    /* Quitamos el redondeo inferior para unirlo visualmente al menú */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: none; /* Quitamos sombra para que no se vea una línea entre los dos */
+  }
+
+  .trigger-content {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Círculos de colores para los iconos */
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+
+  .icon-circle.green-pastel { background-color: var(--accent-green-bg); }
+  .icon-circle.purple-pastel { background-color: #E8EAF6; }
+  .icon-circle.yellow-pastel { background-color: #FFF3E0; }
+  .icon-circle.red-pastel { background-color: #FFEBEE; }
+
+  .trigger-text {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 16px;
+  }
+
+  /* Flecha Chevron */
+  .chevron-icon {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-gray);
+    transition: transform var(--transition-speed) ease;
+  }
+
+  /* Rotar flecha al activar */
+  .dropdown-wrapper.active .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  /* --- EL MENÚ DESPLEGABLE (Lista) --- */
+  .dropdown-menu {
+    background-color: var(--card-white);
+    /* Bordes redondeados solo abajo para conectar con el trigger */
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    overflow: hidden;
+    position: absolute;
+    top: 100%; /* Justo debajo del trigger */
+    left: 0;
+    width: 100%;
+    
+    /* Estados iniciales para la animación (cerrado) */
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    box-shadow: none;
+    transition: all var(--transition-speed) ease;
+    z-index: 1;
+  }
+
+  /* Estados finales para la animación (abierto) */
+  .dropdown-wrapper.active .dropdown-menu {
+    max-height: 400px; /* Altura suficiente para el contenido */
+    opacity: 1;
+    transform: translateY(0);
+    /* La sombra ahora la lleva el menú completo */
+    box-shadow: var(--shadow-soft);
+    padding-bottom: 8px; /* Un poco de espacio al final */
+  }
+
+  /* --- OPCIONES DE LA LISTA --- */
+  .option-item {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0; /* Separador sutil */
+  }
+  
+  .option-item:last-child {
+    border-bottom: none;
+  }
+
+  .option-item:hover {
+    background-color: #fcfcfc;
+  }
+
+  .option-content {
+    display: flex;
+    align-items: center;
+  }
+
+  .option-text {
+    color: var(--text-dark);
+    font-size: 15px;
+  }
+
+  /* Estilos para la opción seleccionada */
+  .option-item.selected {
+    background-color: var(--selected-bg);
+  }
+
+  .option-item.selected .option-text {
+    font-weight: 600;
+    color: #2E7D32; /* Verde más oscuro para texto seleccionado */
+  }
+
+  .check-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--accent-green-icon);
+    display: none; /* Oculto por defecto */
+  }
+
+  .option-item.selected .check-icon {
+    display: block; /* Mostrar solo si está seleccionado */
+  }
+
+  /* Utilidad para SVGs */
+  .icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+  .icon-svg.green { fill: var(--accent-green-icon); }
+  .icon-svg.purple { fill: #7986CB; }
+  .icon-svg.yellow { fill: #FFB74D; }
+  .icon-svg.red { fill: #E57373; }
+
+</style>
+</head>
+<body>
+
+<div class="dropdown-wrapper" id="myDropdown">
+  
+  <div class="dropdown-trigger">
+    <div class="trigger-content">
+      <div class="icon-circle green-pastel">
+        <svg class="icon-svg green" viewBox="0 0 24 24">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+      </div>
+      <span class="trigger-text" id="selectedText">Seleccionar campo</span>
+    </div>
+    
+    <svg class="chevron-icon" viewBox="0 0 24 24">
+      <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+    </svg>
+  </div>
+
+  <div class="dropdown-menu">
+    
+    <div class="option-item selected" data-value="Campo Los Álamos">
+      <div class="option-content">
+        <div class="icon-circle green-pastel" style="width: 32px; height: 32px; margin-right: 12px;">
+           <svg class="icon-svg green" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+           </svg>
+        </div>
+        <span class="option-text">Campo Los Álamos</span>
+      </div>
+      <svg class="check-icon" viewBox="0 0 24 24">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+    </div>
+
+    <div class="option-item" data-value="Lote Norte">
+       <div class="option-content">
+        <div class="icon-circle purple-pastel" style="width: 32px; height: 32px; margin-right: 12px;">
+           <svg class="icon-svg purple" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+           </svg>
+        </div>
+        <span class="option-text">Lote Norte</span>
+      </div>
+    </div>
+
+     <div class="option-item" data-value="Finca San Juan">
+       <div class="option-content">
+        <div class="icon-circle yellow-pastel" style="width: 32px; height: 32px; margin-right: 12px;">
+           <svg class="icon-svg yellow" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+           </svg>
+        </div>
+        <span class="option-text">Finca San Juan</span>
+      </div>
+    </div>
+
+     <div class="option-item" data-value="Parcela 4">
+       <div class="option-content">
+        <div class="icon-circle red-pastel" style="width: 32px; height: 32px; margin-right: 12px;">
+           <svg class="icon-svg red" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+           </svg>
+        </div>
+        <span class="option-text">Parcela 4</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Obtener referencias a los elementos
+  const dropdownWrapper = document.getElementById('myDropdown');
+  const dropdownTrigger = dropdownWrapper.querySelector('.dropdown-trigger');
+  const options = dropdownWrapper.querySelectorAll('.option-item');
+  const selectedTextSpan = document.getElementById('selectedText');
+
+  // Lógica para abrir/cerrar el menú
+  dropdownTrigger.addEventListener('click', () => {
+    // Alternar la clase 'active' en el contenedor principal
+    dropdownWrapper.classList.toggle('active');
+  });
+
+  // Lógica para seleccionar una opción
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      // 1. Quitar la clase 'selected' de todas las opciones
+      options.forEach(opt => opt.classList.remove('selected'));
+      
+      // 2. Añadir 'selected' a la opción clickeada
+      option.classList.add('selected');
+      
+      // 3. Actualizar el texto del gatillo con el valor seleccionado
+      const newValue = option.getAttribute('data-value');
+      selectedTextSpan.textContent = newValue;
+      
+      // 4. Cerrar el menú
+      dropdownWrapper.classList.remove('active');
+    });
+  });
+
+  // Cerrar el menú si se hace clic fuera de él (Opcional pero recomendable)
+  document.addEventListener('click', (e) => {
+    if (!dropdownWrapper.contains(e.target)) {
+      dropdownWrapper.classList.remove('active');
+    }
+  });
+</script>
+
+</body>
+</html>

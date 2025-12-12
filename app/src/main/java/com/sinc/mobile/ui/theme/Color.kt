@@ -24,9 +24,37 @@ val CozyTextMain = Color(0xFF1A1A1A)      // Texto principal
 val CozyTextSecondary = Color(0xFF8A8A8E) // Texto secundario (mismo que DarkerGray)
 
 // Nuevos colores para el rediseño "Soft UI" de MovimientoScreen
+
 val OffWhite = Color(0xFFF9F8F6)
+
 val PastelGreen = Color(0xFFE8F5E9)
+
+val SelectedGreen = Color(0xFFC8F0D6)
+
+val SelectedGreenText = Color(0xFF2E7D32)
+
+val IconGreen = Color(0xFF66BB6A) // Darker pastel green
+
+val IconPurple = Color(0xFF9575CD) // Darker pastel purple
+
+val IconRed = Color(0xFFEF9A9A) // Darker pastel red
+
+val IconYellowHtml = Color(0xFFFFD54F) // Darker pastel yellow/orange
+
+val IconVioletHtml = Color(0xFF7E57C2) // Darker pastel violet
+
+
+
+val WarmCream = Color(0xFFFAF7F0) // Re-adding WarmCream
+
+val SelectedIconOrange = Color(0xFFD97706)
+val AccentYellow = Color(0xFFF59E0B)
+val PaleWarmGray = Color(0xFFF2F2F0)
+val InactiveGray = Color(0xFFA0A0A0)
+val SelectedPinYellow = Color(0xFFD97706)
+
 val WarmGray = Color(0xFF8C8A80)
+
 val CreamyYellow = Color(0xFFFFFBEB) // Amarillo cremoso para highlights
 
 // --- Paleta de colores principal del tema (existente, se puede eliminar gradualmente) ---

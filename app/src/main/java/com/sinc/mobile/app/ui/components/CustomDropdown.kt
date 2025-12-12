@@ -10,6 +10,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,6 +26,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -42,136 +45,124 @@ fun <T> CustomDropdown(
     selectedItem: T?,
     onItemSelected: (T) -> Unit,
     getItemName: (T) -> String,
-    leadingIcon: @Composable () -> Unit,
+    leadingIcon: @Composable (selectedItem: T?) -> Unit,
+    itemLeadingIcon: @Composable (item: T, isSelected: Boolean) -> Unit,
     placeholder: String
 ) {
     var currentState by remember { mutableStateOf(DropdownState.Collapsed) }
     var anchorSize by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
 
     val transition = updateTransition(targetState = currentState, label = "DropdownTransition")
 
     val rotationState by transition.animateFloat(
         label = "Rotation",
-        transitionSpec = { tween(durationMillis = 200) }
+        transitionSpec = { tween(durationMillis = 300) }
     ) { state ->
         if (state == DropdownState.Expanded) 180f else 0f
     }
 
-    val bottomCornerRadius by transition.animateDp(
-        label = "BottomCornerRadius",
-        transitionSpec = { tween(durationMillis = 200) }
+    val menuShadow by transition.animateDp(
+        label = "MenuShadow",
+        transitionSpec = { tween(durationMillis = 300) }
     ) { state ->
-        if (state == DropdownState.Expanded) 0.dp else 24.dp
+        if (state == DropdownState.Expanded) 12.dp else 0.dp
     }
 
-    val inputShadowElevation by transition.animateDp(
-        label = "InputShadowElevation",
-        transitionSpec = { tween(durationMillis = 200) }
-    ) { state ->
-        if (state == DropdownState.Expanded) 0.dp else 4.dp
-    }
-
-    val inputShape = RoundedCornerShape(
-        topStart = 24.dp,
-        topEnd = 24.dp,
-        bottomStart = bottomCornerRadius,
-        bottomEnd = bottomCornerRadius
-    )
-    val dropdownShape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+    val inputShape = RoundedCornerShape(28.dp)
+    val dropdownShape = RoundedCornerShape(28.dp)
 
     Box {
-        // --- El "Input" que siempre es visible ---
+        // --- El "Input" que siempre es visible (Trigger) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .onSizeChanged { anchorSize = it }
+                .shadow(elevation = 8.dp, shape = inputShape)
                 .clip(inputShape)
-                .background(CozyWhite)
+                .background(if (selectedItem != null) AccentYellow else CozyWhite) // Color condicional
                 .clickable {
-                    currentState = if (currentState == DropdownState.Collapsed) DropdownState.Expanded else DropdownState.Collapsed
+                    currentState =
+                        if (currentState == DropdownState.Collapsed) DropdownState.Expanded else DropdownState.Collapsed
                 }
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp), // Ajuste de padding
             verticalAlignment = Alignment.CenterVertically
         ) {
-            leadingIcon()
+            leadingIcon(selectedItem) // Pasar estado de selección
             Spacer(Modifier.width(12.dp))
             Text(
                 text = if (selectedItem != null) getItemName(selectedItem) else placeholder,
-                color = if (selectedItem == null) Color.Gray else CozyTextMain,
-                fontSize = 16.sp,
+                color = if (selectedItem != null) CozyTextMain else InactiveGray, // Color condicional
+                fontSize = 16.sp, // Fuente más grande
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = "Expandir",
-                tint = Color.Gray,
+                tint = if (selectedItem != null) CozyTextMain else InactiveGray, // Color condicional para chevron
                 modifier = Modifier.rotate(rotationState)
             )
         }
 
         // --- El Popup que contiene la lista ---
         if (currentState == DropdownState.Expanded) {
+            val verticalOffset = with(density) { 4.dp.toPx().toInt() }
             Popup(
-                offset = IntOffset(0, anchorSize.height),
+                offset = IntOffset(0, anchorSize.height + verticalOffset), // Ajuste de offset para que no se superponga
                 properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
                 onDismissRequest = { currentState = DropdownState.Collapsed }
             ) {
                 transition.AnimatedVisibility(
                     visible = { it == DropdownState.Expanded },
-                    enter = expandVertically(animationSpec = tween(200)),
-                    exit = shrinkVertically(animationSpec = tween(200))
+                    enter = expandVertically(animationSpec = tween(300)),
+                    exit = shrinkVertically(animationSpec = tween(500)) // Animación de cierre más suave
                 ) {
                     Card(
                         modifier = Modifier
-                            .width(with(density) { anchorSize.width.toDp() }),
+                            .width(with(density) { anchorSize.width.toDp() })
+                            .shadow(elevation = menuShadow, shape = dropdownShape),
                         shape = dropdownShape,
-                        colors = CardDefaults.cardColors(containerColor = CozyWhite)
+                        colors = CardDefaults.cardColors(containerColor = PaleWarmGray)
                     ) {
-                        Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                            items.forEachIndexed { index, item ->
+                        LazyColumn(
+                            modifier = Modifier.heightIn(max = screenHeight / 2 - 20.dp), // Límite a mitad de pantalla con margen
+                            contentPadding = PaddingValues(8.dp)
+                        ) {
+                            items(items.size) { index ->
+                                val item = items[index]
                                 val isSelected = item == selectedItem
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color.Transparent)
-                                        .clickable {
-                                            onItemSelected(item)
-                                            currentState = DropdownState.Collapsed
-                                        }
-                                        .padding(horizontal = 20.dp, vertical = 14.dp)
+
+                                // Cápsula para cada opción
+                                Card(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), // Más margen
+                                    shape = RoundedCornerShape(28.dp), // Más redondeado
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) AccentYellow else CozyWhite
+                                    )
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.LocationOn,
-                                        contentDescription = null,
-                                        tint = CozyIconGray,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = getItemName(item),
-                                        color = CozyTextMain,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 15.sp,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    if (isSelected) {
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Icon(
-                                            imageVector = Icons.Filled.Check,
-                                            contentDescription = "Seleccionado",
-                                            tint = Color(0xFF388E3C),
-                                            modifier = Modifier.size(20.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onItemSelected(item)
+                                                currentState = DropdownState.Collapsed
+                                            }
+                                            .padding(horizontal = 16.dp, vertical = 6.dp) // Píldoras más chicas
+                                    ) {
+                                        itemLeadingIcon(item, isSelected)
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = getItemName(item),
+                                            color = if (isSelected) CozyTextMain else InactiveGray,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            fontSize = 16.sp, // Fuente más grande
+                                            modifier = Modifier.weight(1f)
                                         )
                                     }
-                                }
-                                if (index < items.lastIndex) {
-                                    Divider(
-                                        modifier = Modifier.padding(horizontal = 20.dp),
-                                        color = CozyDivider
-                                    )
                                 }
                             }
                         }
