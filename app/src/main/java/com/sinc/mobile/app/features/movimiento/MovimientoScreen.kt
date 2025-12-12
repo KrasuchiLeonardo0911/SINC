@@ -1,20 +1,8 @@
 package com.sinc.mobile.app.features.movimiento
 
-import androidx.compose.animation.AnimatedVisibility // <- Restaurada la importación
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,11 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.R // <- Movida al lugar correcto
 import com.sinc.mobile.app.features.movimiento.components.*
 import com.sinc.mobile.ui.theme.*
-
-
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,8 +78,6 @@ fun MovimientoScreen(
                 UnidadSelectionStep(
                     unidades = state.unidades,
                     selectedUnidad = state.selectedUnidad,
-                    isDropdownExpanded = state.isDropdownExpanded,
-                    onExpandedChange = viewModel::onDropdownExpandedChange,
                     onUnidadSelected = viewModel::onUnidadSelected
                 )
             }
@@ -103,45 +85,36 @@ fun MovimientoScreen(
             // --- A. Estado Vacío (cuando no hay campo seleccionado) ---
             if (state.selectedUnidad == null) {
                 item {
-                    Card(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
-                            .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = CozyWhite)
+                            .padding(top = 128.dp) // Ajustado el padding superior a 128.dp
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(
+                        Image(
+                            painter = painterResource(id = R.drawable.ilustracion_agregar_movimiento_screen),
+                            contentDescription = "Ilustración de Stock",
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ilustracion_agregar_movimiento_screen),
-                                contentDescription = "Ilustración de Stock",
-                                modifier = Modifier
-                                    .size(180.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, CozyWhite, CircleShape) // Borde reintroducido
-                            )
-                            Spacer(Modifier.height(24.dp))
-                            Text(
-                                text = "No hay movimientos pendientes",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = CozyTextMain
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                text = "Selecciona un campo arriba para registrar nuevas entradas o salidas de stock.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = WarmGray,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
-                        }
+                                .size(180.dp)
+                                .clip(CircleShape)
+                        )
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            text = "No hay movimientos pendientes",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = CozyTextMain
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "Selecciona un campo arriba para registrar nuevas entradas o salidas de stock.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WarmGray,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
                     }
                 }
             } else {

@@ -44,7 +44,6 @@ data class MovimientoState(
     val selectedAction: String? = null, // "alta" or "baja"
 
     // UI State
-    val isDropdownExpanded: Boolean = false,
     val isSaving: Boolean = false,
     val saveError: String? = null,
     val isFormLoading: Boolean = false
@@ -97,7 +96,6 @@ class MovimientoViewModel @Inject constructor(
     fun onUnidadSelected(unidad: UnidadProductiva) {
         _state.value = _state.value.copy(
             selectedUnidad = unidad,
-            isDropdownExpanded = false,
             selectedAction = null,
             saveError = null
         )
@@ -124,10 +122,6 @@ class MovimientoViewModel @Inject constructor(
     fun dismissForm() {
         _state.value = _state.value.copy(selectedAction = null)
         formManager = null
-    }
-
-    fun onDropdownExpandedChange(isExpanded: Boolean) {
-        _state.value = _state.value.copy(isDropdownExpanded = isExpanded)
     }
 
     fun saveMovement() {

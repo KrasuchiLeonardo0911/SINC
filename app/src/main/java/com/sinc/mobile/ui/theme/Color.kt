@@ -26,7 +26,8 @@ val CozyTextSecondary = Color(0xFF8A8A8E) // Texto secundario (mismo que DarkerG
 // Nuevos colores para el rediseño "Soft UI" de MovimientoScreen
 val OffWhite = Color(0xFFF9F8F6)
 val PastelGreen = Color(0xFFE8F5E9)
-val WarmGray = Color(0xFF8C8A80) // Nuevo color para subtítulos sutiles
+val WarmGray = Color(0xFF8C8A80)
+val CreamyYellow = Color(0xFFFFFBEB) // Amarillo cremoso para highlights
 
 // --- Paleta de colores principal del tema (existente, se puede eliminar gradualmente) ---
 val md_theme_light_primary = Color(0xFF8C2218)

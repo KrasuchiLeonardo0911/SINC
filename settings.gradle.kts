@@ -1,12 +1,6 @@
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -19,6 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SINC"
-include(":app", ":domain", ":data")
- 
+rootProject.name = "SINC_MOBILE"
+include(":app", ":data", ":domain")
