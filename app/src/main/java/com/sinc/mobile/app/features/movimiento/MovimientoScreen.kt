@@ -17,14 +17,10 @@ import com.sinc.mobile.app.features.movimiento.components.*
 import com.sinc.mobile.ui.theme.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.navigation.NavController
-import com.sinc.mobile.app.ui.components.CozyBottomNavBar
-import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovimientoScreen(
     modifier: Modifier = Modifier,
@@ -33,26 +29,30 @@ fun MovimientoScreen(
 ) {
     val state = viewModel.state.value
     val syncState = viewModel.syncManager.syncState.value
-    var currentRoute by remember { mutableStateOf(CozyBottomNavRoutes.ADD) }
+
+    val isFormValid = viewModel.formManager?.formState?.value?.isFormValid ?: false
 
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .navigationBarsPadding(),
-        containerColor = SoftGray, // Cambio a SoftGray
-        bottomBar = {
-            CozyBottomNavBar(
-                selectedRoute = currentRoute,
-                onItemSelected = { newRoute ->
-                    if (newRoute != CozyBottomNavRoutes.ADD) {
-                        navController.navigate(newRoute) {
-                            // Basic navigation, can be improved with a proper navigator
-                            popUpTo(navController.graph.startDestinationId)
-                            launchSingleTop = true
-                        }
-                    }
-                }
+        containerColor = SoftGray,
+        topBar = {
+            MovimientoTopBar(
+                onBackClicked = { navController.popBackStack() },
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp)
             )
+        },
+        bottomBar = {
+            if (state.selectedUnidad != null && !state.isUnidadSelectedLoading) {
+                MovimientoBottomBar(
+                    onSave = viewModel::saveMovement,
+                    isSaving = state.isSaving,
+                    enabled = isFormValid && !state.isSaving
+                )
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -62,17 +62,6 @@ fun MovimientoScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- 0. Título de la Pantalla ---
-            item {
-                Text(
-                    text = "Registrar Stock",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = CozyTextMain,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
-            }
-
             // --- 1. Selección de Campo ---
             item {
                 UnidadSelectionStep(
@@ -131,8 +120,6 @@ fun MovimientoScreen(
                             onRazaSelected = fm::onRazaSelected,
                             onMotivoSelected = fm::onMotivoSelected,
                             onCantidadChanged = fm::onCantidadChanged,
-                            onSave = viewModel::saveMovement,
-                            isSaving = state.isSaving
                         )
                     }
                 }

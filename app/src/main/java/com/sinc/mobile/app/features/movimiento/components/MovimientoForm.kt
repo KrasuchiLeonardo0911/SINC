@@ -17,6 +17,7 @@ import com.sinc.mobile.app.ui.components.FormFieldWrapper
 import com.sinc.mobile.domain.model.Categoria
 import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.MotivoMovimiento
+import com.sinc.mobile.app.ui.components.QuantitySelector
 import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.ui.theme.AccentYellow
 import com.sinc.mobile.ui.theme.SincMobileTheme
@@ -30,8 +31,6 @@ fun MovimientoForm(
     onRazaSelected: (Raza) -> Unit,
     onMotivoSelected: (MotivoMovimiento) -> Unit,
     onCantidadChanged: (String) -> Unit,
-    onSave: () -> Unit,
-    isSaving: Boolean,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -86,52 +85,10 @@ fun MovimientoForm(
         }
 
         // --- Cantidad ---
-        FormFieldWrapper(label = "Cantidad") { modifier ->
-            OutlinedTextField(
-                value = formState.cantidad,
-                onValueChange = onCantidadChanged,
-                modifier = modifier,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                placeholder = { Text("0") },
-                singleLine = true,
-                textStyle = LocalTextStyle.current.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // --- Botón de Guardar ---
-        Button(
-            onClick = onSave,
-            enabled = formState.isFormValid && !isSaving,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = ButtonDefaults.shape,
-            colors = ButtonDefaults.buttonColors(containerColor = AccentYellow)
-        ) {
-            if (isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.Black
-                )
-            } else {
-                Text(
-                    text = "Guardar",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.Black
-                )
-            }
-        }
+        QuantitySelector(
+            label = "Cantidad",
+            quantity = formState.cantidad,
+            onQuantityChange = onCantidadChanged
+        )
     }
 }

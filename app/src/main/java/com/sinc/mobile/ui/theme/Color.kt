@@ -2,6 +2,8 @@ package com.sinc.mobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val LightBlue = Color(0xFFE3F2FD)
+
 // --- Nueva Paleta de Colores Unificada "Cozy" ---
 
 // Colores de la Maqueta Original (ahora parte del tema)
