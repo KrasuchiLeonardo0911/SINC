@@ -93,7 +93,7 @@ fun <T> FormDropdown(
                 properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
                 onDismissRequest = { currentState = FormDropdownState.Collapsed }
             ) {
-                val dropdownShape = RoundedCornerShape(28.dp)
+                val dropdownShape = RoundedCornerShape(12.dp)
 
 // ... (inside FormDropdown composable)
 
@@ -113,7 +113,7 @@ fun <T> FormDropdown(
                             
                             Card(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(28.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (isSelected) AccentYellow else CozyWhite
                                 )

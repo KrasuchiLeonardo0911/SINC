@@ -71,8 +71,8 @@ fun <T> CustomDropdown(
         if (state == DropdownState.Expanded) 12.dp else 0.dp
     }
 
-    val inputShape = RoundedCornerShape(28.dp)
-    val dropdownShape = RoundedCornerShape(28.dp)
+    val inputShape = RoundedCornerShape(12.dp)
+    val dropdownShape = RoundedCornerShape(12.dp)
 
     Box {
         // --- El "Input" que siempre es visible (Trigger) ---
@@ -138,7 +138,7 @@ fun <T> CustomDropdown(
                                 // Cápsula para cada opción
                                 Card(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                    shape = RoundedCornerShape(28.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (isSelected) AccentYellow else CozyWhite
                                     )
