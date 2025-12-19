@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.theme.*
 
+
 data class BottomNavItem(
     val label: String,
     val route: String,

@@ -9,7 +9,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sinc.mobile.ui.theme.AccentYellow
-import com.sinc.mobile.ui.theme.SoftGray
+import com.sinc.mobile.ui.theme.Gray200
+import com.sinc.mobile.ui.theme.InactiveGray
 
 @Composable
 fun MovimientoBottomBar(
@@ -20,18 +21,22 @@ fun MovimientoBottomBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shadowElevation = 8.dp,
-        color = SoftGray
+        shadowElevation = 0.dp, // Removed shadow
+        color = Color.Transparent // Inherit background color
     ) {
         Button(
             onClick = onSave,
-            enabled = enabled,
+            enabled = enabled, // Button is truly enabled/disabled now
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp) // Reducido de 16.dp
-                .height(48.dp), // Reducido de 56.dp
+                .padding(12.dp)
+                .height(48.dp),
             shape = ButtonDefaults.shape,
-            colors = ButtonDefaults.buttonColors(containerColor = AccentYellow)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AccentYellow, // Original container color
+                disabledContainerColor = Gray200, // Explicitly set for disabled state
+                disabledContentColor = InactiveGray // Explicitly set for disabled state
+            )
         ) {
             if (isSaving) {
                 CircularProgressIndicator(
@@ -43,7 +48,7 @@ fun MovimientoBottomBar(
                     text = "Guardar",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = Color.Black // Original text color
                 )
             }
         }

@@ -6,8 +6,10 @@ import com.sinc.mobile.app.ui.components.MinimalHeader
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -15,8 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.R // <- Movida al lugar correcto
+import com.sinc.mobile.R
 import com.sinc.mobile.app.features.movimiento.components.*
+import com.sinc.mobile.app.ui.components.InfoDialog
 import com.sinc.mobile.ui.theme.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -32,8 +35,16 @@ fun MovimientoScreen(
 ) {
     val state = viewModel.state.value
     val syncState = viewModel.syncManager.syncState.value
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     val isFormValid = viewModel.formManager?.formState?.value?.isFormValid ?: false
+
+    InfoDialog(
+        showDialog = showInfoDialog,
+        onDismiss = { showInfoDialog = false },
+        title = "Instrucciones del Formulario",
+        message = "Para registrar un movimiento, selecciona la especie y el motivo. La categoría y la raza son opcionales. Luego, indica la cantidad de animales."
+    )
 
     Scaffold(
         modifier = modifier
@@ -62,8 +73,9 @@ fun MovimientoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(6
+                .dp),
+            // Removed verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // --- 1. Selección de Campo ---
             item {
@@ -72,6 +84,7 @@ fun MovimientoScreen(
                     selectedUnidad = state.selectedUnidad,
                     onUnidadSelected = viewModel::onUnidadSelected
                 )
+                Spacer(Modifier.height(16.dp)) // Add spacer after UnidadSelectionStep
             }
 
             // --- Content ---
@@ -80,8 +93,7 @@ fun MovimientoScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 128.dp)
-                            .padding(horizontal = 16.dp),
+                            .padding(top = 128.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -114,6 +126,31 @@ fun MovimientoScreen(
                     MovimientoSkeletonLoader()
                 }
             } else {
+                // --- Form Title with Tooltip ---
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Completar los Datos", // Changed text
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = CozyTextMain,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { showInfoDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "Instrucciones",
+                                tint = CozyTextSecondary
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp)) // Reduced spacer height
+                }
+
+                // --- Form Card ---
                 viewModel.formManager?.let { fm ->
                     item {
                         MovimientoForm(

@@ -45,6 +45,11 @@ val IconYellowHtml = Color(0xFFFFD54F) // Darker pastel yellow/orange
 
 val IconVioletHtml = Color(0xFF7E57C2) // Darker pastel violet
 
+val Gray200 = Color(0xFFEEEEEE)
+val DarkGreen = Color(0xFF2E7D32)
+val AccentGreen = Color(0xFFC8F0D6)
+
+
 
 
 val WarmCream = Color(0xFFFAF7F0) // Re-adding WarmCream

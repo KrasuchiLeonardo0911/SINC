@@ -27,7 +27,7 @@ fun FormFieldWrapper(
     // La tarjeta es el wrapper. El "margin" se controla con el Arrangement.spacedBy en el Column del formulario.
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp), // Bordes suaves
+        shape = RoundedCornerShape(24.dp), // Bordes suaves
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp), // Con sombra
         colors = CardDefaults.cardColors(containerColor = CozyWhite) // Fondo blanco
     ) {
