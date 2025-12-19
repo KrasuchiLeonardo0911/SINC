@@ -19,24 +19,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.theme.*
-
-object CozyBottomNavRoutes {
-    const val HOME = "home"
-    const val EXPLORE = "explore"
-    const val ADD = "add"
-    const val JOURNAL = "journal"
-    const val PROFILE = "profile"
-}
 
 data class BottomNavItem(
     val label: String,
     val route: String,
     val icon: ImageVector
 )
+
 
 @Composable
 fun CozyBottomNavBar(
@@ -46,24 +39,47 @@ fun CozyBottomNavBar(
     val items = listOf(
         BottomNavItem("Home", CozyBottomNavRoutes.HOME, Icons.Filled.Home),
         BottomNavItem("Explorar", CozyBottomNavRoutes.EXPLORE, Icons.Filled.Explore),
-        BottomNavItem("Add", CozyBottomNavRoutes.ADD, Icons.Filled.Add), // Treat as a regular item
         BottomNavItem("Diario", CozyBottomNavRoutes.JOURNAL, Icons.Filled.Article),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Filled.Person)
     )
+
+    val leftItems = items.subList(0, 2)
+    val rightItems = items.subList(2, 4)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
             .background(SoftGray)
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        items.forEach { item ->
-            if (item.route == CozyBottomNavRoutes.ADD) {
-                AddButtonItem(onClick = { onItemSelected(item.route) })
-            } else {
+        // Left Section
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            leftItems.forEach { item ->
+                CozyBottomNavItem(
+                    item = item,
+                    isSelected = selectedRoute == item.route,
+                    onClick = { onItemSelected(item.route) }
+                )
+            }
+        }
+
+        // Center Button
+        AddButtonItem(onClick = { onItemSelected(CozyBottomNavRoutes.ADD) })
+
+        // Right Section
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            rightItems.forEach { item ->
                 CozyBottomNavItem(
                     item = item,
                     isSelected = selectedRoute == item.route,
@@ -75,14 +91,19 @@ fun CozyBottomNavBar(
 }
 
 @Composable
+
 fun RowScope.AddButtonItem(onClick: () -> Unit) {
+
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(50.dp)
+            .shadow(elevation = 8.dp, shape = CircleShape)
             .clip(CircleShape)
             .background(CozyYellow)
             .clickable(onClick = onClick),
+
         contentAlignment = Alignment.Center
+
     ) {
         Icon(
             imageVector = Icons.Filled.Add,
@@ -93,25 +114,31 @@ fun RowScope.AddButtonItem(onClick: () -> Unit) {
     }
 }
 
+
 @Composable
+
 fun RowScope.CozyBottomNavItem(
     item: BottomNavItem,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+
     Column(
+
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .weight(1f)
             .clickable(
                 onClick = onClick,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             )
     ) {
+
         val icon = if (isSelected) {
-            // Relleno para el estado activo (ej. Icons.Filled.Home)
+
+        // Relleno para el estado activo (ej. Icons.Filled.Home)
+
             when (item.route) {
                 CozyBottomNavRoutes.HOME -> Icons.Filled.Home
                 CozyBottomNavRoutes.EXPLORE -> Icons.Filled.Explore
@@ -120,7 +147,8 @@ fun RowScope.CozyBottomNavItem(
                 else -> item.icon // Fallback
             }
         } else {
-            // Contorno para el estado inactivo
+
+        // Contorno para el estado inactivo
             item.icon
         }
 
@@ -139,3 +167,4 @@ fun RowScope.CozyBottomNavItem(
         )
     }
 }
+

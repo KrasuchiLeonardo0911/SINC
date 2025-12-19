@@ -1,5 +1,8 @@
 package com.sinc.mobile.app.features.movimiento
 
+import com.sinc.mobile.app.ui.components.MinimalHeader
+
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,11 +41,11 @@ fun MovimientoScreen(
             .navigationBarsPadding(),
         containerColor = SoftGray,
         topBar = {
-            MovimientoTopBar(
-                onBackClicked = { navController.popBackStack() },
+            MinimalHeader(
+                title = "Carga de Stock",
+                onBackPress = { navController.popBackStack() },
                 modifier = Modifier
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp)
             )
         },
         bottomBar = {
