@@ -1,9 +1,5 @@
 package com.sinc.mobile.app.features.movimiento
 
-import com.sinc.mobile.app.ui.components.MinimalHeader
-
-
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -12,32 +8,42 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.R
-import com.sinc.mobile.app.features.movimiento.components.*
-import com.sinc.mobile.app.ui.components.InfoDialog
-import com.sinc.mobile.ui.theme.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.navigation.NavController
+import com.sinc.mobile.app.features.movimiento.components.MovimientoBottomBar
+import com.sinc.mobile.app.features.movimiento.components.MovimientoForm
+import com.sinc.mobile.app.features.movimiento.components.MovimientoSkeletonLoader
+import com.sinc.mobile.app.ui.components.InfoDialog
+import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.CozyTextMain
+import com.sinc.mobile.ui.theme.CozyTextSecondary
+import com.sinc.mobile.ui.theme.SoftGray
+
+import androidx.compose.foundation.background
+import com.sinc.mobile.app.ui.components.shimmerBrush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovimientoScreen(
+fun MovimientoFormScreen(
     modifier: Modifier = Modifier,
-    viewModel: MovimientoViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    unidadId: String,
+    viewModel: MovimientoViewModel = hiltViewModel()
 ) {
     val state = viewModel.state.value
-    val syncState = viewModel.syncManager.syncState.value
     var showInfoDialog by remember { mutableStateOf(false) }
 
     val isFormValid = viewModel.formManager?.formState?.value?.isFormValid ?: false
+
+    // Trigger the loading of data for the selected unidad
+    LaunchedEffect(key1 = unidadId, key2 = state.unidades) {
+        val selectedUnidadObject = state.unidades.find { it.id.toString() == unidadId }
+        if (selectedUnidadObject != null) {
+            viewModel.onUnidadSelected(selectedUnidadObject)
+        }
+    }
 
     InfoDialog(
         showDialog = showInfoDialog,
@@ -73,57 +79,22 @@ fun MovimientoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(6
-                .dp),
-            // Removed verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
         ) {
-            // --- 1. Selección de Campo ---
-            item {
-                UnidadSelectionStep(
-                    unidades = state.unidades,
-                    selectedUnidad = state.selectedUnidad,
-                    onUnidadSelected = viewModel::onUnidadSelected
-                )
-                Spacer(Modifier.height(16.dp)) // Add spacer after UnidadSelectionStep
-            }
-
-            // --- Content ---
-            if (state.selectedUnidad == null) {
+            if (state.isUnidadSelectedLoading) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 128.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ilustracion_agregar_movimiento_screen),
-                            contentDescription = "Ilustración de Stock",
+                    // Skeleton for the entire screen content
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Skeleton for Title
+                        Box(
                             modifier = Modifier
-                                .size(180.dp)
-                                .clip(CircleShape)
+                                .fillMaxWidth(0.6f)
+                                .height(24.dp)
+                                .background(shimmerBrush(showShimmer = state.showShimmer))
                         )
-                        Spacer(Modifier.height(24.dp))
-                        Text(
-                            text = "No hay movimientos pendientes",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = CozyTextMain
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Selecciona un campo arriba para registrar nuevas entradas o salidas de stock.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = WarmGray,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
+                        // Skeleton for Form
+                        MovimientoSkeletonLoader(showShimmer = state.showShimmer)
                     }
-                }
-            } else if (state.isUnidadSelectedLoading) {
-                item {
-                    MovimientoSkeletonLoader()
                 }
             } else {
                 // --- Form Title with Tooltip ---
@@ -133,7 +104,7 @@ fun MovimientoScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Completar los Datos", // Changed text
+                            text = "Completar los Datos",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = CozyTextMain,
@@ -147,7 +118,11 @@ fun MovimientoScreen(
                             )
                         }
                     }
-                    Spacer(Modifier.height(4.dp)) // Reduced spacer height
+                }
+
+
+                item {
+                    Spacer(Modifier.height(8.dp))
                 }
 
                 // --- Form Card ---

@@ -43,6 +43,7 @@ data class MovimientoState(
     val selectedUnidad: UnidadProductiva? = null,
     val selectedAction: String? = null, // "alta" or "baja"
     val isUnidadSelectedLoading: Boolean = false,
+    val showShimmer: Boolean = false, // New state for shimmer control
 
 
     // UI State
@@ -97,14 +98,28 @@ class MovimientoViewModel @Inject constructor(
 
     fun onUnidadSelected(unidad: UnidadProductiva) {
         viewModelScope.launch {
-            if (state.value.selectedUnidad == unidad) return@launch
+            if (state.value.selectedUnidad == unidad && formManager != null) return@launch
 
-            _state.value = _state.value.copy(selectedUnidad = unidad, isUnidadSelectedLoading = true, selectedAction = null, saveError = null)
-            
-            // Create the form manager immediately
+            // 1. Show static skeleton
+            _state.value = _state.value.copy(
+                isUnidadSelectedLoading = true,
+                showShimmer = false,
+                selectedUnidad = unidad,
+                selectedAction = null,
+                saveError = null
+            )
+
+            // 2. Wait for slide-in animation to finish
+            kotlinx.coroutines.delay(300L)
+
+            // 3. Show shimmer animation
+            _state.value = _state.value.copy(showShimmer = true)
+
+            // 4. Wait for shimmer to be visible for a moment
+            kotlinx.coroutines.delay(400L)
+
+            // 5. Create the form manager and show content
             formManager = MovimientoFormManager(state.value.catalogos)
-
-            kotlinx.coroutines.delay(500)
             _state.value = _state.value.copy(isUnidadSelectedLoading = false)
         }
     }

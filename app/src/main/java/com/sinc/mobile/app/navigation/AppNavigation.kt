@@ -1,17 +1,25 @@
 package com.sinc.mobile.app.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
+import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
 import com.sinc.mobile.app.features.home.journalscreen.MainJournalScreen
 import com.sinc.mobile.app.features.login.LoginScreen
-import com.sinc.mobile.app.features.movimiento.MovimientoScreen
+import com.sinc.mobile.app.features.movimiento.MovimientoFormScreen
+import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
-import com.sinc.mobile.app.features.campos.CamposScreen
-import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -23,6 +31,8 @@ object Routes {
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
     const val CAMPOS = "campos"
+    const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
+    fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
 }
 
 @Composable
@@ -49,8 +59,22 @@ fun AppNavigation(
         composable(Routes.HOME) {
             MainJournalScreen(navController = navController)
         }
-        composable(Routes.MOVIMIENTO) {
-            MovimientoScreen(navController = navController)
+        composable(
+            route = Routes.MOVIMIENTO,
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -300 },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -300 },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            }
+        ) {
+            SeleccionCampoScreen(navController = navController)
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(
@@ -97,6 +121,31 @@ fun AppNavigation(
                     navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
             )
+        }
+        composable(
+            route = Routes.MOVIMIENTO_FORM,
+            arguments = listOf(navArgument("unidadId") { type = NavType.StringType }),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            }
+        ) { backStackEntry ->
+            val unidadId = backStackEntry.arguments?.getString("unidadId")
+            // A null check is good practice, though the route requires the argument.
+            if (unidadId != null) {
+                MovimientoFormScreen(
+                    navController = navController,
+                    unidadId = unidadId
+                )
+            }
         }
     }
 }

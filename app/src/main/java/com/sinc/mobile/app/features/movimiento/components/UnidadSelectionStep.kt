@@ -7,7 +7,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.app.ui.components.SoftDropdown
+import com.sinc.mobile.app.ui.components.ExpandingDropdown
 import com.sinc.mobile.app.ui.components.SoftDropdownIcon
 import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.ui.theme.CozyWhite
@@ -15,13 +15,14 @@ import com.sinc.mobile.ui.theme.CozyYellow
 import com.sinc.mobile.ui.theme.Gray200
 import com.sinc.mobile.ui.theme.CozyTextMain // New import
 
+
 @Composable
 fun UnidadSelectionStep(
     unidades: List<UnidadProductiva>,
     selectedUnidad: UnidadProductiva?,
     onUnidadSelected: (UnidadProductiva) -> Unit
 ) {
-    SoftDropdown(
+    ExpandingDropdown(
         items = unidades,
         selectedItem = selectedUnidad,
         onItemSelected = onUnidadSelected,
