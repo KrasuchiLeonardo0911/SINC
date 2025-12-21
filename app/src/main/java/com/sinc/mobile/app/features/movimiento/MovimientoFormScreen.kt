@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.movimiento
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ fun MovimientoFormScreen(
     var showInfoDialog by remember { mutableStateOf(false) }
 
     val isFormValid = viewModel.formManager?.formState?.value?.isFormValid ?: false
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Trigger the loading of data for the selected unidad
     LaunchedEffect(key1 = unidadId, key2 = state.unidades) {
@@ -62,9 +64,19 @@ fun MovimientoFormScreen(
                 title = "Carga de Stock",
                 onBackPress = { navController.popBackStack() },
                 modifier = Modifier
-                    .statusBarsPadding()
+                    .statusBarsPadding(),
+                actions = {
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "Instrucciones",
+                            tint = CozyTextSecondary
+                        )
+                    }
+                }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (state.selectedUnidad != null && !state.isUnidadSelectedLoading) {
                 MovimientoBottomBar(
@@ -97,34 +109,6 @@ fun MovimientoFormScreen(
                     }
                 }
             } else {
-                // --- Form Title with Tooltip ---
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Completar los Datos",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = CozyTextMain,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = { showInfoDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Info,
-                                contentDescription = "Instrucciones",
-                                tint = CozyTextSecondary
-                            )
-                        }
-                    }
-                }
-
-
-                item {
-                    Spacer(Modifier.height(8.dp))
-                }
-
                 // --- Form Card ---
                 viewModel.formManager?.let { fm ->
                     item {
@@ -135,6 +119,7 @@ fun MovimientoFormScreen(
                             onRazaSelected = fm::onRazaSelected,
                             onMotivoSelected = fm::onMotivoSelected,
                             onCantidadChanged = fm::onCantidadChanged,
+                            snackbarHostState = snackbarHostState
                         )
                     }
                 }

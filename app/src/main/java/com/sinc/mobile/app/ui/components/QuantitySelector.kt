@@ -31,16 +31,20 @@ fun QuantitySelector(
 ) {
     val currentQuantity = quantity.toIntOrNull() ?: 0
 
-    Column(modifier = modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = label,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             color = CozyTextMain
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.width(16.dp))
 
         SoftQuantityInput(
+            modifier = Modifier.weight(1f),
             quantity = quantity,
             onQuantityChange = onQuantityChange,
             currentQuantity = currentQuantity
@@ -51,13 +55,13 @@ fun QuantitySelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SoftQuantityInput(
+    modifier: Modifier = Modifier,
     quantity: String,
     onQuantityChange: (String) -> Unit,
     currentQuantity: Int,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .height(56.dp)
             .border(
                 width = 1.dp,

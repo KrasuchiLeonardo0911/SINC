@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +31,8 @@ import com.sinc.mobile.ui.theme.SincMobileTheme
 fun MinimalHeader(
     title: String,
     onBackPress: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     Row(
         modifier = modifier
@@ -71,6 +73,11 @@ fun MinimalHeader(
             fontWeight = FontWeight.Medium, // CAMBIO CLAVE: De SemiBold a Medium
             letterSpacing = 0.sp       // Quitamos el tracking negativo
         )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Acciones del Header
+        actions()
     }
 }
 

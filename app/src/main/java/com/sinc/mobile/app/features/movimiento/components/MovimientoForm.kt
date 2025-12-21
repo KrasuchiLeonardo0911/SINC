@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sinc.mobile.app.features.movimiento.MovimientoFormState
+import com.sinc.mobile.app.ui.components.PopupDirection
 import com.sinc.mobile.app.ui.components.QuantitySelector
 import com.sinc.mobile.app.ui.components.SoftDropdown
 import com.sinc.mobile.app.ui.components.SoftDropdownIcon
@@ -21,6 +22,7 @@ import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.MotivoMovimiento
 import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun MovimientoForm(
@@ -31,7 +33,10 @@ fun MovimientoForm(
     onRazaSelected: (Raza) -> Unit,
     onMotivoSelected: (MotivoMovimiento) -> Unit,
     onCantidadChanged: (String) -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
+    val scope = rememberCoroutineScope()
+
     Column(
         modifier = modifier
             .fillMaxWidth(),
@@ -121,6 +126,11 @@ fun MovimientoForm(
                 selectedItemBackgroundColor = Gray200,
                 selectedItemTextColor = CozyTextMain,
                 selectedCheckmarkColor = CozyTextMain,
+                onDisabledClick = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Debes seleccionar una especie primero.")
+                    }
+                }
             )
         }
 
@@ -165,6 +175,11 @@ fun MovimientoForm(
                 selectedItemBackgroundColor = Gray200,
                 selectedItemTextColor = CozyTextMain,
                 selectedCheckmarkColor = CozyTextMain,
+                onDisabledClick = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Debes seleccionar una especie primero.")
+                    }
+                }
             )
         }
 
@@ -208,6 +223,7 @@ fun MovimientoForm(
                 selectedItemBackgroundColor = Gray200,
                 selectedItemTextColor = CozyTextMain,
                 selectedCheckmarkColor = CozyTextMain,
+                direction = PopupDirection.Up
             )
         }
 

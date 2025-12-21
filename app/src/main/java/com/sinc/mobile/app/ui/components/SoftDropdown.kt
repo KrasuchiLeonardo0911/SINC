@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,7 +38,9 @@ import com.sinc.mobile.ui.theme.*
 
 
 private enum class SoftDropdownState { Collapsed, Expanded }
+enum class PopupDirection { Up, Down }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> SoftDropdown(
     modifier: Modifier = Modifier,
@@ -51,7 +55,9 @@ fun <T> SoftDropdown(
     showItemIcons: Boolean = true,
     selectedItemBackgroundColor: Color = AccentGreen,
     selectedItemTextColor: Color = DarkGreen,
-    selectedCheckmarkColor: Color = CozyWhite
+    selectedCheckmarkColor: Color = CozyWhite,
+    direction: PopupDirection = PopupDirection.Down,
+    onDisabledClick: (() -> Unit)? = null
 ) {
     var currentState by remember { mutableStateOf(SoftDropdownState.Collapsed) }
     var anchorSize by remember { mutableStateOf(IntSize.Zero) }
@@ -61,44 +67,60 @@ fun <T> SoftDropdown(
 
     val rotationState by transition.animateFloat(
         label = "Rotation",
-        transitionSpec = { tween(durationMillis = 300) }
+        transitionSpec = { tween(durationMillis = 0) }
     ) { state ->
-        if (state == SoftDropdownState.Expanded) 180f else 0f
+        if (direction == PopupDirection.Down) {
+            if (state == SoftDropdownState.Expanded) 180f else 0f
+        } else { // Up
+            if (state == SoftDropdownState.Expanded) 0f else 180f
+        }
     }
 
     val menuAlpha by transition.animateFloat(
         label = "MenuAlpha",
-        transitionSpec = { tween(durationMillis = 300) }
+        transitionSpec = { tween(durationMillis = 0) }
     ) { state ->
         if (state == SoftDropdownState.Expanded) 1f else 0f
     }
 
     val menuTranslationY by transition.animateDp(
         label = "MenuTranslationY",
-        transitionSpec = { tween(durationMillis = 300) }
+        transitionSpec = { tween(durationMillis = 0) }
     ) { state ->
-        if (state == SoftDropdownState.Expanded) 0.dp else (-10).dp
+        if (state == SoftDropdownState.Expanded) {
+            0.dp
+        } else {
+            if (direction == PopupDirection.Down) (-10).dp else 10.dp
+        }
     }
     
     val cornerRadius = 24.dp
-    val triggerBottomRadius by transition.animateDp(label = "TriggerRadius") { state ->
-        if (state == SoftDropdownState.Expanded) 0.dp else cornerRadius
-    }
 
-    val triggerShape = RoundedCornerShape(
-        topStart = cornerRadius,
-        topEnd = cornerRadius,
-        bottomStart = triggerBottomRadius,
-        bottomEnd = triggerBottomRadius
-    )
+    val triggerShape = if (direction == PopupDirection.Up) {
+        RoundedCornerShape(cornerRadius)
+    } else {
+        val animatedBottomRadius by transition.animateDp(label = "TriggerRadius", transitionSpec = { tween(durationMillis = 0) }) { state ->
+            if (state == SoftDropdownState.Expanded) 0.dp else cornerRadius
+        }
+        RoundedCornerShape(
+            topStart = cornerRadius,
+            topEnd = cornerRadius,
+            bottomStart = animatedBottomRadius,
+            bottomEnd = animatedBottomRadius
+        )
+    }
     
     val triggerShadow = 8.dp
 
-    val menuShape = RoundedCornerShape(
-        bottomStart = cornerRadius,
-        bottomEnd = cornerRadius
-    )
-    val menuShadow = 8.dp // Re-added menuShadow
+    val menuShape = if (direction == PopupDirection.Up) {
+        RoundedCornerShape(cornerRadius)
+    } else {
+        RoundedCornerShape(
+            bottomStart = cornerRadius,
+            bottomEnd = cornerRadius
+        )
+    }
+    val menuShadow = 8.dp 
 
     Box(modifier = modifier.onSizeChanged { anchorSize = it }) {
         // --- Trigger ---
@@ -108,9 +130,20 @@ fun <T> SoftDropdown(
                 .shadow(elevation = triggerShadow, shape = triggerShape)
                 .clip(triggerShape)
                 .background(CozyWhite)
-                .clickable(enabled = enabled) {
-                    currentState = if (currentState == SoftDropdownState.Collapsed) SoftDropdownState.Expanded else SoftDropdownState.Collapsed
-                }
+                .then(
+                    if (enabled) {
+                        Modifier.clickable {
+                            currentState = if (currentState == SoftDropdownState.Collapsed) SoftDropdownState.Expanded else SoftDropdownState.Collapsed
+                        }
+                    } else {
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            onDisabledClick?.invoke()
+                        }
+                    }
+                )
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -134,9 +167,15 @@ fun <T> SoftDropdown(
         }
 
         // --- Menu ---
-        if (currentState == SoftDropdownState.Expanded) {
+        if (currentState == SoftDropdownState.Expanded && transition.targetState == SoftDropdownState.Expanded) {
             Popup(
-                offset = IntOffset(0, with(density) { anchorSize.height.toDp().roundToPx() }),
+                alignment = if (direction == PopupDirection.Down) Alignment.TopStart else Alignment.BottomStart,
+                offset = if (direction == PopupDirection.Down) {
+                    IntOffset(0, with(density) { anchorSize.height.toDp().roundToPx() })
+                } else {
+                    val margin = with(density) { 8.dp.roundToPx() }
+                    IntOffset(0, -with(density) { anchorSize.height.toDp().roundToPx() } - margin)
+                },
                 properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
                 onDismissRequest = { currentState = SoftDropdownState.Collapsed }
             ) {
@@ -147,7 +186,7 @@ fun <T> SoftDropdown(
                             alpha = menuAlpha
                             translationY = menuTranslationY.toPx()
                         }
-                        .shadow(elevation = menuShadow, shape = menuShape) // Re-added shadow
+                        .shadow(elevation = menuShadow, shape = menuShape) 
                         .clip(menuShape)
                         .background(CozyWhite)
                 ) {
