@@ -4,6 +4,8 @@ import com.sinc.mobile.data.repository.AuthRepositoryImpl
 import com.sinc.mobile.data.repository.UnidadProductivaRepositoryImpl
 import com.sinc.mobile.domain.repository.AuthRepository
 import com.sinc.mobile.domain.repository.UnidadProductivaRepository
+import com.sinc.mobile.data.repository.StockRepositoryImpl
+import com.sinc.mobile.domain.repository.StockRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -56,4 +58,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTicketRepository(impl: TicketRepositoryImpl): TicketRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindStockRepository(impl: StockRepositoryImpl): StockRepository
 }

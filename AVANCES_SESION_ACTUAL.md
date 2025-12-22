@@ -27,3 +27,33 @@
 ### Gestión de Builds:
 
 -   **Reversión del Build Type `benchmark`**: Se restauró la configuración original de `buildTypes` en `app/build.gradle.kts` a petición del usuario.
+
+## Avances de la Sesión Actual (22 de diciembre de 2025)
+
+### Eliminación de flujo de verificación de persistencia de Stock
+- Se eliminó el código temporal de verificación de la persistencia de stock del `MainViewModel` y cualquier referencia en la UI (`MainJournalScreen`), ya que la persistencia se había verificado exitosamente.
+
+### Implementación del flujo de datos de Stock
+- **Capa de Datos (`:data`)**:
+    - Se crearon DTOs (`StockResponseDto`, `StockDataDto`, `UnidadProductivaStockDto`, `EspecieStockDto`, `DesgloseStockDto`) para mapear la respuesta del endpoint `/api/movil/stock`.
+    - Se creó `StockApiService.kt` con la función `getStock()` para interactuar con el endpoint.
+    - Se añadió `StockApiService` al `NetworkModule` de Hilt para su inyección.
+    - Se implementaron mappers (`StockMappers.kt`) para convertir entre DTOs, entidades (`StockEntity`) y modelos de dominio (`Stock`).
+    - Se creó `StockRepositoryImpl.kt`, implementando la interfaz `StockRepository`, que coordina la llamada a la API, el mapeo de datos y la persistencia en `StockDao`.
+    - Se añadió el binding de `StockRepository` (vía `StockRepositoryImpl`) al `RepositoryModule` de Hilt.
+- **Capa de Dominio (`:domain`)**:
+    - Se definieron los modelos de dominio para Stock (`Stock`, `UnidadProductivaStock`, `EspecieStock`, `DesgloseStock`).
+    - Se creó la interfaz `StockRepository`.
+    - Se implementaron los casos de uso `GetStockUseCase` (para obtener stock del repositorio) y `SyncStockUseCase` (para sincronizar stock con la API).
+- **Capa de Presentación (`:app`)**:
+    - Se actualizó `MainViewModel` para inyectar `GetStockUseCase` y `SyncStockUseCase`, y se añadió la lógica para sincronizar y recolectar el stock en el `MainUiState`.
+    - Se modificó `CozyBottomNavRoutes.kt` para reemplazar la ruta "EXPLORE" por "STOCK".
+    - Se actualizó `CozyBottomNavBar.kt` para mostrar el nuevo ítem "Stock" en la barra de navegación inferior con el icono `Icons.Filled.BarChart`.
+    - Se creó una nueva pantalla básica `StockScreen.kt` en `app/src/main/java/com/sinc/mobile/app/features/stock` para mostrar el stock total general.
+    - Se integró `StockScreen` en `MainJournalScreen.kt` para que se muestre cuando se selecciona la ruta "STOCK" en la barra de navegación inferior.
+
+### Corrección de errores de compilación
+- Se resolvió un error de `Dagger/MissingBinding` re-añadiendo el proveedor para `IdentifierApiService` en `NetworkModule.kt`.
+
+### Estado
+- El proyecto compila exitosamente. El flujo completo para obtener, persistir y presentar una vista básica del stock está implementado.

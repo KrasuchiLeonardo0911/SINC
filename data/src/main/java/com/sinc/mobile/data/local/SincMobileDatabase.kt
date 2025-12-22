@@ -4,17 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.CondicionTenenciaDao
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.FuenteAguaDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
-import com.sinc.mobile.data.local.dao.MovimientoPendienteDao
-import com.sinc.mobile.data.local.dao.MunicipioDao
-import com.sinc.mobile.data.local.dao.RazaDao
-import com.sinc.mobile.data.local.dao.TipoPastoDao
-import com.sinc.mobile.data.local.dao.TipoSueloDao
-import com.sinc.mobile.data.local.dao.UnidadProductivaDao
+import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.local.entity.IdentifierConfigEntity
 import com.sinc.mobile.data.local.entities.*
 import java.time.LocalDateTime
@@ -33,15 +23,17 @@ import java.time.format.DateTimeFormatter
         FuenteAguaEntity::class,
         TipoSueloEntity::class,
         TipoPastoEntity::class,
-        IdentifierConfigEntity::class
+        IdentifierConfigEntity::class,
+        StockEntity::class
     ],
     version = 1,
     exportSchema = false
 )
-@TypeConverters(Converters::class)
+@TypeConverters(Converters::class, StockTypeConverter::class)
 abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun unidadProductivaDao(): UnidadProductivaDao
     abstract fun movimientoPendienteDao(): MovimientoPendienteDao
+    abstract fun stockDao(): StockDao
 
     // DAOs de Catálogos
     abstract fun especieDao(): EspecieDao
@@ -53,7 +45,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun fuenteAguaDao(): FuenteAguaDao
     abstract fun tipoSueloDao(): TipoSueloDao
     abstract fun tipoPastoDao(): TipoPastoDao
-    abstract fun identifierConfigDao(): com.sinc.mobile.data.local.dao.IdentifierConfigDao
+    abstract fun identifierConfigDao(): IdentifierConfigDao
 }
 
 class Converters {

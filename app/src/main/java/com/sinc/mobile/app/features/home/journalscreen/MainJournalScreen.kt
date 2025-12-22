@@ -16,14 +16,23 @@ import com.sinc.mobile.app.features.home.journalscreen.components.MyJournalSecti
 import com.sinc.mobile.app.features.home.journalscreen.components.QuickJournalSection
 import com.sinc.mobile.app.features.home.journalscreen.components.WeekdaySelector
 import com.sinc.mobile.app.features.settings.SettingsScreen
+import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.theme.*
 
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.sinc.mobile.app.features.home.MainViewModel // Import MainViewModel
+import com.sinc.mobile.domain.model.Stock
 
 @Composable
-fun MainJournalScreen(navController: NavHostController) {
+fun MainJournalScreen(
+    navController: NavHostController,
+    viewModel: MainViewModel = hiltViewModel() // Inject MainViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState() // Observe uiState
+
     var currentRoute by remember { mutableStateOf(CozyBottomNavRoutes.HOME) }
 
     Scaffold(
@@ -46,7 +55,12 @@ fun MainJournalScreen(navController: NavHostController) {
         }
     ) { paddingValues ->
         when (currentRoute) {
-            CozyBottomNavRoutes.HOME -> JournalContent(paddingValues)
+            CozyBottomNavRoutes.HOME -> JournalContent(paddingValues = paddingValues, stock = uiState.stock)
+            CozyBottomNavRoutes.STOCK -> StockScreen(
+                stock = uiState.stock,
+                isLoading = uiState.isLoading,
+                modifier = Modifier.padding(paddingValues)
+            )
             CozyBottomNavRoutes.PROFILE -> SettingsScreen(
                 onNavigateBack = { currentRoute = CozyBottomNavRoutes.HOME }, // Go back to home
                 onNavigateToLogin = {
@@ -73,7 +87,7 @@ fun MainJournalScreen(navController: NavHostController) {
 }
 
 @Composable
-fun JournalContent(paddingValues: PaddingValues) {
+fun JournalContent(paddingValues: PaddingValues, stock: Stock?) {
     Column(
         modifier = Modifier
             .padding(paddingValues)

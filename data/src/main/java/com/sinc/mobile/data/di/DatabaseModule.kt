@@ -3,17 +3,7 @@ package com.sinc.mobile.data.di
 import android.content.Context
 import androidx.room.Room
 import com.sinc.mobile.data.local.SincMobileDatabase
-import com.sinc.mobile.data.local.dao.CategoriaAnimalDao
-import com.sinc.mobile.data.local.dao.CondicionTenenciaDao
-import com.sinc.mobile.data.local.dao.EspecieDao
-import com.sinc.mobile.data.local.dao.FuenteAguaDao
-import com.sinc.mobile.data.local.dao.MotivoMovimientoDao
-import com.sinc.mobile.data.local.dao.MovimientoPendienteDao
-import com.sinc.mobile.data.local.dao.MunicipioDao
-import com.sinc.mobile.data.local.dao.RazaDao
-import com.sinc.mobile.data.local.dao.TipoPastoDao
-import com.sinc.mobile.data.local.dao.TipoSueloDao
-import com.sinc.mobile.data.local.dao.UnidadProductivaDao
+import com.sinc.mobile.data.local.dao.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,6 +37,12 @@ object DatabaseModule {
     @Provides
     fun provideMovimientoPendienteDao(database: SincMobileDatabase): MovimientoPendienteDao {
         return database.movimientoPendienteDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideStockDao(database: SincMobileDatabase): StockDao {
+        return database.stockDao()
     }
 
     // --- Proveedores de DAOs de Catálogos ---
@@ -107,7 +103,7 @@ object DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideIdentifierConfigDao(database: SincMobileDatabase): com.sinc.mobile.data.local.dao.IdentifierConfigDao {
+    fun provideIdentifierConfigDao(database: SincMobileDatabase): IdentifierConfigDao {
         return database.identifierConfigDao()
     }
 }

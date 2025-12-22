@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -39,7 +39,7 @@ fun CozyBottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Home", CozyBottomNavRoutes.HOME, Icons.Filled.Home),
-        BottomNavItem("Explorar", CozyBottomNavRoutes.EXPLORE, Icons.Filled.Explore),
+        BottomNavItem("Stock", CozyBottomNavRoutes.STOCK, Icons.Filled.BarChart),
         BottomNavItem("Diario", CozyBottomNavRoutes.JOURNAL, Icons.Filled.Article),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Filled.Person)
     )
@@ -142,7 +142,7 @@ fun RowScope.CozyBottomNavItem(
 
             when (item.route) {
                 CozyBottomNavRoutes.HOME -> Icons.Filled.Home
-                CozyBottomNavRoutes.EXPLORE -> Icons.Filled.Explore
+                CozyBottomNavRoutes.STOCK -> Icons.Filled.BarChart
                 CozyBottomNavRoutes.JOURNAL -> Icons.Filled.Article
                 CozyBottomNavRoutes.PROFILE -> Icons.Filled.Person
                 else -> item.icon // Fallback

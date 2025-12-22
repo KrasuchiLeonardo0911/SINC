@@ -7,6 +7,8 @@ import com.sinc.mobile.data.network.api.AuthApiService
 import com.sinc.mobile.data.network.api.MovimientoApiService
 import com.sinc.mobile.data.network.api.TicketApiService
 import com.sinc.mobile.data.network.api.UnidadProductivaApiService
+import com.sinc.mobile.data.network.IdentifierApiService
+import com.sinc.mobile.data.network.api.StockApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -79,8 +81,14 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideIdentifierApiService(retrofit: Retrofit): com.sinc.mobile.data.network.IdentifierApiService {
-        return retrofit.create(com.sinc.mobile.data.network.IdentifierApiService::class.java)
+    fun provideStockApiService(retrofit: Retrofit): StockApiService {
+        return retrofit.create(StockApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIdentifierApiService(retrofit: Retrofit): IdentifierApiService {
+        return retrofit.create(IdentifierApiService::class.java)
     }
 }
 
