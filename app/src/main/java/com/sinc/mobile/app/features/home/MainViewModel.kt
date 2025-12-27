@@ -26,44 +26,81 @@ class MainViewModel @Inject constructor(
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        loadUnidadesProductivas()
-        loadStock()
+        // Start collecting data from the local database immediately
+        collectUnidadesProductivas()
+        collectStock()
+
+        // Perform initial sync from the network
+        refresh()
     }
 
-    private fun loadStock() {
+    fun refresh() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val syncResult = syncStockUseCase() // Trigger sync from API
-            if (syncResult is com.sinc.mobile.domain.util.Result.Failure) {
-                Log.e("MainViewModel", "Error syncing stock: ${syncResult.error.message}")
-                _uiState.update { it.copy(error = syncResult.error.message) }
+            if (_uiState.value.isLoading) return@launch
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            Log.d("MainViewModel", "[REFRESH] Iniciando. isLoading = true")
+
+            val startTime = System.currentTimeMillis()
+
+            // Launch sync tasks in parallel
+            val unidadesSyncJob = launch {
+                Log.d("MainViewModel", "[REFRESH] Sincronizando unidades productivas...")
+                val result = syncUnidadesProductivasUseCase()
+                if (result is com.sinc.mobile.domain.util.Result.Failure) {
+                    val errorMessage = when (result.error) {
+                        is com.sinc.mobile.domain.model.GenericError -> (result.error as com.sinc.mobile.domain.model.GenericError).message
+                        else -> "Error desconocido al sincronizar unidades productivas"
+                    }
+                    Log.e("MainViewModel", "[REFRESH] Error en unidades: $errorMessage")
+                } else {
+                    Log.d("MainViewModel", "[REFRESH] Unidades sincronizadas.")
+                }
+            }
+            val stockSyncJob = launch {
+                Log.d("MainViewModel", "[REFRESH] Sincronizando stock...")
+                val result = syncStockUseCase()
+                if (result is com.sinc.mobile.domain.util.Result.Failure) {
+                    val errorMessage = when (result.error) {
+                        is com.sinc.mobile.domain.model.GenericError -> (result.error as com.sinc.mobile.domain.model.GenericError).message
+                        else -> "Error desconocido al sincronizar stock"
+                    }
+                    Log.e("MainViewModel", "[REFRESH] Error en stock: $errorMessage")
+                    _uiState.update { it.copy(error = errorMessage) }
+                } else {
+                    Log.d("MainViewModel", "[REFRESH] Stock sincronizado.")
+                }
             }
 
+            Log.d("MainViewModel", "[REFRESH] Esperando que finalicen los jobs...")
+            unidadesSyncJob.join()
+            stockSyncJob.join()
+            Log.d("MainViewModel", "[REFRESH] Jobs finalizados.")
+
+            val duration = System.currentTimeMillis() - startTime
+            val remainingDelay = 1000L - duration
+            if (remainingDelay > 0) {
+                kotlinx.coroutines.delay(remainingDelay)
+            }
+
+            _uiState.update { it.copy(isLoading = false) }
+            Log.d("MainViewModel", "[REFRESH] Finalizado. isLoading = false")
+        }
+    }
+
+    private fun collectStock() {
+        viewModelScope.launch {
             getStockUseCase().collectLatest { stockData ->
-                _uiState.update { it.copy(stock = stockData, isLoading = false) }
+                Log.d("MainViewModel", "Nuevo stock recibido del DB Flow: $stockData")
+                _uiState.update { it.copy(stock = stockData) }
             }
         }
     }
 
-    private fun loadUnidadesProductivas() {
+    private fun collectUnidadesProductivas() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) } // Clear previous errors
-
-            // Primero, intentar sincronizar las UPs desde la API
-            val syncResult = syncUnidadesProductivasUseCase()
-
-            // Luego, observar las UPs desde la base de datos local
             getUnidadesProductivasUseCase().collectLatest { unidades ->
-                val errorMsg = if (syncResult is com.sinc.mobile.domain.util.Result.Failure) {
-                    (syncResult.error as? com.sinc.mobile.domain.model.GenericError)?.message
-                } else null
-
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    unidadesProductivas = unidades,
-                    error = errorMsg,
-                    shouldNavigateToCreateUnidadProductiva = false // Always navigate to home, user can go to create UP manually
-                ) }
+                Log.d("MainViewModel", "Nuevas unidades productivas recibidas del DB Flow: $unidades")
+                _uiState.update { it.copy(unidadesProductivas = unidades) }
             }
         }
     }

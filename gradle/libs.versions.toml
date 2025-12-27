@@ -30,8 +30,10 @@ osmdroid = "6.1.18"
 androidx-preference = "1.2.1"
 play-services-location = "21.3.0"
 lottie = "6.4.0"
+accompanist = "0.34.0"
 
 [libraries]
+accompanist-swiperefresh = { group = "com.google.accompanist", name = "accompanist-swiperefresh", version.ref = "accompanist" }
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 androidx-preference = { group = "androidx.preference", name = "preference-ktx", version.ref = "androidx-preference" }

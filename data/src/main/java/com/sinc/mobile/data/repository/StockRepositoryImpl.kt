@@ -46,7 +46,8 @@ class StockRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
             Result.Failure(GenericError("Error de conexión: Asegúrate de tener acceso a internet."))
         } catch (e: Exception) {
-            Result.Failure(GenericError("Ocurrió un error inesperado al sincronizar el stock."))
+            e.printStackTrace() // Log the full stack trace
+            Result.Failure(GenericError("Ocurrió un error inesperado al sincronizar el stock. ${e.message}"))
         }
     }
 }

@@ -58,8 +58,11 @@ fun MainJournalScreen(
             CozyBottomNavRoutes.HOME -> JournalContent(paddingValues = paddingValues, stock = uiState.stock)
             CozyBottomNavRoutes.STOCK -> StockScreen(
                 stock = uiState.stock,
+                unidadesProductivas = uiState.unidadesProductivas,
                 isLoading = uiState.isLoading,
-                modifier = Modifier.padding(paddingValues)
+                onRefresh = { viewModel.refresh() }, // Pass refresh function
+                modifier = Modifier.padding(paddingValues),
+                navController = navController
             )
             CozyBottomNavRoutes.PROFILE -> SettingsScreen(
                 onNavigateBack = { currentRoute = CozyBottomNavRoutes.HOME }, // Go back to home
