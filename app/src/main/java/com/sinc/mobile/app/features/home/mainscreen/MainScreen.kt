@@ -24,7 +24,6 @@ import com.sinc.mobile.app.ui.theme.*
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.home.MainViewModel // Import MainViewModel
-import com.sinc.mobile.domain.model.Stock
 
 @Composable
 fun MainScreen(
@@ -55,12 +54,8 @@ fun MainScreen(
         }
     ) { paddingValues ->
         when (currentRoute) {
-            CozyBottomNavRoutes.HOME -> MainContent(paddingValues = paddingValues, stock = uiState.stock)
+            CozyBottomNavRoutes.HOME -> MainContent(paddingValues = paddingValues)
             CozyBottomNavRoutes.STOCK -> StockScreen(
-                stock = uiState.stock,
-                unidadesProductivas = uiState.unidadesProductivas,
-                isLoading = uiState.isLoading,
-                onRefresh = { viewModel.refresh() }, // Pass refresh function
                 modifier = Modifier.padding(paddingValues),
                 navController = navController
             )
@@ -90,7 +85,7 @@ fun MainScreen(
 }
 
 @Composable
-fun MainContent(paddingValues: PaddingValues, stock: Stock?) {
+fun MainContent(paddingValues: PaddingValues) {
     Column(
         modifier = Modifier
             .padding(paddingValues)
