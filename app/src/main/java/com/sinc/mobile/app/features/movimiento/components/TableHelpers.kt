@@ -4,9 +4,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +44,7 @@ fun DataCell(text: String, width: Dp) {
 
 @Composable
 fun VerticalDivider() {
-    Divider(
+    VerticalDivider(
         modifier = Modifier
             .fillMaxHeight()
             .width(1.dp),
@@ -53,7 +54,7 @@ fun VerticalDivider() {
 
 @Composable
 fun HorizontalDivider() {
-    Divider(
+    HorizontalDivider(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     )

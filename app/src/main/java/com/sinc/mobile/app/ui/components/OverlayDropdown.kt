@@ -132,7 +132,7 @@ fun <T> OverlayDropdown(
                                 }
                             }
                             if (index < items.lastIndex) {
-                                Divider(
+                                HorizontalDivider(
                                     color = CozyDivider,
                                     thickness = 0.5.dp,
                                     modifier = Modifier.padding(horizontal = 16.dp)

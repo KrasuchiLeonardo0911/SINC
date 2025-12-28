@@ -80,7 +80,9 @@ dependencies {
 
     // Accompanist
     implementation("com.google.accompanist:accompanist-placeholder-material3:0.32.0")
-    implementation(libs.accompanist.swiperefresh)
+
+    // Material (for pull-to-refresh)
+    implementation("androidx.compose.material:material")
 
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")

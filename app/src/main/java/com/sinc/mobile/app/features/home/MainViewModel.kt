@@ -47,10 +47,7 @@ class MainViewModel @Inject constructor(
                 Log.d("MainViewModel", "[REFRESH] Sincronizando unidades productivas...")
                 val result = syncUnidadesProductivasUseCase()
                 if (result is com.sinc.mobile.domain.util.Result.Failure) {
-                    val errorMessage = when (result.error) {
-                        is com.sinc.mobile.domain.model.GenericError -> (result.error as com.sinc.mobile.domain.model.GenericError).message
-                        else -> "Error desconocido al sincronizar unidades productivas"
-                    }
+                    val errorMessage = result.error.message
                     Log.e("MainViewModel", "[REFRESH] Error en unidades: $errorMessage")
                 } else {
                     Log.d("MainViewModel", "[REFRESH] Unidades sincronizadas.")
@@ -60,10 +57,7 @@ class MainViewModel @Inject constructor(
                 Log.d("MainViewModel", "[REFRESH] Sincronizando stock...")
                 val result = syncStockUseCase()
                 if (result is com.sinc.mobile.domain.util.Result.Failure) {
-                    val errorMessage = when (result.error) {
-                        is com.sinc.mobile.domain.model.GenericError -> (result.error as com.sinc.mobile.domain.model.GenericError).message
-                        else -> "Error desconocido al sincronizar stock"
-                    }
+                    val errorMessage = result.error.message
                     Log.e("MainViewModel", "[REFRESH] Error en stock: $errorMessage")
                     _uiState.update { it.copy(error = errorMessage) }
                 } else {

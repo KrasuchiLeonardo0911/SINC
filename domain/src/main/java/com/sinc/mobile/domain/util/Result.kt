@@ -5,4 +5,6 @@ sealed class Result<T, E : Error> {
     data class Failure<T, E : Error>(val error: E) : Result<T, E>()
 }
 
-interface Error
+interface Error {
+    val message: String
+}

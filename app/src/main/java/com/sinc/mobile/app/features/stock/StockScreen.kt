@@ -1,7 +1,6 @@
 package com.sinc.mobile.app.features.stock
 
 import android.util.Log // Import Log
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,10 +20,12 @@ import com.sinc.mobile.domain.model.DesgloseStock
 import com.sinc.mobile.domain.model.EspecieStock
 import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun StockScreen(
     stock: Stock?,
@@ -47,7 +48,7 @@ fun StockScreen(
             )
         }
     ) { paddingValues ->
-        val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isLoading)
+        val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = onRefresh)
 
         Column(
             modifier = Modifier
@@ -69,107 +70,115 @@ fun StockScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            SwipeRefresh(
-                state = swipeRefreshState,
-                onRefresh = onRefresh,
-            ) {
-                if (stock != null) {
-                    Log.d("StockScreen", "Stock data is not null. Total General: ${stock.stockTotalGeneral}")
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        when (val selection = selectedView) {
-                            is String -> { // "Total" view
-                                if (stock.stockTotalGeneral == 0) {
-                                    item { Text("No hay stock registrado en el sistema.", modifier = Modifier.padding(top = 16.dp)) }
-                                } else {
-                                    val allSpecies = stock.unidadesProductivas
-                                        .flatMap { it.especies }
-                                        .groupBy { it.nombre }
-                                        .map { (nombre, especies) ->
-                                            EspecieStock(
-                                                nombre = nombre,
-                                                stockTotal = especies.sumOf { it.stockTotal },
-                                                desglose = especies.flatMap { it.desglose }
-                                                    .groupBy { Triple(it.categoria, it.raza, it.cantidad) }
-                                                    .map { (key, group) ->
-                                                        DesgloseStock(key.first, key.second, group.sumOf { it.cantidad })
+                        Box(Modifier.pullRefresh(pullRefreshState)) {
+                            if (stock != null) {
+                                Log.d("StockScreen", "Stock data is not null. Total General: ${stock.stockTotalGeneral}")
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 16.dp)
+                                ) {
+                                    when (val selection = selectedView) {
+                                        is String -> { // "Total" view
+                                            if (stock.stockTotalGeneral == 0) {
+                                                item { Text("No hay stock registrado en el sistema.", modifier = Modifier.padding(top = 16.dp)) }
+                                            } else {
+                                                val allSpecies = stock.unidadesProductivas
+                                                    .flatMap { it.especies }
+                                                    .groupBy { it.nombre }
+                                                    .map { (nombre, especies) ->
+                                                        EspecieStock(
+                                                            nombre = nombre,
+                                                            stockTotal = especies.sumOf { it.stockTotal },
+                                                            desglose = especies.flatMap { it.desglose }
+                                                                .groupBy { Triple(it.categoria, it.raza, it.cantidad) }
+                                                                .map { (key, group) ->
+                                                                    DesgloseStock(key.first, key.second, group.sumOf { it.cantidad })
+                                                                }
+                                                        )
                                                     }
+                                                Log.d("StockScreen", "Total view - allSpecies: $allSpecies")
+            
+                                                item {
+                                                    StockAccordion(
+                                                        header = {
+                                                            Text("Stock Total General: ${stock.stockTotalGeneral}", fontWeight = FontWeight.Bold)
+                                                        },
+                                                        content = {
+                                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                                stock.unidadesProductivas.forEach { up ->
+                                                                    Row(
+                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                                    ) {
+                                                                        Text(up.nombre, fontWeight = FontWeight.SemiBold)
+                                                                        Text(up.stockTotal.toString())
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        initiallyExpanded = true
+                                                    )
+                                                }
+                                                items(allSpecies) { especie ->
+                                                    StockAccordion(
+                                                        header = { Text("${especie.nombre}: ${especie.stockTotal}", fontWeight = FontWeight.SemiBold) },
+                                                        content = { DesgloseContent(desglose = especie.desglose) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        is UnidadProductiva -> {
+                                            Log.d("StockScreen", "Selected UnidadProductiva: ${selection.nombre} (ID: ${selection.id})")
+                                            val upStock = stock.unidadesProductivas.find { it.id == selection.id }
+                                            if (upStock != null && upStock.stockTotal > 0) {
+                                                Log.d("StockScreen", "Found upStock: ${upStock.nombre}, total: ${upStock.stockTotal}")
+                                                item {
+                                                    StockAccordion(
+                                                        header = {
+                                                            Text("Stock Total: ${upStock.stockTotal}", fontWeight = FontWeight.Bold)
+                                                        },
+                                                        content = {},
+                                                        initiallyExpanded = true
+                                                    )
+                                                }
+                                                items(upStock.especies) { especie ->
+                                                    Log.d("StockScreen", "Especie in upStock: ${especie.nombre}, total: ${especie.stockTotal}")
+                                                    StockAccordion(
+                                                        header = { Text("${especie.nombre}: ${especie.stockTotal}", fontWeight = FontWeight.SemiBold) },
+                                                        content = { DesgloseContent(desglose = especie.desglose) }
+                                                    )
+                                                }
+                                            } else {
+                                                Log.d("StockScreen", "upStock not found or total is 0 for ID: ${selection.id}. upStock: $upStock")
+                                                item { Text("No hay stock registrado en este campo.", modifier = Modifier.padding(top = 16.dp)) }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (!isLoading) {
+                                Log.d("StockScreen", "Stock data is null and not loading.")
+                                // Wrap the empty state in a LazyColumn to make it refreshable
+                                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                    item {
+                                        Box(modifier = Modifier
+                                            .fillParentMaxSize() // Make sure the box fills the whole screen
+                                            .padding(16.dp)) {
+                                            Text(
+                                                text = "No se pudo cargar el stock. Desliza hacia abajo para reintentar.",
+                                                modifier = Modifier.align(Alignment.Center)
                                             )
                                         }
-                                    Log.d("StockScreen", "Total view - allSpecies: $allSpecies")
-
-                                    item {
-                                        StockAccordion(
-                                            header = {
-                                                Text("Stock Total General: ${stock.stockTotalGeneral}", fontWeight = FontWeight.Bold)
-                                            },
-                                            content = {
-                                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                    stock.unidadesProductivas.forEach { up ->
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            Text(up.nombre, fontWeight = FontWeight.SemiBold)
-                                                            Text(up.stockTotal.toString())
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            initiallyExpanded = true
-                                        )
-                                    }
-                                    items(allSpecies) { especie ->
-                                        StockAccordion(
-                                            header = { Text("${especie.nombre}: ${especie.stockTotal}", fontWeight = FontWeight.SemiBold) },
-                                            content = { DesgloseContent(desglose = especie.desglose) }
-                                        )
                                     }
                                 }
                             }
-                            is UnidadProductiva -> {
-                                Log.d("StockScreen", "Selected UnidadProductiva: ${selection.nombre} (ID: ${selection.id})")
-                                val upStock = stock.unidadesProductivas.find { it.id == selection.id }
-                                if (upStock != null && upStock.stockTotal > 0) {
-                                    Log.d("StockScreen", "Found upStock: ${upStock.nombre}, total: ${upStock.stockTotal}")
-                                    item {
-                                        StockAccordion(
-                                            header = {
-                                                Text("Stock Total: ${upStock.stockTotal}", fontWeight = FontWeight.Bold)
-                                            },
-                                            content = {},
-                                            initiallyExpanded = true
-                                        )
-                                    }
-                                    items(upStock.especies) { especie ->
-                                        Log.d("StockScreen", "Especie in upStock: ${especie.nombre}, total: ${especie.stockTotal}")
-                                        StockAccordion(
-                                            header = { Text("${especie.nombre}: ${especie.stockTotal}", fontWeight = FontWeight.SemiBold) },
-                                            content = { DesgloseContent(desglose = especie.desglose) }
-                                        )
-                                    }
-                                } else {
-                                    Log.d("StockScreen", "upStock not found or total is 0 for ID: ${selection.id}. upStock: $upStock")
-                                    item { Text("No hay stock registrado en este campo.", modifier = Modifier.padding(top = 16.dp)) }
-                                }
-                            }
-                        }
-                    }
-                } else if (!isLoading) {
-                    Log.d("StockScreen", "Stock data is null and not loading.")
-                    // Use a full-size box to allow swipe-to-refresh on an empty screen
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Text(
-                            text = "No se pudo cargar el stock. Desliza hacia abajo para reintentar.",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                }
-            }
-        }
+            
+                            PullRefreshIndicator(
+                                refreshing = isLoading,
+                                state = pullRefreshState,
+                                modifier = Modifier.align(Alignment.TopCenter)
+                            )
+                        }        }
     }
 }
 
