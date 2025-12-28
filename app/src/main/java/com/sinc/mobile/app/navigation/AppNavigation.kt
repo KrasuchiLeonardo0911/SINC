@@ -15,7 +15,7 @@ import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
 import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
-import com.sinc.mobile.app.features.home.journalscreen.MainJournalScreen
+import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoFormScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
@@ -57,7 +57,7 @@ fun AppNavigation(
             )
         }
         composable(Routes.HOME) {
-            MainJournalScreen(navController = navController)
+            MainScreen(navController = navController)
         }
         composable(
             route = Routes.MOVIMIENTO,

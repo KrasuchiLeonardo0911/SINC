@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.home.journalscreen.components
+package com.sinc.mobile.app.features.home.mainscreen.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.home.journalscreen
+package com.sinc.mobile.app.features.home.mainscreen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,10 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.sinc.mobile.app.features.home.journalscreen.components.Header
-import com.sinc.mobile.app.features.home.journalscreen.components.MyJournalSection
-import com.sinc.mobile.app.features.home.journalscreen.components.QuickJournalSection
-import com.sinc.mobile.app.features.home.journalscreen.components.WeekdaySelector
+import com.sinc.mobile.app.features.home.mainscreen.components.Header
+import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
+import com.sinc.mobile.app.features.home.mainscreen.components.QuickJournalSection
+import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
@@ -27,7 +27,7 @@ import com.sinc.mobile.app.features.home.MainViewModel // Import MainViewModel
 import com.sinc.mobile.domain.model.Stock
 
 @Composable
-fun MainJournalScreen(
+fun MainScreen(
     navController: NavHostController,
     viewModel: MainViewModel = hiltViewModel() // Inject MainViewModel
 ) {
@@ -55,7 +55,7 @@ fun MainJournalScreen(
         }
     ) { paddingValues ->
         when (currentRoute) {
-            CozyBottomNavRoutes.HOME -> JournalContent(paddingValues = paddingValues, stock = uiState.stock)
+            CozyBottomNavRoutes.HOME -> MainContent(paddingValues = paddingValues, stock = uiState.stock)
             CozyBottomNavRoutes.STOCK -> StockScreen(
                 stock = uiState.stock,
                 unidadesProductivas = uiState.unidadesProductivas,
@@ -90,7 +90,7 @@ fun MainJournalScreen(
 }
 
 @Composable
-fun JournalContent(paddingValues: PaddingValues, stock: Stock?) {
+fun MainContent(paddingValues: PaddingValues, stock: Stock?) {
     Column(
         modifier = Modifier
             .padding(paddingValues)

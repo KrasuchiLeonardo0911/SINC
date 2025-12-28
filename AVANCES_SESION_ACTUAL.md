@@ -1,59 +1,35 @@
-## Avances de la Sesión Actual (19 de diciembre de 2025)
 
-### Mejoras en la Experiencia de Usuario y Transiciones:
+## Avances de la Sesión Actual (27 de diciembre de 2025)
 
--   **Manejo de Transiciones y Esqueletos de Carga:**
-    *   **`MovimientoViewModel.kt`**: Implementación de una secuencia de carga multi-etapa en `onUnidadSelected` para un feedback más suave: el esqueleto aparece estático durante la transición, luego activa un breve efecto de brillo (shimmer) y finalmente muestra el contenido.
-    *   **`ShimmerBrush.kt`**: Modificado para devolver un color gris sólido opaco cuando la animación de brillo está desactivada, asegurando que el esqueleto estático sea visible.
-    *   **`MovimientoFormScreen.kt`**: Ajuste del `contentPadding` superior del `LazyColumn` a `16.dp` para un mejor espaciado con la barra superior. Se añadió un marcador de posición de esqueleto para el título "Completar los Datos", que se muestra durante la carga.
+### Mejoras en la Pantalla de Stock (`StockScreen`)
 
--   **Animaciones de Navegación para `MovimientoFormScreen`:**
-    *   **`AppNavigation.kt`**: Se configuraron `enterTransition` (deslizamiento desde la derecha) y `popExitTransition` para `Routes.MOVIMIENTO_FORM`, junto con las transiciones correspondientes (`exitTransition`, `popEnterTransition`) para `Routes.MOVIMIENTO`, creando una experiencia de navegación más fluida.
-    *   **Corrección de Errores de Compilación**: Se reinsertó la declaración `package com.sinc.mobile.app.navigation` en `AppNavigation.kt` para resolver las referencias no resueltas.
+-   **Interfaz de Usuario (`StockScreen`):**
+    *   **Top Bar Minimalista:** Se añadió un Top Bar (`MinimalHeader`) a `StockScreen` para una navegación y título consistentes.
+    *   **Selector de Vista:** Se creó el componente `StockViewSelector` para permitir al usuario alternar entre la vista de stock total general y el stock por unidad productiva (campo).
+    *   **Visualización Detallada (Acordeones):**
+        *   Implementación de `StockAccordion` para mostrar el stock de forma plegable y organizada.
+        *   Los detalles del stock se presentan discriminados por especie, raza y cantidad (`DesgloseContent`).
+        *   Se gestiona el mensaje "No hay stock registrado" si el total es cero.
+    *   **Pulido Visual:**
+        *   Se ajustó el `weight` de las columnas en `DesgloseContent` (`Tipo`, `Raza`, `Cantidad`) para evitar desbordamientos, dándole un ancho fijo a "Cantidad" y pesos a las otras.
+        *   Se redujo el `fontSize` de los **encabezados** de las columnas (`Tipo`, `Raza`, `Cantidad`) en `DesgloseContent` a `13.sp` para una mayor compactación sin afectar el texto de los datos.
+        *   Se añadió un `Spacer` entre el `StockViewSelector` y el área de contenido principal para una división visual sutil.
 
-### Consistencia en la UI y Componentes:
+-   **Experiencia de Usuario y Flujo de Datos:**
+    *   **"Deslizar para Refrescar" (`SwipeRefresh`):** Se implementó la funcionalidad de `SwipeRefresh` en `StockScreen` para permitir la actualización manual de los datos, vinculada al estado de carga del `MainViewModel`.
+    *   **Refactorización de `MainViewModel`:** Se reestructuró `MainViewModel` para separar la recolección de datos (`collectUnidadesProductivas`, `collectStock`) de la sincronización de red (`refresh`). La función `refresh()` ahora maneja la lógica de sincronización y asegura que el indicador de carga permanezca visible por al menos 1 segundo, mejorando la retroalimentación visual.
+    *   **Depuración de Sincronización de Stock:** Se diagnosticó un problema de sincronización debido a la falta de la cabecera `Accept: application/json` y una ruta de endpoint incorrecta en `StockApiService.kt`. Se corrigió el `StockApiService.kt` para asegurar que el servidor siempre devuelva una respuesta JSON esperada.
 
--   **Integración de `CozyBottomNavBar`:**
-    *   **`SeleccionCampoScreen.kt`**: Se añadió el `Scaffold` y el `CozyBottomNavBar` para alinear esta pantalla con la navegación principal de la aplicación.
--   **Rediseño del Formulario de Movimiento (sin tarjeta):**
-    *   **`MovimientoForm.kt`**: Eliminación del contenedor `Card` principal y ajuste de los selectores (`SoftDropdown`, `QuantitySelector`) para que ocupen todo el ancho disponible.
-    *   **`MovimientoSkeletonLoader.kt`**: Modificado para reflejar la nueva estructura sin `Card` del formulario.
--   **Nuevo Componente `ExpandingDropdown`:**
-    *   Se revirtió el cambio previo en `SoftDropdown.kt` que eliminaba su animación de colapso.
-    *   **`ExpandingDropdown.kt`**: Se creó un nuevo componente que se expande y colapsa en línea, manteniendo una forma unificada y redondeada, sin el comportamiento de superposición del `SoftDropdown`.
-    *   **`UnidadSelectionStep.kt`**: Se reemplazó el `SoftDropdown` con el nuevo `ExpandingDropdown` para mejorar el comportamiento de la selección de campos.
-    *   **Corrección de Errores**: Se resolvió un error de referencia no resuelta (`shadow`) en `ExpandingDropdown.kt`.
+-   **Preparación para Filtrado y Agrupación:**
+    *   **`GroupBy` Enum:** Se definió un `enum class GroupBy { ESPECIE, CATEGORIA, RAZA }` para gestionar las opciones de agrupación.
+    *   **`FilterChipGroup`:** Se creó un nuevo componente `FilterChipGroup` que contendrá los `FilterChip`s para la selección de las opciones de agrupación.
+    *   **Reestructuración Flexible de `StockScreen`:** Se inició la reestructuración de `StockScreen` para integrar el `FilterChipGroup` y un `when(groupBy)` para el renderizado condicional de los resultados según la opción de agrupación seleccionada por el usuario.
+    *   **Header de Totales Dinámico:** Se ajustó la cabecera de los totales para que muestre el "Stock Total General" o "Stock Total Campo" según la vista seleccionada.
 
-### Gestión de Builds:
+### Debugging y Resoluciones
 
--   **Reversión del Build Type `benchmark`**: Se restauró la configuración original de `buildTypes` en `app/build.gradle.kts` a petición del usuario.
+-   **`curl` y `Invoke-WebRequest`:** Se superaron problemas de ejecución de `curl` en PowerShell, optando finalmente por `Invoke-WebRequest` para depurar directamente la respuesta de la API.
+-   **Error `IllegalStateException` (Gson):** Se identificó y resolvió un error de `Gson` (`Expected BEGIN_OBJECT but was STRING`) causado por la ausencia de la cabecera `Accept: application/json` en la petición de la app al servidor, lo que llevaba al servidor a devolver una respuesta inesperada.
+-   **Errores de Compilación:** Se resolvieron errores de referencias no resueltas (`DesgloseContent`, `sp`) y paréntesis extra durante el proceso.
 
-## Avances de la Sesión Actual (22 de diciembre de 2025)
-
-### Eliminación de flujo de verificación de persistencia de Stock
-- Se eliminó el código temporal de verificación de la persistencia de stock del `MainViewModel` y cualquier referencia en la UI (`MainJournalScreen`), ya que la persistencia se había verificado exitosamente.
-
-### Implementación del flujo de datos de Stock
-- **Capa de Datos (`:data`)**:
-    - Se crearon DTOs (`StockResponseDto`, `StockDataDto`, `UnidadProductivaStockDto`, `EspecieStockDto`, `DesgloseStockDto`) para mapear la respuesta del endpoint `/api/movil/stock`.
-    - Se creó `StockApiService.kt` con la función `getStock()` para interactuar con el endpoint.
-    - Se añadió `StockApiService` al `NetworkModule` de Hilt para su inyección.
-    - Se implementaron mappers (`StockMappers.kt`) para convertir entre DTOs, entidades (`StockEntity`) y modelos de dominio (`Stock`).
-    - Se creó `StockRepositoryImpl.kt`, implementando la interfaz `StockRepository`, que coordina la llamada a la API, el mapeo de datos y la persistencia en `StockDao`.
-    - Se añadió el binding de `StockRepository` (vía `StockRepositoryImpl`) al `RepositoryModule` de Hilt.
-- **Capa de Dominio (`:domain`)**:
-    - Se definieron los modelos de dominio para Stock (`Stock`, `UnidadProductivaStock`, `EspecieStock`, `DesgloseStock`).
-    - Se creó la interfaz `StockRepository`.
-    - Se implementaron los casos de uso `GetStockUseCase` (para obtener stock del repositorio) y `SyncStockUseCase` (para sincronizar stock con la API).
-- **Capa de Presentación (`:app`)**:
-    - Se actualizó `MainViewModel` para inyectar `GetStockUseCase` y `SyncStockUseCase`, y se añadió la lógica para sincronizar y recolectar el stock en el `MainUiState`.
-    - Se modificó `CozyBottomNavRoutes.kt` para reemplazar la ruta "EXPLORE" por "STOCK".
-    - Se actualizó `CozyBottomNavBar.kt` para mostrar el nuevo ítem "Stock" en la barra de navegación inferior con el icono `Icons.Filled.BarChart`.
-    - Se creó una nueva pantalla básica `StockScreen.kt` en `app/src/main/java/com/sinc/mobile/app/features/stock` para mostrar el stock total general.
-    - Se integró `StockScreen` en `MainJournalScreen.kt` para que se muestre cuando se selecciona la ruta "STOCK" en la barra de navegación inferior.
-
-### Corrección de errores de compilación
-- Se resolvió un error de `Dagger/MissingBinding` re-añadiendo el proveedor para `IdentifierApiService` en `NetworkModule.kt`.
-
-### Estado
-- El proyecto compila exitosamente. El flujo completo para obtener, persistir y presentar una vista básica del stock está implementado.
+El proyecto se encuentra en un estado donde la pantalla de Stock es funcional, robusta y preparada para una mayor interactividad con las opciones de filtrado y agrupación.

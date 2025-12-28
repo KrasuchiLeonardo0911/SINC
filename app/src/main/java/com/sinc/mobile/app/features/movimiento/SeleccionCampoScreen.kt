@@ -55,7 +55,7 @@ fun SeleccionCampoScreen(
                             }
                         }
                         CozyBottomNavRoutes.PROFILE -> {
-                            // MainJournalScreen handles showing the profile screen
+                            // MainScreen handles showing the profile screen
                             navController.navigate(Routes.HOME) {
                                 popUpTo(Routes.HOME) { inclusive = true }
                             }
