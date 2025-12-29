@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.stock
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,7 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sinc.mobile.app.features.stock.components.GroupingOptions
+import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChart
+import com.sinc.mobile.app.features.stock.components.PieChartData
 import com.sinc.mobile.app.features.stock.components.StockViewSelector
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SoftGray
@@ -68,9 +71,7 @@ fun StockScreen(
                     }
                     items(processedStock.allSpecies) { especie ->
                         SpeciesStockCard(
-                            speciesStock = especie,
-                            grouping = uiState.stockGrouping,
-                            onGroupingSelected = viewModel::setStockGrouping
+                            speciesStock = especie
                         )
                     }
                 }
@@ -150,19 +151,59 @@ private fun TotalStockCard(stock: ProcessedStock) {
     }
 }
 
+// Define colors at the top level of the file for reuse
+private val pieChartColors = listOf(
+    Color(0xFF6C5B7B), Color(0xFFC06C84), Color(0xFFF67280), Color(0xFFF8B195),
+    Color(0xFFB39DDB), Color(0xFF81C784), Color(0xFFFFD54F), Color(0xFF4FC3F7),
+    Color(0xFFE57373), Color(0xFF9575CD), Color(0xFF4DB6AC), Color(0xFFFFF176)
+)
+
 @Composable
 private fun SpeciesStockCard(
-    speciesStock: ProcessedEspecieStock,
-    grouping: StockGrouping,
-    onGroupingSelected: (StockGrouping) -> Unit
+    speciesStock: ProcessedEspecieStock
 ) {
+    var selectedGrouping by remember { mutableStateOf(StockGrouping.BY_ALL) }
+
+    val desgloseUiData = remember(selectedGrouping, speciesStock.desglose) {
+        when (selectedGrouping) {
+            StockGrouping.BY_ALL -> {
+                DesgloseUiData.Full(speciesStock.desglose)
+            }
+            StockGrouping.BY_CATEGORY, StockGrouping.BY_BREED -> {
+                val groupedData = speciesStock.desglose
+                    .groupBy { if (selectedGrouping == StockGrouping.BY_CATEGORY) it.categoria else it.raza }
+                    .mapValues { entry -> entry.value.sumOf { it.quantity } }
+
+                val totalGroupValue = groupedData.values.sum().toFloat()
+                val legendItems = if (totalGroupValue > 0f) {
+                    groupedData.entries.mapIndexed { index, entry ->
+                        LegendItem(
+                            label = entry.key,
+                            value = entry.value,
+                            percentage = (entry.value / totalGroupValue) * 100,
+                            color = pieChartColors[index % pieChartColors.size]
+                        )
+                    }
+                } else {
+                    emptyList()
+                }
+                val chartData = legendItems.map { PieChartData(value = it.value.toFloat(), color = it.color) }
+                DesgloseUiData.Grouped(chartData, legendItems)
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .animateContentSize()
+        ) {
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -185,8 +226,8 @@ private fun SpeciesStockCard(
                     fontWeight = FontWeight.Light
                 )
                 GroupingOptions(
-                    selectedGrouping = grouping,
-                    onGroupingSelected = onGroupingSelected
+                    selectedGrouping = selectedGrouping,
+                    onGroupingSelected = { selectedGrouping = it }
                 )
             }
             
@@ -194,7 +235,7 @@ private fun SpeciesStockCard(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
             // Content
-            DesgloseContent(desgloseUiData = speciesStock.desglose)
+            DesgloseContent(desgloseUiData = desgloseUiData)
         }
     }
 }
