@@ -18,35 +18,25 @@ fun GroupingOptions(
     onGroupingSelected: (StockGrouping) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Neutral background
+    Row(
+        modifier = modifier
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp) // Adjusted spacing slightly
-        ) {
-            FilterChip(
-                selected = selectedGrouping == StockGrouping.BY_ALL,
-                onClick = { onGroupingSelected(StockGrouping.BY_ALL) },
-                label = { Text("Todos", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                modifier = Modifier.weight(1f)
-            )
-            FilterChip(
-                selected = selectedGrouping == StockGrouping.BY_CATEGORY,
-                onClick = { onGroupingSelected(StockGrouping.BY_CATEGORY) },
-                label = { Text("Por Categoría", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                modifier = Modifier.weight(1f)
-            )
-            FilterChip(
-                selected = selectedGrouping == StockGrouping.BY_BREED,
-                onClick = { onGroupingSelected(StockGrouping.BY_BREED) },
-                label = { Text("Por Raza", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        FilterChip(
+            selected = selectedGrouping == StockGrouping.BY_ALL,
+            onClick = { onGroupingSelected(StockGrouping.BY_ALL) },
+            label = { Text("Todos", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        )
+        FilterChip(
+            selected = selectedGrouping == StockGrouping.BY_CATEGORY,
+            onClick = { onGroupingSelected(StockGrouping.BY_CATEGORY) },
+            label = { Text("Por Categoría", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        )
+        FilterChip(
+            selected = selectedGrouping == StockGrouping.BY_BREED,
+            onClick = { onGroupingSelected(StockGrouping.BY_BREED) },
+            label = { Text("Por Raza", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        )
     }
 }

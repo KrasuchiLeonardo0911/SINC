@@ -623,3 +623,76 @@ Esta sesión se centró en la implementación y corrección de la lógica del fo
 
 ---
 **Estado Actual**: El formulario de creación de Unidades Productivas está completamente implementado con validaciones de interfaz y de negocio, incluyendo la selección automática de municipios y feedback visual para el usuario. La arquitectura de manejo de resultados está unificada en toda la aplicación.
+
+## Avances de la Sesión Actual (27 de diciembre de 2025)
+
+### Mejoras en la Pantalla de Stock (`StockScreen`)
+
+-   **Interfaz de Usuario (`StockScreen`):**
+    *   **Top Bar Minimalista:** Se añadió un Top Bar (`MinimalHeader`) a `StockScreen` para una navegación y título consistentes.
+    *   **Selector de Vista:** Se creó el componente `StockViewSelector` para permitir al usuario alternar entre la vista de stock total general y el stock por unidad productiva (campo).
+    *   **Visualización Detallada (Acordeones):**
+        *   Implementación de `StockAccordion` para mostrar el stock de forma plegable y organizada.
+        *   Los detalles del stock se presentan discriminados por especie, raza y cantidad (`DesgloseContent`).
+        *   Se gestiona el mensaje "No hay stock registrado" si el total es cero.
+    *   **Pulido Visual:**
+        *   Se ajustó el `weight` de las columnas en `DesgloseContent` (`Tipo`, `Raza`, `Cantidad`) para evitar desbordamientos, dándole un ancho fijo a "Cantidad" y pesos a las otras.
+        *   Se redujo el `fontSize` de los **encabezados** de las columnas (`Tipo`, `Raza`, `Cantidad`) en `DesgloseContent` a `13.sp` para una mayor compactación sin afectar el texto de los datos.
+        *   Se añadió un `Spacer` entre el `StockViewSelector` y el área de contenido principal para una división visual sutil.
+
+-   **Experiencia de Usuario y Flujo de Datos:**
+    *   **"Deslizar para Refrescar" (`SwipeRefresh`):** Se implementó la funcionalidad de `SwipeRefresh` en `StockScreen` para permitir la actualización manual de los datos, vinculada al estado de carga del `MainViewModel`.
+    *   **Refactorización de `MainViewModel`:** Se reestructuró `MainViewModel` para separar la recolección de datos (`collectUnidadesProductivas`, `collectStock`) de la sincronización de red (`refresh`). La función `refresh()` ahora maneja la lógica de sincronización y asegura que el indicador de carga permanezca visible por al menos 1 segundo, mejorando la retroalimentación visual.
+    *   **Depuración de Sincronización de Stock:** Se diagnosticó un problema de sincronización debido a la falta de la cabecera `Accept: application/json` y una ruta de endpoint incorrecta en `StockApiService.kt`. Se corrigió el `StockApiService.kt` para asegurar que el servidor siempre devuelva una respuesta JSON esperada.
+
+-   **Preparación para Filtrado y Agrupación:**
+    *   **`GroupBy` Enum:** Se definió un `enum class GroupBy { ESPECIE, CATEGORIA, RAZA }` para gestionar las opciones de agrupación.
+    *   **`FilterChipGroup`:** Se creó un nuevo componente `FilterChipGroup` que contendrá los `FilterChip`s para la selección de las opciones de agrupación.
+    *   **Reestructuración Flexible de `StockScreen`:** Se inició la reestructuración de `StockScreen` para integrar el `FilterChipGroup` y un `when(groupBy)` para el renderizado condicional de los resultados según la opción de agrupación seleccionada por el usuario.
+    *   **Header de Totales Dinámico:** Se ajustó la cabecera de los totales para que muestre el "Stock Total General" o "Stock Total Campo" según la vista seleccionada.
+
+### Debugging y Resoluciones
+
+-   **`curl` y `Invoke-WebRequest`:** Se superaron problemas de ejecución de `curl` en PowerShell, optando finalmente por `Invoke-WebRequest` para depurar directamente la respuesta de la API.
+-   **Error `IllegalStateException` (Gson):** Se identificó y resolvió un error de `Gson` (`Expected BEGIN_OBJECT but was STRING`) causado por la ausencia de la cabecera `Accept: application/json` en la petición de la app al servidor, lo que llevaba al servidor a devolver una respuesta inesperada.
+-   **Errores de Compilación:** Se resolvieron errores de referencias no resueltas (`DesgloseContent`, `sp`) y paréntesis extra durante el proceso.
+
+El proyecto se encuentra en un estado donde la pantalla de Stock es funcional, robusta y preparada para una mayor interactividad con las opciones de filtrado y agrupación.
+
+# Avances de la Sesión - 28 de Diciembre de 2025
+
+Esta sesión se centró en una profunda refactorización y rediseño de la pantalla de visualización de stock (`StockScreen`) para mejorar la arquitectura y la experiencia de usuario.
+
+## 1. Refactorización de Arquitectura
+
+-   **Creación de `StockViewModel`**: Se identificó que `StockScreen` era un componente "tonto" que recibía su estado desde `MainViewModel`. Siguiendo las mejores prácticas, se creó un `StockViewModel` dedicado para encapsular toda la lógica y el estado relacionados con la pantalla de stock.
+-   **Migración de Lógica**: Se trasladó toda la lógica de obtención, sincronización y procesamiento de datos de stock desde `MainViewModel` al nuevo `StockViewModel`.
+-   **Limpieza**: Como resultado, `MainViewModel` y `MainScreen` fueron limpiados, eliminando responsabilidades que no les correspondían y simplificando el código.
+
+## 2. Rediseño Profundo de la Interfaz de Usuario (UI)
+
+Se descartó el diseño original basado en una lista de acordeones en favor de una interfaz más moderna y visual basada en tarjetas y gráficos.
+
+-   **Componente `PieChart`**: Se creó un nuevo componente reutilizable `PieChart.kt` que dibuja un gráfico de torta (o de anillo) usando `Canvas`.
+-   **Nuevo Layout en `StockScreen`**:
+    -   Se eliminó la barra de navegación inferior para dar más espacio al contenido.
+    -   La pantalla se dividió en secciones, utilizando `Card` con fondos blancos y esquinas redondeadas para una mejor organización visual.
+    -   Se creó una `TotalStockCard` que muestra el stock general junto a un pequeño gráfico de torta que compara las especies.
+    -   Se crearon `SpeciesStockCard` individuales para "Ovinos" y "Caprinos".
+-   **Leyenda del Gráfico**: Siguiendo feedback, se implementó una leyenda detallada para los gráficos de torta que muestra un indicador de color, el nombre de la categoría/raza y el porcentaje que representa, en lugar de dibujar el texto dentro del gráfico.
+
+## 3. Implementación de Filtros y Refinamientos de UX
+
+-   **Filtros de Agrupación**:
+    -   Se añadieron chips de filtrado ("Todos", "Por Categoría", "Por Raza") para permitir al usuario cambiar dinámicamente el desglose del stock.
+    -   La opción "Todos" se estableció como predeterminada, mostrando una tabla de texto con dos columnas (categoría y raza).
+    -   Las opciones "Por Categoría" y "Por Raza" muestran el nuevo desglose con el gráfico de torta y su leyenda.
+-   **Refinamientos de Diseño**:
+    -   Se ajustó el layout de los chips para que "floten" sobre una línea divisoria sutil dentro de la tarjeta de la especie, en lugar de estar envueltos en su propia tarjeta.
+    -   Se eliminaron los "puntos" (placeholders de iconos) de los encabezados de las tarjetas de especie.
+    -   Se corrigió el color de fondo de todas las tarjetas a blanco puro para eliminar tintes rojizos y asegurar consistencia visual.
+    -   Se gestionaron y corrigieron varios diseños intermedios de los chips (con pesos, en columna) hasta llegar a la solución final de un carrusel (`LazyRow`).
+
+## Estado Final
+
+Tras múltiples iteraciones, correcciones de errores de compilación y refinamientos de diseño, la nueva pantalla de stock está completamente implementada y el proyecto compila con éxito.

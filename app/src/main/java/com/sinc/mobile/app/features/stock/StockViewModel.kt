@@ -1,17 +1,27 @@
 package com.sinc.mobile.app.features.stock
 
-import android.util.Log
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sinc.mobile.domain.model.DesgloseStock
+import com.sinc.mobile.app.features.stock.components.PieChartData
 import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.domain.use_case.GetStockUseCase
 import com.sinc.mobile.domain.use_case.GetUnidadesProductivasUseCase
 import com.sinc.mobile.domain.use_case.SyncStockUseCase
 import com.sinc.mobile.domain.use_case.SyncUnidadesProductivasUseCase
+import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,15 +32,28 @@ enum class StockGrouping {
     BY_BREED
 }
 
-sealed class DesgloseItem {
-    data class Grouped(val name: String, val quantity: Int) : DesgloseItem()
+data class LegendItem(
+    val label: String,
+    val value: Int,
+    val percentage: Float,
+    val color: Color
+)
+
+sealed class DesgloseItem { // Renamed for clarity
     data class Full(val categoria: String, val raza: String, val quantity: Int) : DesgloseItem()
+}
+
+sealed class DesgloseUiData {
+    data class Grouped(val chartData: List<PieChartData>, val legendItems: List<LegendItem>) : DesgloseUiData()
+    data class Full(val tableData: List<DesgloseItem.Full>) : DesgloseUiData()
 }
 
 data class ProcessedStock(
     val stockTotalGeneral: Int,
     val unidadesProductivas: List<ProcessedUnidadProductivaStock>,
-    val allSpecies: List<ProcessedEspecieStock>
+    val allSpecies: List<ProcessedEspecieStock>,
+    val speciesDistribution: List<PieChartData> = emptyList(),
+    val speciesLegendItems: List<LegendItem> = emptyList() // New field
 )
 
 data class ProcessedUnidadProductivaStock(
@@ -41,7 +64,7 @@ data class ProcessedUnidadProductivaStock(
 data class ProcessedEspecieStock(
     val nombre: String,
     val stockTotal: Int,
-    val desglose: List<DesgloseItem>
+    val desglose: DesgloseUiData
 )
 
 data class StockUiState(
@@ -65,6 +88,12 @@ class StockViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StockUiState())
     val uiState: StateFlow<StockUiState> = _uiState.asStateFlow()
 
+    private val pieChartColors = listOf(
+        Color(0xFF6C5B7B), Color(0xFFC06C84), Color(0xFFF67280), Color(0xFFF8B195),
+        Color(0xFFB39DDB), Color(0xFF81C784), Color(0xFFFFD54F), Color(0xFF4FC3F7),
+        Color(0xFFE57373), Color(0xFF9575CD), Color(0xFF4DB6AC), Color(0xFFFFF176)
+    )
+
     init {
         collectUnidadesProductivas()
         processAndCollectStock()
@@ -75,27 +104,20 @@ class StockViewModel @Inject constructor(
         viewModelScope.launch {
             if (_uiState.value.isLoading) return@launch
             _uiState.update { it.copy(isLoading = true, error = null) }
-            Log.d("StockViewModel", "[REFRESH] Iniciando. isLoading = true")
-
             val startTime = System.currentTimeMillis()
-            val unidadesSyncJob = launch { syncUnidadesProductivasUseCase() }
-            val stockSyncJob = launch {
-                val result = syncStockUseCase()
-                if (result is com.sinc.mobile.domain.util.Result.Failure) {
-                    val errorMessage = result.error.message
-                    _uiState.update { it.copy(error = errorMessage) }
-                }
+
+            val stockSyncResult = syncStockUseCase()
+            syncUnidadesProductivasUseCase()
+
+            if (stockSyncResult is Result.Failure) {
+                _uiState.update { it.copy(error = stockSyncResult.error.message) }
             }
-            unidadesSyncJob.join()
-            stockSyncJob.join()
 
             val duration = System.currentTimeMillis() - startTime
-            if (System.currentTimeMillis() - startTime < 1000) {
-                kotlinx.coroutines.delay(1000 - duration)
+            if (duration < 1000) {
+                delay(1000 - duration)
             }
-
             _uiState.update { it.copy(isLoading = false) }
-            Log.d("StockViewModel", "[REFRESH] Finalizado. isLoading = false")
         }
     }
 
@@ -104,75 +126,114 @@ class StockViewModel @Inject constructor(
     }
 
     private fun collectUnidadesProductivas() {
-        viewModelScope.launch {
-            getUnidadesProductivasUseCase().collectLatest { unidades ->
-                _uiState.update { it.copy(unidadesProductivas = unidades) }
-            }
-        }
+        getUnidadesProductivasUseCase().onEach { unidades ->
+            _uiState.update { it.copy(unidadesProductivas = unidades) }
+        }.launchIn(viewModelScope)
     }
 
     private fun processAndCollectStock() {
         viewModelScope.launch {
-            getStockUseCase().combine(uiState.map { it.stockGrouping }.distinctUntilChanged()) { stock, grouping ->
-                Pair(stock, grouping)
-            }.collect { (stock, grouping) ->
+            combine(
+                getStockUseCase(),
+                uiState.map { it.stockGrouping }.distinctUntilChanged()
+            ) { stock, grouping ->
                 if (stock == null) {
-                    _uiState.update { it.copy(stock = null, processedStock = null) }
-                    return@collect
+                    Pair(null, null)
+                } else {
+                    val processed = processStock(stock, grouping)
+                    Pair(stock, processed)
                 }
-
-                val processed = processStock(stock, grouping)
-                _uiState.update { it.copy(stock = stock, processedStock = processed) }
+            }.collect { (rawStock, processedStock) ->
+                _uiState.update {
+                    it.copy(
+                        stock = rawStock,
+                        processedStock = processedStock
+                    )
+                }
             }
         }
     }
 
     internal fun processStock(stock: Stock, grouping: StockGrouping): ProcessedStock {
+        val speciesTotals = stock.unidadesProductivas
+            .flatMap { it.especies }
+            .groupBy { it.nombre }
+            .mapValues { entry -> entry.value.sumOf { it.stockTotal } }
+
+        val totalGeneralStock = speciesTotals.values.sum().toFloat()
+
+        val speciesDistributionData = speciesTotals.entries.mapIndexed { index, entry ->
+            PieChartData(
+                value = entry.value.toFloat(), // Convert to Float for PieChartData
+                color = pieChartColors[index % pieChartColors.size]
+            )
+        }
+
+        val speciesLegendItems = if (totalGeneralStock == 0f) {
+            emptyList()
+        } else {
+            speciesTotals.entries.mapIndexed { index, entry ->
+                LegendItem(
+                    label = entry.key,
+                    value = entry.value,
+                    percentage = (entry.value / totalGeneralStock) * 100,
+                    color = pieChartColors[index % pieChartColors.size]
+                )
+            }
+        }
+
         val allSpeciesProcessed = stock.unidadesProductivas
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .map { (nombreEspecie, especiesList) ->
                 val desgloses = especiesList.flatMap { it.desglose }
-
-                val groupedDesglose: List<DesgloseItem> = when (grouping) {
+                val desgloseUiData: DesgloseUiData = when (grouping) {
                     StockGrouping.BY_ALL -> {
-                        desgloses.groupBy { Pair(it.categoria, it.raza) }
+                        val tableData = desgloses.groupBy { Pair(it.categoria, it.raza) }
                             .map { (key, group) ->
                                 DesgloseItem.Full(key.first, key.second, group.sumOf { it.cantidad })
                             }
+                        DesgloseUiData.Full(tableData)
                     }
-                    StockGrouping.BY_CATEGORY -> {
-                        desgloses.groupBy { it.categoria }
-                            .map { (name, group) ->
-                                DesgloseItem.Grouped(name, group.sumOf { it.cantidad })
+                    StockGrouping.BY_CATEGORY, StockGrouping.BY_BREED -> {
+                        val groupedData = desgloses
+                            .groupBy { if (grouping == StockGrouping.BY_CATEGORY) it.categoria else it.raza }
+                            .mapValues { entry -> entry.value.sumOf { it.cantidad } }
+
+                        val totalGroupValue = groupedData.values.sum().toFloat()
+                        val legendItems = if (totalGroupValue == 0f) {
+                            emptyList()
+                        } else {
+                            groupedData.entries.mapIndexed { index, entry ->
+                                LegendItem(
+                                    label = entry.key,
+                                    value = entry.value,
+                                    percentage = (entry.value / totalGroupValue) * 100,
+                                    color = pieChartColors[index % pieChartColors.size]
+                                )
                             }
-                    }
-                    StockGrouping.BY_BREED -> {
-                        desgloses.groupBy { it.raza }
-                            .map { (name, group) ->
-                                DesgloseItem.Grouped(name, group.sumOf { it.cantidad })
-                            }
+                        }
+                        val chartData = legendItems.map { PieChartData(value = it.value.toFloat(), color = it.color) }
+                        DesgloseUiData.Grouped(chartData, legendItems)
                     }
                 }
-
                 ProcessedEspecieStock(
                     nombre = nombreEspecie,
                     stockTotal = especiesList.sumOf { it.stockTotal },
-                    desglose = groupedDesglose
+                    desglose = desgloseUiData
                 )
             }
 
         val unidadesProcessed = stock.unidadesProductivas.map {
-            ProcessedUnidadProductivaStock(
-                nombre = it.nombre,
-                stockTotal = it.stockTotal
-            )
+            ProcessedUnidadProductivaStock(nombre = it.nombre, stockTotal = it.stockTotal)
         }
 
         return ProcessedStock(
             stockTotalGeneral = stock.stockTotalGeneral,
             unidadesProductivas = unidadesProcessed,
-            allSpecies = allSpeciesProcessed
+            allSpecies = allSpeciesProcessed,
+            speciesDistribution = speciesDistributionData,
+            speciesLegendItems = speciesLegendItems
         )
     }
 }
