@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
+import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 
@@ -59,69 +61,71 @@ fun SettingsScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(CozyLightGray)
-            .padding(horizontal = 16.dp)
-    ) {
-        // Header
-        Text(
-            text = "Configuración",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = CozyTextMain,
-                fontSize = 32.sp
-            ),
-            modifier = Modifier.padding(top = 32.dp, bottom = 24.dp)
-        )
-
-        // Profile Card
-        ProfileCard(
-            name = "Jose Maria", // Hardcoded for now
-            onEditClick = { /* TODO: Navigate to profile edit screen */ }
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Settings Items
-        var notificationsEnabled by remember { mutableStateOf(true) }
-
-        SettingsSection {
-            SettingsItem(
-                title = "Cuenta",
-                icon = Icons.Outlined.Person,
-                iconBackgroundColor = CozyLavender,
-                onClick = onNavigateToChangePassword // Reuse change password screen for "Account"
+    Scaffold(
+        topBar = {
+            MinimalHeader(
+                title = "Configuración",
+                onBackPress = onNavigateBack,
+                modifier = Modifier.statusBarsPadding()
             )
-            SettingsItem(
-                title = "Notificaciones",
-                icon = Icons.Outlined.Notifications,
-                iconBackgroundColor = CozyMint
-            ) {
-                CozySwitch(
-                    checked = notificationsEnabled,
-                    onCheckedChange = { notificationsEnabled = it }
+        },
+        containerColor = CozyLightGray
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Profile Card
+            ProfileCard(
+                name = "Jose Maria", // Hardcoded for now
+                onEditClick = { /* TODO: Navigate to profile edit screen */ }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Settings Items
+            var notificationsEnabled by remember { mutableStateOf(true) }
+
+            SettingsSection {
+                SettingsItem(
+                    title = "Cuenta",
+                    icon = Icons.Outlined.Person,
+                    iconBackgroundColor = CozyLavender,
+                    onClick = onNavigateToChangePassword // Reuse change password screen for "Account"
+                )
+                SettingsItem(
+                    title = "Notificaciones",
+                    icon = Icons.Outlined.Notifications,
+                    iconBackgroundColor = CozyMint
+                ) {
+                    CozySwitch(
+                        checked = notificationsEnabled,
+                        onCheckedChange = { notificationsEnabled = it }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SettingsSection {
+                SettingsItem(
+                    title = "Ayuda",
+                    icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                    iconBackgroundColor = CozyPink,
+                    onClick = { /* TODO */ }
+                )
+                SettingsItem(
+                    title = "Cerrar Sesión",
+                    icon = Icons.AutoMirrored.Outlined.ExitToApp,
+                    iconBackgroundColor = CozyPink.copy(alpha = 0.5f),
+                    isLogout = true,
+                    onClick = { showLogoutDialog = true }
                 )
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        SettingsSection {
-            SettingsItem(
-                title = "Ayuda",
-                icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                iconBackgroundColor = CozyPink,
-                onClick = { /* TODO */ }
-            )
-            SettingsItem(
-                title = "Cerrar Sesión",
-                icon = Icons.AutoMirrored.Outlined.ExitToApp,
-                iconBackgroundColor = CozyPink.copy(alpha = 0.5f),
-                isLogout = true,
-                onClick = { showLogoutDialog = true }
-            )
         }
     }
 }

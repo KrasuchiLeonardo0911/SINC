@@ -1,6 +1,7 @@
 package com.sinc.mobile.app.features.home.mainscreen.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Header() {
+fun Header(onSettingsClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -34,25 +35,15 @@ fun Header() {
                 color = Color.Black
             )
         )
-        // Reemplazo temporal si no tienes la imagen
         Box(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.Gray),
+                .background(Color.Gray)
+                .clickable { onSettingsClick() }, // Make the Box clickable
             contentAlignment = Alignment.Center
         ) {
             Icon(imageVector = Icons.Default.Person, contentDescription = "User", tint = Color.White)
         }
-
-        /* CÓDIGO ORIGINAL (Úsalo cuando tengas la imagen en res/drawable)
-        Image(
-            painter = painterResource(id = R.drawable.logoovinos),
-            contentDescription = "User Avatar",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-        */
     }
 }

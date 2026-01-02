@@ -41,8 +41,7 @@ fun MinimalHeader(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp) // Aumentamos ligeramente la altura para darle aire
-            .padding(horizontal = 10.dp) // Padding lateral estricto
-            .windowInsetsPadding(WindowInsets.statusBars), // APLICA PADDING A LA BARRA DE ESTADO
+            .padding(horizontal = 10.dp), // Padding lateral estricto
         horizontalArrangement = Arrangement.Start, // Alineación forzada a la izquierda
         verticalAlignment = Alignment.CenterVertically
     ) {

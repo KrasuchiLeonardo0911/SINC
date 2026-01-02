@@ -54,7 +54,7 @@ fun SeleccionCampoScreen(
                                 popUpTo(Routes.HOME) { inclusive = true }
                             }
                         }
-                        CozyBottomNavRoutes.PROFILE -> {
+                        CozyBottomNavRoutes.CAMPOS -> {
                             // MainScreen handles showing the profile screen
                             navController.navigate(Routes.HOME) {
                                 popUpTo(Routes.HOME) { inclusive = true }

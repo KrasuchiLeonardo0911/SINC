@@ -24,7 +24,9 @@ import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosSc
 
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.app.features.home.MainViewModel // Import MainViewModel
+import com.sinc.mobile.app.features.campos.CamposScreen
+import com.sinc.mobile.app.features.home.MainViewModel
+import com.sinc.mobile.app.navigation.Routes
 
 @Composable
 fun MainScreen(
@@ -55,23 +57,19 @@ fun MainScreen(
         }
     ) { paddingValues ->
         when (currentRoute) {
-            CozyBottomNavRoutes.HOME -> MainContent(paddingValues = paddingValues)
+            CozyBottomNavRoutes.HOME -> MainContent(
+                paddingValues = paddingValues,
+                onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+            )
             CozyBottomNavRoutes.STOCK -> StockScreen(
-                modifier = Modifier.padding(paddingValues),
                 navController = navController
             )
             CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
                 onBack = { currentRoute = CozyBottomNavRoutes.HOME }
             )
-            CozyBottomNavRoutes.PROFILE -> SettingsScreen(
-                onNavigateBack = { currentRoute = CozyBottomNavRoutes.HOME }, // Go back to home
-                onNavigateToLogin = {
-                    navController.navigate("login") {
-                        popUpTo(navController.graph.id) { inclusive = true }
-                    }
-                },
-                onNavigateToChangePassword = {
-                    navController.navigate("change_password")
+            CozyBottomNavRoutes.CAMPOS -> CamposScreen(
+                onNavigateToCreateUnidadProductiva = {
+                    navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
             )
             // Add placeholders for other routes
@@ -89,13 +87,16 @@ fun MainScreen(
 }
 
 @Composable
-fun MainContent(paddingValues: PaddingValues) {
+fun MainContent(
+    paddingValues: PaddingValues,
+    onSettingsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .padding(paddingValues)
             .padding(16.dp)
     ) {
-        Header()
+        Header(onSettingsClick = onSettingsClick)
         Spacer(modifier = Modifier.height(24.dp))
         WeekdaySelector()
         Spacer(modifier = Modifier.height(24.dp))

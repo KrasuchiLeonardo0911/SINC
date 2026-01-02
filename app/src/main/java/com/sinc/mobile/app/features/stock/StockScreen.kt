@@ -56,7 +56,8 @@ fun StockScreen(
         topBar = {
             MinimalHeader(
                 title = "Mi Stock",
-                onBackPress = { navController.popBackStack() }
+                onBackPress = { navController.popBackStack() },
+                modifier = Modifier.statusBarsPadding()
             )
         }
         // No BottomBar to provide more space

@@ -11,7 +11,8 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,7 +43,7 @@ fun CozyBottomNavBar(
         BottomNavItem("Home", CozyBottomNavRoutes.HOME, Icons.Filled.Home),
         BottomNavItem("Stock", CozyBottomNavRoutes.STOCK, Icons.Filled.BarChart),
         BottomNavItem("Historial", CozyBottomNavRoutes.HISTORIAL, Icons.AutoMirrored.Filled.List),
-        BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Filled.Person)
+        BottomNavItem("Campos", CozyBottomNavRoutes.CAMPOS, Icons.Outlined.Map)
     )
 
     val leftItems = items.subList(0, 2)
@@ -145,7 +146,7 @@ fun RowScope.CozyBottomNavItem(
                 CozyBottomNavRoutes.HOME -> Icons.Filled.Home
                 CozyBottomNavRoutes.STOCK -> Icons.Filled.BarChart
                 CozyBottomNavRoutes.HISTORIAL -> Icons.AutoMirrored.Filled.List
-                CozyBottomNavRoutes.PROFILE -> Icons.Filled.Person
+                CozyBottomNavRoutes.CAMPOS -> Icons.Filled.Map
                 else -> item.icon // Fallback
             }
         } else {
