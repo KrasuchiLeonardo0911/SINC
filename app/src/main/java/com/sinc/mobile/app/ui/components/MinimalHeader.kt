@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.ripple.rememberRipple
@@ -38,7 +41,8 @@ fun MinimalHeader(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp) // Aumentamos ligeramente la altura para darle aire
-            .padding(horizontal = 10.dp), // Padding lateral estricto
+            .padding(horizontal = 10.dp) // Padding lateral estricto
+            .windowInsetsPadding(WindowInsets.statusBars), // APLICA PADDING A LA BARRA DE ESTADO
         horizontalArrangement = Arrangement.Start, // Alineación forzada a la izquierda
         verticalAlignment = Alignment.CenterVertically
     ) {

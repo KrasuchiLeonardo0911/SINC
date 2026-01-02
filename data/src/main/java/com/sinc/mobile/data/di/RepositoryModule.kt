@@ -27,6 +27,9 @@ import com.sinc.mobile.domain.repository.IdentifierRepository
 import com.sinc.mobile.data.repository.TicketRepositoryImpl
 import com.sinc.mobile.domain.repository.TicketRepository
 
+import com.sinc.mobile.data.repository.MovimientoHistorialRepositoryImpl
+import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
@@ -62,4 +65,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindStockRepository(impl: StockRepositoryImpl): StockRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMovimientoHistorialRepository(impl: MovimientoHistorialRepositoryImpl): MovimientoHistorialRepository
 }

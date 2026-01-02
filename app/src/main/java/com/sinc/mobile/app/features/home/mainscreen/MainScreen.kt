@@ -20,6 +20,7 @@ import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.theme.*
+import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
 
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,6 +59,9 @@ fun MainScreen(
             CozyBottomNavRoutes.STOCK -> StockScreen(
                 modifier = Modifier.padding(paddingValues),
                 navController = navController
+            )
+            CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
+                onBack = { currentRoute = CozyBottomNavRoutes.HOME }
             )
             CozyBottomNavRoutes.PROFILE -> SettingsScreen(
                 onNavigateBack = { currentRoute = CozyBottomNavRoutes.HOME }, // Go back to home

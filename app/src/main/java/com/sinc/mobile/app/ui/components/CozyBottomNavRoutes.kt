@@ -6,4 +6,5 @@ object CozyBottomNavRoutes {
     const val ADD = "add"
     const val JOURNAL = "journal"
     const val PROFILE = "profile"
+    const val HISTORIAL = "historial"
 }

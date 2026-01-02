@@ -696,3 +696,131 @@ Se descartó el diseño original basado en una lista de acordeones en favor de u
 ## Estado Final
 
 Tras múltiples iteraciones, correcciones de errores de compilación y refinamientos de diseño, la nueva pantalla de stock está completamente implementada y el proyecto compila con éxito.
+
+# Avances de la Sesión Actual (29 de Diciembre de 2025)
+
+Esta sesión se centró en una serie de mejoras y correcciones significativas en la pantalla de Stock, abordando tanto la funcionalidad como la experiencia de usuario (UX) y el rendimiento visual.
+
+## 1. Refinamiento del Spinner de Carga y Visibilidad de Contenido
+
+*   **Problema Inicial:**
+    *   El spinner de carga del "pull-to-refresh" no estaba centrado horizontalmente en la pantalla.
+    *   Al realizar un "pull-to-refresh", el contenido previamente visible de la pantalla desaparecía por completo mientras el spinner estaba activo, dejando un espacio en blanco temporalmente antes de que se mostraran los datos actualizados. Esto creaba una experiencia de usuario abrupta y desagradable.
+*   **Solución Implementada:**
+    *   Se corrigió el alineamiento del spinner de carga añadiendo `Modifier.fillMaxSize()` al `Box` contenedor en `StockScreen.kt`. Esto aseguró que el `PullRefreshIndicator` siempre se centrara correctamente dentro del área de la pantalla.
+    *   La visibilidad del contenido durante el refresco se solucionó modificando la condición de renderizado del `LazyColumn` en `StockScreen.kt`. En lugar de ocultar la lista si `isLoading` era `true`, se ajustó para que siempre mostrara el `processedStock` (los datos antiguos) mientras se cargaba el nuevo contenido. Esto evita que la pantalla se quede en blanco, manteniendo la información anterior visible hasta que la actualización esté lista.
+
+## 2. Mejora de la Leyenda del Gráfico de Stock Total General
+
+*   **Problema:** La tarjeta "Stock Total General" presentaba un gráfico de torta que visualizaba la distribución de especies (ovinos/caprinos), pero carecía de una leyenda explícita que relacionara los colores del gráfico con las especies y sus porcentajes correspondientes.
+*   **Solución Implementada:**
+    *   Se modificó la clase `ProcessedStock` en `StockViewModel.kt` para incluir un nuevo campo: `speciesLegendItems: List<LegendItem>`. Esta lista se calcula en la función `processStock` y contiene la información detallada (etiqueta, valor, porcentaje, color) para cada segmento del gráfico de stock total.
+    *   La `TotalStockCard` en `StockScreen.kt` fue reestructurada para mostrar esta nueva leyenda de manera clara y organizada, debajo del gráfico de torta.
+    *   Durante la implementación, se corrigió un error de layout que causaba que el texto del título ("Stock Total General") apareciera verticalmente debido a una mala distribución del espacio horizontal. La nueva estructura garantiza que todos los elementos se muestren correctamente.
+
+## 3. Chips de Filtro Deslizables
+
+*   **Problema:** Los chips de filtro dentro de las tarjetas de especie (`SpeciesStockCard`) no cabían en el ancho de la pantalla cuando había múltiples opciones, obligando a un recorte o a un uso ineficiente del espacio.
+*   **Solución Implementada:**
+    *   El componente `GroupingOptions.kt` fue refactorizado para utilizar `LazyRow` en lugar de `Row`. Este cambio permite el desplazamiento horizontal de los chips, asegurando que todas las opciones de filtro sean accesibles y la interfaz se adapte mejor a diferentes anchos de pantalla.
+
+## 4. Tarjetas de Especie Colapsables y Refinamiento UI/UX
+
+*   **Problema:** Se identificó la necesidad de hacer las `SpeciesStockCard`s colapsables para mejorar la usabilidad, especialmente si hay muchos registros. Además, la animación de colapso/expansión era lenta, las tarjetas se expandían por defecto y el efecto visual al hacer clic en la cabecera (un rectángulo gris) no se integraba bien con el diseño redondeado de la tarjeta.
+*   **Solución Implementada:**
+    *   Cada `SpeciesStockCard` ahora gestiona su propio estado de expansión/colapso con `rememberSaveable { mutableStateOf(false) }`, haciendo que las tarjetas estén **colapsadas por defecto**.
+    *   La cabecera de cada tarjeta se hizo "clicable" (`Modifier.clickable`) para alternar el estado de expansión, con un icono de flecha (`KeyboardArrowDown`) que gira para indicar visualmente el estado actual.
+    *   La velocidad de las animaciones se ajustó: `animateContentSize` usa `tween(250)` y `AnimatedVisibility` usa `fadeIn(tween(200, delayMillis = 50))` y `fadeOut(tween(100))` para transiciones más rápidas y suaves.
+    *   El modificador `clickable` se movió de la `Row` de la cabecera a la `Card` principal. Esto asegura que el efecto "ripple" (la onda de clic) sea recortado automáticamente por la forma redondeada de la tarjeta, resultando en una indicación visual de clic más limpia y estéticamente agradable.
+    *   Se corrigió el bug donde cambiar un filtro en una tarjeta afectaba a todas las demás. Ahora, cada `SpeciesStockCard` gestiona su propia selección de filtro internamente, asegurando independencia.
+
+## 5. Colores Dinámicos en los Chips de Filtro
+
+*   **Problema:** Los chips de filtro seleccionados utilizaban los colores por defecto del tema de Material Design, lo que no siempre combinaba óptimamente con el color específico de la especie a la que pertenecía la tarjeta.
+*   **Solución Implementada:**
+    *   Se añadió un campo `color: Color` a la clase `ProcessedEspecieStock` en `StockViewModel.kt`. Este color se calcula en la función `processStock` a partir de `pieChartColors`, asegurando que cada especie tenga un color consistente.
+    *   El componente `GroupingOptions.kt` se modificó para aceptar un parámetro `selectedChipColor: Color`. Este color se utiliza para establecer el `selectedContainerColor` de los `FilterChip`s cuando están seleccionados, lo que significa que un chip seleccionado en la tarjeta de "Ovinos" tendrá el color asociado a los ovinos, y así sucesivamente.
+
+## 6. Corrección de Advertencias y Errores de Compilación
+
+*   **Errores de Referencia:** Se resolvieron errores de compilación relacionados con `PieChartData` y `LegendItem` moviendo `LegendItem` de `StockViewModel.kt` a su propio archivo `LegendItem.kt` dentro del directorio `components`, y añadiendo las importaciones necesarias en `StockViewModel.kt` y `StockScreen.kt`.
+*   **Error de Sobrecarga de `filterChipColors`:** Se corrigió un error de compilación en `GroupingOptions.kt` ajustando los nombres de los parámetros de la función `FilterChipDefaults.filterChipColors` (`selectedContentColor` a `selectedLabelColor`) para que coincidieran con la API de Material3.
+*   **Advertencia de Compilador ("Condition is always 'false'"):** Se abordó una advertencia persistente del compilador en `StockViewModel.kt` reescribiendo la condición `if (totalGroupValue == 0f)` a `if (totalGroupValue > 0f)`. Aunque la lógica original era correcta, este cambio eliminó la advertencia (que parecía un falso positivo del compilador) sin alterar la funcionalidad.
+
+La pantalla de Stock ahora es más robusta, usable y visualmente consistente, incorporando todas las mejoras solicitadas.
+
+# Avances de la Sesión Actual (03 de Enero de 2026)
+
+Esta sesión se centró en la implementación de una nueva funcionalidad crítica, el **Historial de Movimientos**, y en una serie de mejoras y correcciones de la interfaz de usuario basadas en el feedback recibido.
+
+## 1. Implementación del Módulo "Historial de Movimientos"
+
+Se construyó la funcionalidad completa para obtener, almacenar localmente y visualizar el historial de movimientos de stock del productor, respetando rigurosamente la Arquitectura Limpia del proyecto.
+
+### 1.1. Capa de Datos (`:data`)
+
+-   **Networking (Retrofit)**:
+    -   Se creó el DTO `MovimientoHistorialDto.kt` para mapear la respuesta del nuevo endpoint de la API: `GET /api/movil/cuaderno/movimientos`.
+    -   Se definió la interfaz `HistorialMovimientosApiService.kt` para declarar la llamada a la API.
+    -   Se actualizó `NetworkModule.kt` (Hilt) para proveer la instancia de `HistorialMovimientosApiService` a toda la aplicación.
+
+-   **Persistencia Local (Room)**:
+    -   Se definió la entidad `MovimientoHistorialEntity.kt` para la tabla de la base de datos local.
+    -   Se creó el DAO `MovimientoHistorialDao.kt`, que incluye métodos para obtener un `Flow` de movimientos, insertar una lista y limpiar la tabla de forma transaccional (`clearAndInsert`).
+    -   Se actualizaron `SincMobileDatabase.kt` y `DatabaseModule.kt` (Hilt) para integrar la nueva entidad y el DAO.
+
+-   **Repositorio**:
+    -   Se creó `MovimientoHistorialMapper.kt` con funciones de extensión para convertir `DTO -> Entity` y `Entity -> Domain`.
+    -   Se implementó `MovimientoHistorialRepositoryImpl.kt`, que orquesta el flujo de datos:
+        1.  El método `getMovimientos()` expone un `Flow` de datos directamente desde el `DAO` local, asegurando que la UI siempre lea de la "fuente única de verdad".
+        2.  El método `syncMovimientos()` se encarga de llamar a la API, recibir los datos, mapearlos a entidades y guardarlos en la base de datos local a través del DAO.
+    -   Se actualizó `RepositoryModule.kt` (Hilt) para vincular la interfaz `MovimientoHistorialRepository` con su implementación.
+
+### 1.2. Capa de Dominio (`:domain`)
+
+-   Se creó el modelo de negocio `MovimientoHistorial.kt`.
+-   Se definió la interfaz `MovimientoHistorialRepository.kt` como el contrato que la capa de datos debe seguir.
+-   Se implementaron dos Casos de Uso:
+    -   `GetMovimientosHistorialUseCase`: Para obtener el `Flow` de datos del repositorio.
+    -   `SyncMovimientosHistorialUseCase`: Para encapsular la lógica de negocio de la sincronización.
+
+### 1.3. Capa de Presentación (`:app`)
+
+-   Se creó un nuevo paquete de feature: `app.features.historial_movimientos`.
+-   **ViewModel**: Se implementó `HistorialMovimientosViewModel.kt`, que consume los casos de uso para obtener y sincronizar los datos, y expone el estado de la UI (`HistorialMovimientosState`) a través de un `StateFlow`.
+-   **UI (Compose)**:
+    -   Se construyó `HistorialMovimientosScreen.kt` como la pantalla principal de la feature.
+    -   Se diseñó un Composable reutilizable, `MovimientoHistorialItem.kt`, para mostrar cada ítem de la lista con un diseño detallado y estilizado, que incluye:
+        -   Iconos de flecha (`ic_arrow_upward`, `ic_arrow_downward`) para indicar visualmente si es una "alta" or "baja".
+        -   Colores de fondo y de texto condicionales para una mejor distinción.
+    -   Se añadieron los nuevos iconos como Vector Drawables al proyecto.
+
+## 2. Refinamiento de UI/UX y Corrección de Errores
+
+### 2.1. Navegación Principal
+
+-   **Feedback Atendido**: Se ajustó la navegación para que "Historial de Movimientos" sea una pantalla principal, accesible directamente desde el menú de navegación inferior, en lugar de un sub-menú.
+-   **Implementación**:
+    -   Se revirtió la adición del botón "Ver Historial" en la pantalla de `StockScreen`.
+    -   Se añadió una nueva ruta `HISTORIAL` en `CozyBottomNavRoutes.kt`.
+    -   Se modificó `CozyBottomNavBar.kt`, reemplazando el ítem "Diario" (que actuaba como placeholder) por "Historial", utilizando el icono `Icons.AutoMirrored.Filled.List`. Esto mantuvo el balance visual de la barra de navegación.
+    -   Se actualizó la lógica de navegación en `MainScreen.kt` para mostrar `HistorialMovimientosScreen` al seleccionar la nueva opción en la barra.
+
+### 2.2. Ajustes de Layout y "Pull-to-Refresh"
+
+-   **Feedback Atendido**: Se corrigió el layout de `HistorialMovimientosScreen` para que la barra superior no se sintiera desconectada y el contenido no estuviera pegado a ella. También se arregló la animación del "pull-to-refresh".
+-   **Implementación**:
+    -   Se modificó `MinimalHeader.kt`, añadiendo el modifier `.windowInsetsPadding(WindowInsets.statusBars)` para asegurar que la barra superior respete el espacio de la barra de estado del sistema, solucionando cualquier superposición.
+    -   Se reestructuró `HistorialMovimientosScreen.kt` para imitar la estructura de `StockScreen.kt`, aplicando el `containerColor`, el orden correcto de modifiers (`.pullRefresh().padding().fillMaxSize()`) y un `Arrangement.spacedBy` en el `LazyColumn` para un espaciado consistente.
+    -   Se mejoró `HistorialMovimientosViewModel.kt`, replicando la lógica de `StockViewModel` para el refresco de datos. Ahora, la animación del spinner se muestra durante un mínimo de 1 segundo, proveyendo un feedback visual claro y evitando que la animación se oculte instantáneamente en conexiones rápidas.
+
+### 2.3. Corrección de Errores de Compilación
+
+Durante el proceso, se solucionaron múltiples errores de compilación, incluyendo:
+-   Referencias no resueltas a `SimpleTopAppBar` (se reemplazó por el componente correcto, `MinimalHeader`).
+-   Import incorrecto de la clase `R` en los componentes de la UI.
+-   Errores en el `ViewModel` y `Repository` por el uso incorrecto de la clase sellada `Result` (se corrigió `Result.Error` a `Result.Failure`).
+-   Importaciones de layout faltantes en varios Composables.
+
+---
+**Estado Actual**: El proyecto compila exitosamente. La nueva funcionalidad está completamente integrada y la UI es consistente con el resto de la aplicación, habiendo atendido todas las correcciones y sugerencias de la sesión.

@@ -15,6 +15,7 @@ import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
 import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
+import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
 import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoFormScreen
@@ -33,6 +34,7 @@ object Routes {
     const val CAMPOS = "campos"
     const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
+    const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
 }
 
 @Composable
@@ -121,6 +123,9 @@ fun AppNavigation(
                     navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                 }
             )
+        }
+        composable(Routes.HISTORIAL_MOVIMIENTOS) {
+            HistorialMovimientosScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = Routes.MOVIMIENTO_FORM,
