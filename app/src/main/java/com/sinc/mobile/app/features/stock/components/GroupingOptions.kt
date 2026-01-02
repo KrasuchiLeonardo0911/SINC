@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.features.stock.StockGrouping
@@ -15,8 +16,16 @@ import com.sinc.mobile.app.features.stock.StockGrouping
 fun GroupingOptions(
     selectedGrouping: StockGrouping,
     onGroupingSelected: (StockGrouping) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedChipColor: Color = MaterialTheme.colorScheme.primary
 ) {
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = selectedChipColor,
+        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+        selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimary
+    )
+
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -26,21 +35,24 @@ fun GroupingOptions(
             FilterChip(
                 selected = selectedGrouping == StockGrouping.BY_ALL,
                 onClick = { onGroupingSelected(StockGrouping.BY_ALL) },
-                label = { Text("Todos", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                label = { Text("Todos", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                colors = chipColors
             )
         }
         item {
             FilterChip(
                 selected = selectedGrouping == StockGrouping.BY_CATEGORY,
                 onClick = { onGroupingSelected(StockGrouping.BY_CATEGORY) },
-                label = { Text("Por Categoría", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                label = { Text("Por Categoría", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                colors = chipColors
             )
         }
         item {
             FilterChip(
                 selected = selectedGrouping == StockGrouping.BY_BREED,
                 onClick = { onGroupingSelected(StockGrouping.BY_BREED) },
-                label = { Text("Por Raza", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                label = { Text("Por Raza", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                colors = chipColors
             )
         }
     }

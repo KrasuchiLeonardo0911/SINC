@@ -30,8 +30,6 @@ enum class StockGrouping {
     BY_BREED
 }
 
-
-
 sealed class DesgloseItem { // Renamed for clarity
     data class Full(val categoria: String, val raza: String, val quantity: Int) : DesgloseItem()
 }
@@ -57,7 +55,8 @@ data class ProcessedUnidadProductivaStock(
 data class ProcessedEspecieStock(
     val nombre: String,
     val stockTotal: Int,
-    val desglose: List<DesgloseItem.Full> // Now contains raw data
+    val desglose: List<DesgloseItem.Full>,
+    val color: Color // NEW FIELD
 )
 
 data class StockUiState(
@@ -172,10 +171,16 @@ class StockViewModel @Inject constructor(
                         DesgloseItem.Full(key.first, key.second, group.sumOf { it.cantidad })
                     }
 
+                // Get the color for this species
+                val speciesColor = speciesTotals.entries.firstOrNull { it.key == nombreEspecie }?.let { entry ->
+                    pieChartColors[speciesTotals.keys.indexOf(entry.key) % pieChartColors.size]
+                } ?: Color.Gray // Fallback color
+
                 ProcessedEspecieStock(
                     nombre = nombreEspecie,
                     stockTotal = especiesList.sumOf { it.stockTotal },
-                    desglose = desgloses
+                    desglose = desgloses,
+                    color = speciesColor // Assign the color
                 )
             }
 
