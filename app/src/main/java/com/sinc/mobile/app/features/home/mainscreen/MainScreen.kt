@@ -22,20 +22,24 @@ import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.theme.*
 import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.home.MainViewModel
 import com.sinc.mobile.app.navigation.Routes
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @Composable
 fun MainScreen(
     navController: NavHostController,
+    startRoute: String = CozyBottomNavRoutes.HOME,
     viewModel: MainViewModel = hiltViewModel() // Inject MainViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState() // Observe uiState
 
-    var currentRoute by remember { mutableStateOf(CozyBottomNavRoutes.HOME) }
+    var currentRoute by rememberSaveable { mutableStateOf(startRoute) }
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
@@ -44,42 +48,45 @@ fun MainScreen(
             CozyBottomNavBar(
                 selectedRoute = currentRoute,
                 onItemSelected = { newRoute ->
-                    // Handle navigation for main sections.
-                    // The "add" button might trigger a separate action, not just a screen change.
                     if (newRoute != CozyBottomNavRoutes.ADD) {
                         currentRoute = newRoute
                     } else {
-                        // Navigate to the Movimiento screen when "add" is tapped
                         navController.navigate(com.sinc.mobile.app.navigation.Routes.MOVIMIENTO)
                     }
                 }
             )
         }
     ) { paddingValues ->
-        when (currentRoute) {
-            CozyBottomNavRoutes.HOME -> MainContent(
-                paddingValues = paddingValues,
-                onSettingsClick = { navController.navigate(Routes.SETTINGS) }
-            )
-            CozyBottomNavRoutes.STOCK -> StockScreen(
-                navController = navController
-            )
-            CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
-                onBack = { currentRoute = CozyBottomNavRoutes.HOME }
-            )
-            CozyBottomNavRoutes.CAMPOS -> CamposScreen(
-                onNavigateToCreateUnidadProductiva = {
-                    navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
-                }
-            )
-            // Add placeholders for other routes
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .padding(16.dp)
-                ) {
-                    Text(text = "Screen for $currentRoute")
+        Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
+            when (route) {
+                CozyBottomNavRoutes.HOME -> MainContent(
+                    paddingValues = paddingValues,
+                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+                )
+                CozyBottomNavRoutes.STOCK -> StockScreen(
+                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                    onBack = { currentRoute = CozyBottomNavRoutes.HOME } // Pass onBack lambda
+                )
+                CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
+                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                    onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                )
+                CozyBottomNavRoutes.CAMPOS -> CamposScreen(
+                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                    onNavigateToCreateUnidadProductiva = {
+                        navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
+                    },
+                    onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                )
+                // Add placeholders for other routes
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .padding(16.dp)
+                    ) {
+                        Text(text = "Screen for $route")
+                    }
                 }
             }
         }

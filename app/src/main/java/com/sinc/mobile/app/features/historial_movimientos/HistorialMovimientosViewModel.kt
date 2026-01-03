@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HistorialMovimientosState(
+    val isInitialLoad: Boolean = true,
     val movimientos: List<MovimientoHistorial> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -61,7 +62,7 @@ class HistorialMovimientosViewModel @Inject constructor(
             if (duration < 1000) {
                 delay(1000 - duration)
             }
-            _state.update { it.copy(isLoading = false) }
+            _state.update { it.copy(isLoading = false, isInitialLoad = false) }
         }
     }
 }

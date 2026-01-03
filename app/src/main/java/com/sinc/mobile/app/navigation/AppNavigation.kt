@@ -21,6 +21,7 @@ import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoFormScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
+import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
 object Routes {
     const val LOGIN = "login"
@@ -58,8 +59,19 @@ fun AppNavigation(
                 }
             )
         }
-        composable(Routes.HOME) {
-            MainScreen(navController = navController)
+
+        composable(
+            route = Routes.HOME + "?startRoute={startRoute}",
+            arguments = listOf(navArgument("startRoute") {
+                type = NavType.StringType
+                nullable = true
+            })
+        ) { backStackEntry ->
+            val startRoute = backStackEntry.arguments?.getString("startRoute")
+            MainScreen(
+                navController = navController,
+                startRoute = startRoute ?: CozyBottomNavRoutes.HOME
+            )
         }
         composable(
             route = Routes.MOVIMIENTO,
@@ -74,11 +86,22 @@ fun AppNavigation(
                     initialOffsetX = { -300 },
                     animationSpec = tween(300)
                 ) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
         ) {
             SeleccionCampoScreen(navController = navController)
         }
-        composable(Routes.SETTINGS) {
+        composable(
+            route = Routes.SETTINGS,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
@@ -89,7 +112,15 @@ fun AppNavigation(
                 onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) }
             )
         }
-        composable(Routes.CHANGE_PASSWORD) {
+        composable(
+            route = Routes.CHANGE_PASSWORD,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
             ChangePasswordScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
@@ -102,7 +133,15 @@ fun AppNavigation(
                 }
             )
         }
-        composable(Routes.FORGOT_PASSWORD) {
+        composable(
+            route = Routes.FORGOT_PASSWORD,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
             ForgotPasswordScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
@@ -112,21 +151,21 @@ fun AppNavigation(
                 }
             )
         }
-        composable(Routes.CREATE_UNIDAD_PRODUCTIVA) {
+        composable(
+            route = Routes.CREATE_UNIDAD_PRODUCTIVA,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
             CreateUnidadProductivaScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable(Routes.CAMPOS) {
-            CamposScreen(
-                onNavigateToCreateUnidadProductiva = {
-                    navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
-                }
-            )
-        }
-        composable(Routes.HISTORIAL_MOVIMIENTOS) {
-            HistorialMovimientosScreen(onBack = { navController.popBackStack() })
-        }
+
+
         composable(
             route = Routes.MOVIMIENTO_FORM,
             arguments = listOf(navArgument("unidadId") { type = NavType.StringType }),

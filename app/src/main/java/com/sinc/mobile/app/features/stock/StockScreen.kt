@@ -28,14 +28,15 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.sinc.mobile.app.features.stock.components.GroupingOptions
 import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChart
 import com.sinc.mobile.app.features.stock.components.PieChartData
+import com.sinc.mobile.app.features.stock.components.StockScreenSkeletonLoader
 import com.sinc.mobile.app.features.stock.components.StockViewSelector
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SoftGray
@@ -44,63 +45,93 @@ import com.sinc.mobile.ui.theme.SoftGray
 @Composable
 fun StockScreen(
     modifier: Modifier = Modifier,
-    navController: NavController,
+    onBack: () -> Unit,
+    mainScaffoldBottomPadding: Dp,
     viewModel: StockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val processedStock = uiState.processedStock
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = SoftGray,
-        topBar = {
-            MinimalHeader(
-                title = "Mi Stock",
-                onBackPress = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding()
-            )
+    if (uiState.isInitialLoad) {
+        // Show skeleton loader on initial load
+        Scaffold(
+            modifier = modifier
+                .fillMaxSize(),
+            containerColor = SoftGray,
+            topBar = {
+                MinimalHeader(
+                    title = "Mi Stock",
+                    onBackPress = onBack,
+                    modifier = Modifier.statusBarsPadding()
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .padding(bottom = mainScaffoldBottomPadding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp))
+            }
         }
-        // No BottomBar to provide more space
-    ) { paddingValues ->
-        val pullRefreshState = rememberPullRefreshState(refreshing = uiState.isLoading, onRefresh = viewModel::refresh)
+    } else {
+        // Show real content after initial load
+        Scaffold(
+            modifier = modifier
+                .fillMaxSize(),
+            containerColor = SoftGray,
+            topBar = {
+                MinimalHeader(
+                    title = "Mi Stock",
+                    onBackPress = onBack,
+                    modifier = Modifier.statusBarsPadding()
+                )
+            }
+            // No BottomBar to provide more space
+        ) { paddingValues ->
+            val pullRefreshState = rememberPullRefreshState(refreshing = uiState.isLoading, onRefresh = viewModel::refresh)
 
-        Box(
-            Modifier
-                .pullRefresh(pullRefreshState)
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            if (processedStock != null) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item {
-                        TotalStockCard(processedStock)
+            Box(
+                Modifier
+                    .pullRefresh(pullRefreshState)
+                    .padding(paddingValues)
+                    .padding(bottom = mainScaffoldBottomPadding)
+                    .fillMaxSize()
+            ) {
+                if (processedStock != null) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            TotalStockCard(processedStock)
+                        }
+                        items(processedStock.allSpecies) { especie ->
+                            SpeciesStockCard(
+                                speciesStock = especie
+                            )
+                        }
                     }
-                    items(processedStock.allSpecies) { especie ->
-                        SpeciesStockCard(
-                            speciesStock = especie
+                } else if (!uiState.isLoading) {
+                    // Empty state
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                        Text(
+                            text = "No se pudo cargar el stock. Desliza hacia abajo para reintentar.",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
-            } else if (!uiState.isLoading) {
-                // Empty state
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                    Text(
-                        text = "No se pudo cargar el stock. Desliza hacia abajo para reintentar.",
-                        modifier = Modifier.align(Alignment.Center),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
 
-            PullRefreshIndicator(
-                refreshing = uiState.isLoading,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+                PullRefreshIndicator(
+                    refreshing = uiState.isLoading,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
         }
     }
 }

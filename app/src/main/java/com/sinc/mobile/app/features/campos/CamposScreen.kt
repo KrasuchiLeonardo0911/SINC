@@ -7,22 +7,37 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+
+import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SoftGray
 
 @Composable
 fun CamposScreen(
     viewModel: CamposViewModel = hiltViewModel(),
+    mainScaffoldBottomPadding: Dp,
     onNavigateToCreateUnidadProductiva: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        modifier = modifier
+        modifier = modifier,
+        containerColor = SoftGray,
+        topBar = {
+            MinimalHeader(
+                title = "Mis Campos",
+                onBackPress = onBack,
+                modifier = Modifier.statusBarsPadding()
+            )
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .padding(bottom = mainScaffoldBottomPadding)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {

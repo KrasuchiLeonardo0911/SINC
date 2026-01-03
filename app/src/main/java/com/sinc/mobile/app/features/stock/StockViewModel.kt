@@ -60,7 +60,7 @@ data class ProcessedEspecieStock(
 )
 
 data class StockUiState(
-
+    val isInitialLoad: Boolean = true,
     val isLoading: Boolean = false,
     val unidadesProductivas: List<UnidadProductiva> = emptyList(),
     val error: String? = null,
@@ -112,7 +112,7 @@ class StockViewModel @Inject constructor(
             if (duration < 1000) {
                 delay(1000 - duration)
             }
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { it.copy(isLoading = false, isInitialLoad = false) }
         }
     }
     private fun collectUnidadesProductivas() {

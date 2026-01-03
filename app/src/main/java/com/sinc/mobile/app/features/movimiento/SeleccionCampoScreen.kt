@@ -39,7 +39,11 @@ fun SeleccionCampoScreen(
         topBar = {
             MinimalHeader(
                 title = "Seleccionar Campo", // Changed title
-                onBackPress = { navController.popBackStack() },
+                onBackPress = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
                 modifier = Modifier
                     .statusBarsPadding()
             )
@@ -48,19 +52,11 @@ fun SeleccionCampoScreen(
             CozyBottomNavBar(
                 selectedRoute = CozyBottomNavRoutes.ADD,
                 onItemSelected = { newRoute ->
-                    when (newRoute) {
-                        CozyBottomNavRoutes.HOME -> {
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
+                    if (newRoute != CozyBottomNavRoutes.ADD) {
+                        // Navigate to MainScreen and tell it which tab to open
+                        navController.navigate(Routes.HOME + "?startRoute=${newRoute}") {
+                            popUpTo(Routes.HOME) { inclusive = true }
                         }
-                        CozyBottomNavRoutes.CAMPOS -> {
-                            // MainScreen handles showing the profile screen
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.HOME) { inclusive = true }
-                            }
-                        }
-                        // Other routes can be handled here if needed
                     }
                 }
             )

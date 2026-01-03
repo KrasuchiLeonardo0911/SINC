@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.theme.*
@@ -53,7 +54,7 @@ fun CozyBottomNavBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .background(SoftGray)
+            .background(Color.White)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -125,49 +126,62 @@ fun RowScope.CozyBottomNavItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-
-    Column(
-
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+    Box(
         modifier = Modifier
+            .weight(1f) // Ensure it takes equal space within the RowScope
+            .fillMaxHeight()
             .clickable(
                 onClick = onClick,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            )
+            ),
+        contentAlignment = Alignment.Center // Center content vertically and horizontally
     ) {
+        // Indicator Line
+        val indicatorColor = if (isSelected) CozyTextMain else Color.Transparent
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter) // Align to the very top of the Box
+                .height(3.dp)
+                .width(24.dp)
+                .background(indicatorColor, shape = CircleShape)
+        )
 
-        val icon = if (isSelected) {
-
-        // Relleno para el estado activo (ej. Icons.Filled.Home)
-
-            when (item.route) {
-                CozyBottomNavRoutes.HOME -> Icons.Filled.Home
-                CozyBottomNavRoutes.STOCK -> Icons.Filled.BarChart
-                CozyBottomNavRoutes.HISTORIAL -> Icons.AutoMirrored.Filled.List
-                CozyBottomNavRoutes.CAMPOS -> Icons.Filled.Map
-                else -> item.icon // Fallback
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxHeight() // Fill the remaining height after the indicator
+                .padding(top = 3.dp) // Offset content slightly to account for indicator line
+        ) {
+            val icon = if (isSelected) {
+                // Relleno para el estado activo (ej. Icons.Filled.Home)
+                when (item.route) {
+                    CozyBottomNavRoutes.HOME -> Icons.Filled.Home
+                    CozyBottomNavRoutes.STOCK -> Icons.Filled.BarChart
+                    CozyBottomNavRoutes.HISTORIAL -> Icons.AutoMirrored.Filled.List
+                    CozyBottomNavRoutes.CAMPOS -> Icons.Filled.Map
+                    else -> item.icon // Fallback
+                }
+            } else {
+                // Contorno para el estado inactivo
+                item.icon
             }
-        } else {
 
-        // Contorno para el estado inactivo
-            item.icon
+            Icon(
+                imageVector = icon,
+                contentDescription = item.label,
+                tint = if (isSelected) CozyTextMain else CozyIconGray,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isSelected) CozyTextMain else CozyIconGray
+            )
         }
-
-        Icon(
-            imageVector = icon,
-            contentDescription = item.label,
-            tint = if (isSelected) CozyTextMain else CozyIconGray,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = item.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) CozyTextMain else CozyIconGray
-        )
     }
 }
 
