@@ -11,19 +11,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 
-import com.sinc.mobile.ui.theme.Gray200
-import com.sinc.mobile.ui.theme.SoftGray
+import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincDivider
 
 @Composable
 fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush {
     if (!showShimmer) {
-        return SolidColor(Gray200)
+        return SolidColor(SincDivider)
     }
 
     val shimmerColors = listOf(
-        Gray200,
-        SoftGray,
-        Gray200,
+        SincDivider,
+        SincBackground,
+        SincDivider,
     )
 
     val transition = rememberInfiniteTransition(label = "shimmer")

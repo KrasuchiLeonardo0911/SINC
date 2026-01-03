@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.features.stock.GroupBy
-import com.sinc.mobile.ui.theme.CozyWhite
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +20,7 @@ fun FilterChipGroup(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CozyWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(

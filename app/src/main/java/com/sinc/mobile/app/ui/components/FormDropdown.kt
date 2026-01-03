@@ -4,14 +4,29 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -26,11 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import com.sinc.mobile.ui.theme.*
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-
-// ... (other imports)
 
 private enum class FormDropdownState { Collapsed, Expanded }
 
@@ -72,22 +82,22 @@ fun <T> FormDropdown(
         ) {
             Text(
                 text = selectedItem?.let(itemToString) ?: placeholder,
-                color = if (selectedItem != null && enabled) CozyTextMain else InactiveGray,
-                fontSize = 16.sp, // Revertido
+                color = if (selectedItem != null && enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = "Expandir",
-                tint = if (enabled) CozyTextMain else InactiveGray,
+                tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.rotate(rotationState)
             )
         }
 
         // Popup with the list of items
         if (currentState == FormDropdownState.Expanded) {
-            val verticalOffset = with(density) { 16.dp.toPx().toInt() } // Aumentado para compensar el padding del wrapper
+            val verticalOffset = with(density) { 16.dp.toPx().toInt() }
             Popup(
                 offset = IntOffset(0, anchorSize.height + verticalOffset),
                 properties = PopupProperties(focusable = true, dismissOnBackPress = true, dismissOnClickOutside = true),
@@ -95,17 +105,15 @@ fun <T> FormDropdown(
             ) {
                 val dropdownShape = RoundedCornerShape(12.dp)
 
-// ... (inside FormDropdown composable)
-
                 Card(
                     modifier = Modifier
                         .width(with(density) { anchorSize.width.toDp() })
                         .shadow(elevation = 12.dp, shape = dropdownShape),
                     shape = dropdownShape,
-                    colors = CardDefaults.cardColors(containerColor = PaleWarmGray)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     LazyColumn(
-                        modifier = Modifier.heightIn(max = 184.dp), // Aprox 3 items
+                        modifier = Modifier.heightIn(max = 184.dp),
                         contentPadding = PaddingValues(8.dp)
                     ) {
                         items(items) { item ->
@@ -115,7 +123,7 @@ fun <T> FormDropdown(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) AccentYellow else CozyWhite
+                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
                                 )
                             ) {
                                 Row(
@@ -130,7 +138,7 @@ fun <T> FormDropdown(
                                 ) {
                                     Text(
                                         text = itemToString(item),
-                                        color = if (isSelected) CozyTextMain else InactiveGray,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                         fontSize = 16.sp,
                                         modifier = Modifier.weight(1f)

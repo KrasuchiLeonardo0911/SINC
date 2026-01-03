@@ -9,22 +9,34 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -35,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import com.sinc.mobile.ui.theme.*
 
 private enum class DropdownState { Collapsed, Expanded }
 
@@ -82,7 +93,7 @@ fun <T> CustomDropdown(
                 .onSizeChanged { anchorSize = it }
                 .shadow(elevation = 8.dp, shape = inputShape)
                 .clip(inputShape)
-                .background(if (selectedItem != null) AccentYellow else CozyWhite) // Color condicional
+                .background(if (selectedItem != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface) // Color condicional
                 .clickable {
                     currentState =
                         if (currentState == DropdownState.Collapsed) DropdownState.Expanded else DropdownState.Collapsed
@@ -94,7 +105,7 @@ fun <T> CustomDropdown(
             Spacer(Modifier.width(12.dp))
             Text(
                 text = if (selectedItem != null) getItemName(selectedItem) else placeholder,
-                color = if (selectedItem != null) CozyTextMain else InactiveGray, // Color condicional
+                color = if (selectedItem != null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), // Color condicional
                 fontSize = 16.sp, // Fuente más grande
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
@@ -102,7 +113,7 @@ fun <T> CustomDropdown(
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = "Expandir",
-                tint = if (selectedItem != null) CozyTextMain else InactiveGray, // Color condicional para chevron
+                tint = if (selectedItem != null) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), // Color condicional para chevron
                 modifier = Modifier.rotate(rotationState)
             )
         }
@@ -125,7 +136,7 @@ fun <T> CustomDropdown(
                             .width(with(density) { anchorSize.width.toDp() })
                             .shadow(elevation = menuShadow, shape = dropdownShape),
                         shape = dropdownShape,
-                        colors = CardDefaults.cardColors(containerColor = PaleWarmGray)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         LazyColumn(
                             modifier = Modifier.heightIn(max = 184.dp), // Aprox 3 items
@@ -140,7 +151,7 @@ fun <T> CustomDropdown(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) AccentYellow else CozyWhite
+                                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
                                     )
                                 ) {
                                     Row(
@@ -157,7 +168,7 @@ fun <T> CustomDropdown(
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Text(
                                             text = getItemName(item),
-                                            color = if (isSelected) CozyTextMain else InactiveGray,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                             fontSize = 16.sp,
                                             modifier = Modifier.weight(1f)

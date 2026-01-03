@@ -26,8 +26,6 @@ import com.sinc.mobile.app.ui.components.OsmdroidMapView
 import com.sinc.mobile.domain.model.DomainGeoPoint
 import com.sinc.mobile.domain.model.LocationError
 import com.sinc.mobile.domain.model.Municipio
-import com.sinc.mobile.ui.theme.colorBotonSiguiente
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 import kotlinx.coroutines.launch
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -223,7 +221,7 @@ private fun MapDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cerrar mapa",
-                            tint = md_theme_light_primary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -234,7 +232,7 @@ private fun MapDialog(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = peekHeight + 16.dp) // Dynamic padding
                             .fillMaxWidth(0.8f),
-                        colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         enabled = !isFetchingLocation
                     ) {
                         Text("Guardar Ubicación")
@@ -247,7 +245,7 @@ private fun MapDialog(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .size(40.dp),
-                        tint = md_theme_light_primary
+                        tint = MaterialTheme.colorScheme.primary
                     )
 
                     // Loading indicator
@@ -265,7 +263,7 @@ private fun MapDialog(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    CircularProgressIndicator(color = md_theme_light_primary)
+                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                                     Text("Cargando...")
                                 }
                             }
@@ -343,9 +341,9 @@ private fun SearchableSheetContent(
                 )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = colorBotonSiguiente,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = Color.Gray,
-                focusedLabelColor = colorBotonSiguiente
+                focusedLabelColor = MaterialTheme.colorScheme.primary
             ),
             singleLine = true
         )

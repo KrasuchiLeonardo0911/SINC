@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.components.shimmerBrush
-import com.sinc.mobile.ui.theme.CozyWhite
 
 @Composable
 fun MovimientoSkeletonLoader(

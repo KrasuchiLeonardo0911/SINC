@@ -2,14 +2,27 @@ package com.sinc.mobile.app.features.movimiento.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import com.sinc.mobile.app.features.movimiento.MovimientoAgrupado
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.UnidadProductiva
-import com.sinc.mobile.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,14 +44,14 @@ fun MovimientoItemCard(
 ) {
     val motivo = catalogos?.motivosMovimiento?.find { it.id == movimiento.motivoMovimientoId }
     val isAlta = motivo?.tipo?.contains("alta", ignoreCase = true) == true
-    val color = if (isAlta) colorAlta else colorBaja
+    val color = if (isAlta) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     val icon = if (isAlta) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = colorSuperficie),
-        border = BorderStroke(1.dp, colorBorde)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -62,12 +74,12 @@ fun MovimientoItemCard(
                 Text(
                     "$especie - $categoria",
                     fontWeight = FontWeight.SemiBold,
-                    color = colorTextoPrincipal
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     motivo?.nombre ?: "N/A",
                     style = MaterialTheme.typography.bodySmall,
-                    color = colorTextoSecundario
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
@@ -81,7 +93,7 @@ fun MovimientoItemCard(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = "Eliminar",
-                    tint = colorTextoSecundario.copy(alpha = 0.7f),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
                 )
             }

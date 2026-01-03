@@ -2,6 +2,7 @@ package com.sinc.mobile.app.features.campos
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.ui.theme.SoftGray
 
 @Composable
 fun CamposScreen(
@@ -24,7 +24,7 @@ fun CamposScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        containerColor = SoftGray,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MinimalHeader(
                 title = "Mis Campos",

@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 
 @Composable
 fun ProgressBar(currentStep: Int) {
@@ -34,7 +34,7 @@ fun ProgressBar(currentStep: Int) {
             modifier = Modifier
                 .fillMaxWidth(progress)
                 .height(8.dp)
-                .background(md_theme_light_primary, shape = RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(4.dp))
         )
     }
 }

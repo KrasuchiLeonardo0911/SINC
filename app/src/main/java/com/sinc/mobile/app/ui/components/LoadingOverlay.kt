@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 
 @Composable
 fun LoadingOverlay(
@@ -48,17 +47,17 @@ fun LoadingOverlay(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        CircularProgressIndicator(color = md_theme_light_primary)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         message?.let {
                             Text(
                                 text = it,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Color.DarkGray
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         } ?: Text(
                             text = "Cargando...",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.DarkGray
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }

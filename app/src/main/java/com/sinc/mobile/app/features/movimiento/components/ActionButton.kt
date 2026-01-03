@@ -3,12 +3,20 @@ package com.sinc.mobile.app.features.movimiento.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,10 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sinc.mobile.ui.theme.colorBorde
-import com.sinc.mobile.ui.theme.colorFondo
-import com.sinc.mobile.ui.theme.colorSuperficie
-import com.sinc.mobile.ui.theme.colorTextoPrincipal
 
 @Composable
 fun ActionButton(
@@ -33,9 +37,9 @@ fun ActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isSelected) color else colorSuperficie
-    val contentColor = if (isSelected) Color.White else colorTextoPrincipal
-    val border = if (isSelected) null else BorderStroke(1.dp, colorBorde)
+    val backgroundColor = if (isSelected) color else MaterialTheme.colorScheme.surface
+    val contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+    val border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
 
     Card(
         modifier = modifier.clickable(onClick = onClick),
@@ -55,7 +59,7 @@ fun ActionButton(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (isSelected) Color.White.copy(alpha = 0.15f) else colorFondo),
+                    .background(if (isSelected) Color.White.copy(alpha = 0.15f) else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(icon, contentDescription = text, tint = contentColor, modifier = Modifier.size(24.dp))

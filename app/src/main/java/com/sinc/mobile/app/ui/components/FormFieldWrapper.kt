@@ -1,22 +1,18 @@
 package com.sinc.mobile.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sinc.mobile.ui.theme.CozyTextMain
-import com.sinc.mobile.ui.theme.CozyWhite
 
 @Composable
 fun FormFieldWrapper(
@@ -29,7 +25,7 @@ fun FormFieldWrapper(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp), // Bordes suaves
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp), // Con sombra
-        colors = CardDefaults.cardColors(containerColor = CozyWhite) // Fondo blanco
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo blanco
     ) {
         // El Column interno reemplaza al diseño anterior de "label arriba".
         Column(
@@ -39,7 +35,7 @@ fun FormFieldWrapper(
                 text = label,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp, // Tamaño de subtítulo que te gustó
-                color = CozyTextMain,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             // El contenido (dropdown/textfield) se coloca debajo del label.

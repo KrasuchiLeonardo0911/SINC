@@ -18,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.CozyTextMain
-import com.sinc.mobile.ui.theme.CozyWhite
 
 @Composable
 fun StockAccordion(
@@ -35,7 +33,7 @@ fun StockAccordion(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(cornerRadius),
-        colors = CardDefaults.cardColors(containerColor = CozyWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -59,7 +57,7 @@ fun StockAccordion(
                 Icon(
                     imageVector = Icons.Rounded.KeyboardArrowDown,
                     contentDescription = "Expandir",
-                    tint = CozyTextMain,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.rotate(if (isExpanded) 180f else 0f)
                 )
             }

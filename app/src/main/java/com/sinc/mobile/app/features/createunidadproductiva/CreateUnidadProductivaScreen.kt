@@ -56,8 +56,6 @@ import com.sinc.mobile.app.features.createunidadproductiva.components.Step3Formu
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.domain.model.GenericError
-import com.sinc.mobile.ui.theme.colorBotonSiguiente
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 import androidx.compose.foundation.layout.navigationBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +130,7 @@ fun CreateUnidadProductivaScreen(
                     "Permiso de Ubicación",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorBotonSiguiente // Changed to green
+                    color = MaterialTheme.colorScheme.primary // Changed to green
                 )
                 LottieAnimation(
                     composition = composition,
@@ -160,7 +158,7 @@ fun CreateUnidadProductivaScreen(
                         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Aceptar")
                 }
@@ -220,7 +218,7 @@ fun CreateUnidadProductivaScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = titles[currentStep - 1],
-                    style = MaterialTheme.typography.headlineSmall.copy(color = md_theme_light_primary, fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 )
                 Text(
                     text = subtitles[currentStep - 1],

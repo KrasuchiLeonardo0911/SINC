@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 
 @Composable
 fun ActionButton(
@@ -36,7 +35,7 @@ fun ActionButton(
         ) {
             Text(
                 text = text,
-                color = md_theme_light_primary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold

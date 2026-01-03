@@ -39,7 +39,9 @@ import com.sinc.mobile.app.features.stock.components.PieChartData
 import com.sinc.mobile.app.features.stock.components.StockScreenSkeletonLoader
 import com.sinc.mobile.app.features.stock.components.StockViewSelector
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.ui.theme.SoftGray
+import com.sinc.mobile.ui.theme.SincPrimary
+import com.sinc.mobile.ui.theme.SincPrimaryDark
+import com.sinc.mobile.ui.theme.SincPrimaryLight
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -57,7 +59,7 @@ fun StockScreen(
         Scaffold(
             modifier = modifier
                 .fillMaxSize(),
-            containerColor = SoftGray,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 MinimalHeader(
                     title = "Mi Stock",
@@ -81,7 +83,7 @@ fun StockScreen(
         Scaffold(
             modifier = modifier
                 .fillMaxSize(),
-            containerColor = SoftGray,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 MinimalHeader(
                     title = "Mi Stock",
@@ -142,7 +144,7 @@ private fun TotalStockCard(stock: ProcessedStock) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -194,9 +196,14 @@ private fun TotalStockCard(stock: ProcessedStock) {
 
 // Define colors at the top level of the file for reuse
 private val pieChartColors = listOf(
-    Color(0xFF6C5B7B), Color(0xFFC06C84), Color(0xFFF67280), Color(0xFFF8B195),
-    Color(0xFFB39DDB), Color(0xFF81C784), Color(0xFFFFD54F), Color(0xFF4FC3F7),
-    Color(0xFFE57373), Color(0xFF9575CD), Color(0xFF4DB6AC), Color(0xFFFFF176)
+    SincPrimary,
+    SincPrimaryDark,
+    SincPrimaryLight,
+    Color(0xFFa34e46),
+    Color(0xFFae645d),
+    Color(0xFFc5908b),
+    Color(0xFFdcbcb9),
+    Color(0xFFf3e8e7)
 )
 
 @Composable
@@ -211,7 +218,7 @@ private fun SpeciesStockCard(
             .clickable { isExpanded = !isExpanded }, // Clickable on the Card
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier

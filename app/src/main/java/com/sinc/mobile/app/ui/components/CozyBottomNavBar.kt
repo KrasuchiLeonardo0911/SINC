@@ -128,7 +128,6 @@ fun RowScope.CozyBottomNavItem(
 ) {
     Box(
         modifier = Modifier
-            .weight(1f) // Ensure it takes equal space within the RowScope
             .fillMaxHeight()
             .clickable(
                 onClick = onClick,
@@ -143,7 +142,7 @@ fun RowScope.CozyBottomNavItem(
             modifier = Modifier
                 .align(Alignment.TopCenter) // Align to the very top of the Box
                 .height(3.dp)
-                .width(24.dp)
+                .width(36.dp) // Lengthen the indicator line slightly
                 .background(indicatorColor, shape = CircleShape)
         )
 
@@ -152,7 +151,7 @@ fun RowScope.CozyBottomNavItem(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxHeight() // Fill the remaining height after the indicator
-                .padding(top = 3.dp) // Offset content slightly to account for indicator line
+                .padding(top = 0.dp) // Reduce space between top of bar and icons
         ) {
             val icon = if (isSelected) {
                 // Relleno para el estado activo (ej. Icons.Filled.Home)

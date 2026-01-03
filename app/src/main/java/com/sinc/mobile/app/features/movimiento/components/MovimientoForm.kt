@@ -21,7 +21,6 @@ import com.sinc.mobile.domain.model.Categoria
 import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.MotivoMovimiento
 import com.sinc.mobile.domain.model.Raza
-import com.sinc.mobile.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,7 +47,7 @@ fun MovimientoForm(
                 text = "Especie",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
-                color = CozyTextMain,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             SoftDropdown(
@@ -60,28 +59,16 @@ fun MovimientoForm(
                 placeholder = "Seleccionar especie",
                 triggerIcon = { selected ->
                     SoftDropdownIcon {
-                        if (selected != null) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Seleccionado",
-                                tint = CozyTextMain,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.TouchApp,
-                                contentDescription = "Seleccionar",
-                                tint = CozyWhite,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (selected != null) Icons.Default.Check else Icons.Default.TouchApp,
+                            contentDescription = if (selected != null) "Seleccionado" else "Seleccionar",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 itemIcon = { _, _ -> },
                 showItemIcons = false,
-                selectedItemBackgroundColor = Gray200,
-                selectedItemTextColor = CozyTextMain,
-                selectedCheckmarkColor = CozyTextMain,
             )
         }
 
@@ -91,7 +78,7 @@ fun MovimientoForm(
                 text = "Categoría",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
-                color = CozyTextMain,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             SoftDropdown(
@@ -104,28 +91,16 @@ fun MovimientoForm(
                 enabled = formState.selectedEspecie != null,
                 triggerIcon = { selected ->
                     SoftDropdownIcon {
-                        if (selected != null) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Seleccionado",
-                                tint = CozyTextMain,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.TouchApp,
-                                contentDescription = "Seleccionar",
-                                tint = CozyWhite,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (selected != null) Icons.Default.Check else Icons.Default.TouchApp,
+                            contentDescription = if (selected != null) "Seleccionado" else "Seleccionar",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 itemIcon = { _, _ -> },
                 showItemIcons = false,
-                selectedItemBackgroundColor = Gray200,
-                selectedItemTextColor = CozyTextMain,
-                selectedCheckmarkColor = CozyTextMain,
                 onDisabledClick = {
                     scope.launch {
                         snackbarHostState.showSnackbar("Debes seleccionar una especie primero.")
@@ -140,7 +115,7 @@ fun MovimientoForm(
                 text = "Raza",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
-                color = CozyTextMain,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             SoftDropdown(
@@ -153,28 +128,16 @@ fun MovimientoForm(
                 enabled = formState.selectedEspecie != null,
                 triggerIcon = { selected ->
                     SoftDropdownIcon {
-                        if (selected != null) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Seleccionado",
-                                tint = CozyTextMain,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.TouchApp,
-                                contentDescription = "Seleccionar",
-                                tint = CozyWhite,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (selected != null) Icons.Default.Check else Icons.Default.TouchApp,
+                            contentDescription = if (selected != null) "Seleccionado" else "Seleccionar",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 itemIcon = { _, _ -> },
                 showItemIcons = false,
-                selectedItemBackgroundColor = Gray200,
-                selectedItemTextColor = CozyTextMain,
-                selectedCheckmarkColor = CozyTextMain,
                 onDisabledClick = {
                     scope.launch {
                         snackbarHostState.showSnackbar("Debes seleccionar una especie primero.")
@@ -189,7 +152,7 @@ fun MovimientoForm(
                 text = "Motivo",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
-                color = CozyTextMain,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             SoftDropdown(
@@ -201,28 +164,16 @@ fun MovimientoForm(
                 placeholder = "Seleccionar motivo",
                 triggerIcon = { selected ->
                     SoftDropdownIcon {
-                        if (selected != null) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Seleccionado",
-                                tint = CozyTextMain,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.TouchApp,
-                                contentDescription = "Seleccionar",
-                                tint = CozyWhite,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (selected != null) Icons.Default.Check else Icons.Default.TouchApp,
+                            contentDescription = if (selected != null) "Seleccionado" else "Seleccionar",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 itemIcon = { _, _ -> },
                 showItemIcons = false,
-                selectedItemBackgroundColor = Gray200,
-                selectedItemTextColor = CozyTextMain,
-                selectedCheckmarkColor = CozyTextMain,
                 direction = PopupDirection.Up
             )
         }

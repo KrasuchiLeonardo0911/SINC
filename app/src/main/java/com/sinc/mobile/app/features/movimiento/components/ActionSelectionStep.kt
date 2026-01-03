@@ -1,14 +1,15 @@
 package com.sinc.mobile.app.features.movimiento.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.colorAlta
-import com.sinc.mobile.ui.theme.colorBaja
 
 @Composable
 fun ActionSelectionStep(
@@ -24,7 +25,7 @@ fun ActionSelectionStep(
             text = "Registrar Alta",
             icon = Icons.Default.Add,
             isSelected = selectedAction == "alta",
-            color = colorAlta,
+            color = MaterialTheme.colorScheme.primary,
             onClick = { onActionSelected("alta") },
             modifier = Modifier.weight(1f)
         )
@@ -32,7 +33,7 @@ fun ActionSelectionStep(
             text = "Registrar Baja",
             icon = Icons.Default.Remove,
             isSelected = selectedAction == "baja",
-            color = colorBaja,
+            color = MaterialTheme.colorScheme.error,
             onClick = { onActionSelected("baja") },
             modifier = Modifier.weight(1f)
         )

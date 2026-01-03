@@ -12,13 +12,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.colorBotonSiguiente
 
 @Composable
 fun BottomNavBar(
@@ -51,7 +51,7 @@ fun BottomNavBar(
             Button(
                 onClick = onNext,
                 shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = colorBotonSiguiente) // Aplicar el nuevo color
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Aplicar el nuevo color
             ) {
                 Text(
                     text = if (currentStep < 3) "Siguiente" else "Finalizar",

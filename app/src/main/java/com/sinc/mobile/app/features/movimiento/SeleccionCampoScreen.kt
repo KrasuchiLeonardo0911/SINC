@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,7 +16,6 @@ import androidx.navigation.NavController
 import com.sinc.mobile.app.features.movimiento.components.UnidadSelectionStep
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.ui.theme.SoftGray
 import androidx.compose.foundation.layout.PaddingValues
 
 
@@ -35,7 +35,7 @@ fun SeleccionCampoScreen(
         modifier = modifier
             .fillMaxSize()
             .navigationBarsPadding(),
-        containerColor = SoftGray,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MinimalHeader(
                 title = "Seleccionar Campo", // Changed title

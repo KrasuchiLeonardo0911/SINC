@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.features.createunidadproductiva.IdentifierFormatInfo
 import com.sinc.mobile.app.ui.components.visual_transformation.PatternVisualTransformation
 import com.sinc.mobile.domain.model.IdentifierConfig
-import com.sinc.mobile.ui.theme.md_theme_light_primary
 
 @Composable
 fun Step2FormularioBasico(
@@ -98,7 +97,7 @@ fun Step2FormularioBasico(
                 ) {
                     Text(
                         text = "No conozco mi $identifierLabel",
-                        color = md_theme_light_primary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(modifier = Modifier.height(12.dp))

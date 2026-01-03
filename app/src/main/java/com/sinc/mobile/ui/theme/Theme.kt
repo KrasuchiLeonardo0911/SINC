@@ -18,51 +18,51 @@ import androidx.compose.ui.graphics.Color
 import com.sinc.mobile.ui.theme.*
 
 private val LightColors = lightColorScheme(
-    primary = CozyTextMain,
-    onPrimary = Color.White,
-    secondary = CozyTextSecondary,
-    onSecondary = Color.White,
-    tertiary = CozyMint,
-    onTertiary = Color.White,
-    error = md_theme_light_error,
-    onError = Color.White,
-    background = CozyLightGray,
-    onBackground = CozyTextMain,
-    surface = CozyWhite,
-    onSurface = CozyTextMain,
-    outline = CozyDivider,
-    primaryContainer = CozyLightGray,
-    onPrimaryContainer = CozyTextMain,
-    secondaryContainer = CozyLightGray,
-    onSecondaryContainer = CozyTextSecondary,
-    tertiaryContainer = CozyLightGray,
-    onTertiaryContainer = CozyMint,
-    surfaceVariant = CozyLightGray,
-    onSurfaceVariant = CozyTextSecondary,
+    primary = SincPrimary,
+    onPrimary = SincOnPrimary,
+    secondary = SincPrimaryDark,
+    onSecondary = SincOnPrimary,
+    tertiary = SincPrimaryLight,
+    onTertiary = SincOnPrimary,
+    error = SincError,
+    onError = SincOnPrimary,
+    background = SincBackground,
+    onBackground = SincTextPrimary,
+    surface = SincSurface,
+    onSurface = SincTextPrimary,
+    outline = SincDivider,
+    primaryContainer = SincPrimaryLight,
+    onPrimaryContainer = SincPrimary,
+    secondaryContainer = SincBackground,
+    onSecondaryContainer = SincTextSecondary,
+    tertiaryContainer = SincBackground,
+    onTertiaryContainer = SincTextSecondary,
+    surfaceVariant = SincBackground,
+    onSurfaceVariant = SincTextSecondary,
 )
 
 
-private val DarkColors = darkColorScheme(
-    primary = md_theme_dark_primary,
-    onPrimary = md_theme_dark_onPrimary,
-    primaryContainer = md_theme_dark_primaryContainer,
-    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
-    secondary = md_theme_dark_secondary,
-    onSecondary = md_theme_dark_onSecondary,
-    secondaryContainer = md_theme_dark_secondaryContainer,
-    onSecondaryContainer = md_theme_dark_onSecondaryContainer,
-    tertiary = md_theme_dark_tertiary,
-    onTertiary = md_theme_dark_onTertiary,
-    tertiaryContainer = md_theme_dark_tertiaryContainer,
-    onTertiaryContainer = md_theme_dark_onTertiaryContainer,
-    error = md_theme_dark_error,
-    onError = md_theme_dark_onError,
-    background = md_theme_dark_background,
-    onSurface = md_theme_dark_onSurface,
-    surfaceVariant = md_theme_dark_surfaceVariant,
-    onSurfaceVariant = md_theme_dark_onSurfaceVariant,
-    outline = md_theme_dark_outline,
-)
+// private val DarkColors = darkColorScheme(
+//    primary = md_theme_dark_primary,
+//    onPrimary = md_theme_dark_onPrimary,
+//    primaryContainer = md_theme_dark_primaryContainer,
+//    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
+//    secondary = md_theme_dark_secondary,
+//    onSecondary = md_theme_dark_onSecondary,
+//    secondaryContainer = md_theme_dark_secondaryContainer,
+//    onSecondaryContainer = md_theme_dark_onSecondaryContainer,
+//    tertiary = md_theme_dark_tertiary,
+//    onTertiary = md_theme_dark_onTertiary,
+//    tertiaryContainer = md_theme_dark_tertiaryContainer,
+//    onTertiaryContainer = md_theme_dark_onTertiaryContainer,
+//    error = md_theme_dark_error,
+//    onError = md_theme_dark_onError,
+//    background = md_theme_dark_background,
+//    onSurface = md_theme_dark_onSurface,
+//    surfaceVariant = md_theme_dark_surfaceVariant,
+//    onSurfaceVariant = md_theme_dark_onSurfaceVariant,
+//    outline = md_theme_dark_outline,
+// )
 
 @Composable
 fun SincMobileTheme(
@@ -76,8 +76,7 @@ fun SincMobileTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
-        darkTheme -> DarkColors
+        // darkTheme -> DarkColors // Commented out
         else -> LightColors
     }
     val view = LocalView.current

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,13 +26,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.ui.theme.colorAlta // Importar el nuevo color
 import kotlinx.coroutines.delay
 import java.util.UUID
 
-enum class BannerType(val backgroundColor: Color, val textColor: Color) {
-    SUCCESS(colorAlta, Color.White), // Usar colorAlta
-    ERROR(Color(0xFFBA1A1A), Color.White)
+enum class BannerType {
+    SUCCESS,
+    ERROR;
+
+    val backgroundColor: Color
+        @Composable
+        get() = when (this) {
+            SUCCESS -> MaterialTheme.colorScheme.primaryContainer
+            ERROR -> MaterialTheme.colorScheme.error
+        }
+
+    val textColor: Color
+        @Composable
+        get() = when (this) {
+            SUCCESS -> MaterialTheme.colorScheme.onPrimaryContainer
+            ERROR -> MaterialTheme.colorScheme.onError
+        }
 }
 
 data class BannerData(

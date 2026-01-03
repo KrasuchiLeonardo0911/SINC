@@ -53,9 +53,9 @@ fun <T> SoftDropdown(
     itemIcon: @Composable (item: T, isSelected: Boolean) -> Unit,
     enabled: Boolean = true,
     showItemIcons: Boolean = true,
-    selectedItemBackgroundColor: Color = AccentGreen,
-    selectedItemTextColor: Color = DarkGreen,
-    selectedCheckmarkColor: Color = CozyWhite,
+    selectedItemBackgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    selectedItemTextColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedCheckmarkColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     direction: PopupDirection = PopupDirection.Down,
     onDisabledClick: (() -> Unit)? = null
 ) {
@@ -129,7 +129,7 @@ fun <T> SoftDropdown(
                 .fillMaxWidth()
                 .shadow(elevation = triggerShadow, shape = triggerShape)
                 .clip(triggerShape)
-                .background(CozyWhite)
+                .background(MaterialTheme.colorScheme.surface)
                 .then(
                     if (enabled) {
                         Modifier.clickable {
@@ -154,14 +154,14 @@ fun <T> SoftDropdown(
                 Text(
                     text = selectedItem?.let(getItemName) ?: placeholder,
                     fontWeight = FontWeight.Medium,
-                    color = if (selectedItem != null && enabled) CozyTextMain else InactiveGray,
+                    color = if (selectedItem != null && enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     fontSize = 16.sp
                 )
             }
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = "Expandir",
-                tint = if (enabled) CozyTextMain else InactiveGray,
+                tint = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.rotate(rotationState)
             )
         }
@@ -188,7 +188,7 @@ fun <T> SoftDropdown(
                         }
                         .shadow(elevation = menuShadow, shape = menuShape) 
                         .clip(menuShape)
-                        .background(CozyWhite)
+                        .background(MaterialTheme.colorScheme.surface)
                 ) {
                     LazyColumn(
                         modifier = Modifier
@@ -248,7 +248,7 @@ private fun <T> MenuItem(
             }
             Text(
                 text = getItemName(item),
-                color = if (isSelected) selectedItemTextColor else CozyTextMain,
+                color = if (isSelected) selectedItemTextColor else MaterialTheme.colorScheme.onSurface,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 fontSize = 16.sp
             )
@@ -268,7 +268,7 @@ private fun <T> MenuItem(
 @Composable
 fun SoftDropdownIcon(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = CozyYellow,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
     content: @Composable () -> Unit
 ) {
     Box(

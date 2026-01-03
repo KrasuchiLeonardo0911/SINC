@@ -14,6 +14,7 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +28,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.historial_movimientos.components.HistorialMovimientosSkeletonLoader
 import com.sinc.mobile.app.features.historial_movimientos.components.MovimientoHistorialItem
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.ui.theme.SoftGray
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -49,7 +49,7 @@ fun HistorialMovimientosScreen(
                     modifier = Modifier.statusBarsPadding()
                 )
             },
-            containerColor = SoftGray
+            containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
             Box(
                 modifier = Modifier
@@ -77,7 +77,7 @@ fun HistorialMovimientosScreen(
                     modifier = Modifier.statusBarsPadding()
                 )
             },
-            containerColor = SoftGray
+            containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
             Box(
                 modifier = Modifier
