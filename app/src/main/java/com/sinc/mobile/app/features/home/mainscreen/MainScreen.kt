@@ -61,7 +61,8 @@ fun MainScreen(
             when (route) {
                 CozyBottomNavRoutes.HOME -> MainContent(
                     paddingValues = paddingValues,
-                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+                    onSettingsClick = { navController.navigate(Routes.SETTINGS) },
+                    onNavigateToMaqueta = { navController.navigate(Routes.MOVIMIENTO_FORM_MAQUETA) }
                 )
                 CozyBottomNavRoutes.STOCK -> StockScreen(
                     mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
@@ -96,7 +97,8 @@ fun MainScreen(
 @Composable
 fun MainContent(
     paddingValues: PaddingValues,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onNavigateToMaqueta: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -110,5 +112,9 @@ fun MainContent(
         MyJournalSection()
         Spacer(modifier = Modifier.height(24.dp))
         QuickJournalSection()
+        Spacer(modifier = Modifier.height(24.dp))
+        androidx.compose.material3.Button(onClick = onNavigateToMaqueta) {
+            Text("Ir a Maqueta")
+        }
     }
 }

@@ -36,6 +36,7 @@ object Routes {
     const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
+    const val MOVIMIENTO_FORM_MAQUETA = "movimiento_form_maqueta"
 }
 
 @Composable
@@ -190,6 +191,24 @@ fun AppNavigation(
                     unidadId = unidadId
                 )
             }
+        }
+
+        composable(
+            route = Routes.MOVIMIENTO_FORM_MAQUETA,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            com.sinc.mobile.app.features.maquetas.MovimientoFormMaquetaScreen()
         }
     }
 }

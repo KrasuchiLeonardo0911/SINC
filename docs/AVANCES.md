@@ -824,3 +824,148 @@ Durante el proceso, se solucionaron múltiples errores de compilación, incluyen
 
 ---
 **Estado Actual**: El proyecto compila exitosamente. La nueva funcionalidad está completamente integrada y la UI es consistente con el resto de la aplicación, habiendo atendido todas las correcciones y sugerencias de la sesión.
+
+
+---
+### 02 de Enero de 2026 (Parte 2) - Mejoras de UI/UX y Navegación
+
+Esta sesión se centró en una serie de mejoras significativas en la experiencia de usuario (UI/UX) y la estandarización de la navegación y la carga de datos en varias pantallas clave de la aplicación.
+
+**1. Uniformidad y Corrección del `MinimalHeader`**
+*   **Problema Identificado:** Inconsistencias en el espaciado superior del `MinimalHeader` en distintas pantallas. `HistorialMovimientosScreen` tenía muy poco margen superior, `StockScreen` demasiado, mientras que `MovimientoFormScreen` presentaba el espaciado correcto.
+*   **Causa:** El componente `MinimalHeader` aplicaba internamente `statusBarsPadding()`, pero algunas pantallas (como `MovimientoFormScreen`) también lo aplicaban externamente al `MinimalHeader`, generando un doble padding en algunos casos y un manejo inconsistente en otros.
+*   **Solución Implementada:**
+    *   Se eliminó el `modifier.windowInsetsPadding(WindowInsets.statusBars)` interno de `MinimalHeader.kt`. La responsabilidad de este padding se centralizó en la pantalla que utiliza el componente, promoviendo mayor flexibilidad.
+    *   Se añadió `modifier = Modifier.statusBarsPadding()` explícitamente a todas las llamadas a `MinimalHeader` en `StockScreen.kt` y `HistorialMovimientosScreen.kt` para asegurar un espaciado uniforme y correcto debajo de la barra de estado del sistema.
+
+**2. Corrección de Margen Excesivo en `StockScreen`**
+*   **Problema:** Tras la estandarización del `MinimalHeader`, la pantalla `Mi Stock` (StockScreen) aún mostraba un margen superior excesivo para su contenido principal.
+*   **Causa:** `MainScreen.kt` estaba pasando a `StockScreen` un `modifier` que incluía los `paddingValues` de su propio `Scaffold` (que ya contabilizaban la altura de la `CozyBottomNavBar`). Esto resultaba en una doble aplicación de padding en el contenido de `StockScreen`.
+*   **Solución Implementada:** Se eliminó el `modifier = Modifier.padding(paddingValues)` de la llamada a `StockScreen` dentro del bloque `when` de `MainScreen.kt`. Esto eliminó el padding externo redundante, corrigiendo el margen excesivo.
+
+**3. Refactorización de Navegación y UI de `SettingsScreen`**
+*   **Objetivo:** Integrar `SettingsScreen` de manera más coherente con la arquitectura de UI y reubicar su acceso.
+*   **Cambios Realizados:**
+    *   **`SettingsScreen.kt`:** Se refactorizó para reemplazar su encabezado personalizado con el componente `MinimalHeader` (título "Configuración" y botón de retroceso funcional `onNavigateBack`), incluyendo el `modifier = Modifier.statusBarsPadding()` para consistencia.
+    *   **`CozyBottomNavRoutes.kt`:** La constante `PROFILE` fue renombrada a `CAMPOS` para reflejar el nuevo propósito del botón en la barra de navegación inferior.
+    *   **`CozyBottomNavBar.kt`:** Se modificó el `BottomNavItem` que antes representaba "Perfil" para que ahora fuera "Campos". Se actualizó su `route` a `CozyBottomNavRoutes.CAMPOS` y su icono a `Icons.Outlined.Map` (con `Icons.Filled.Map` para el estado seleccionado).
+    *   **`MainScreen.kt`:** Se actualizó el bloque `when(currentRoute)` para manejar la nueva ruta `CozyBottomNavRoutes.CAMPOS`. Ahora, al seleccionar "Campos" en la barra inferior, se renderiza `CamposScreen`, pasándole la lambda necesaria para navegar a `Routes.CREATE_UNIDAD_PRODUCTIVA`.
+    *   **`Header.kt` (componente de `MainContent`):** Se modificó para incluir un icono de usuario (`Icons.Default.Person`) envuelto en un círculo clicable. Al pulsar este icono, se navega a la `SettingsScreen` mediante `navController.navigate(Routes.SETTINGS)`.
+    *   **`MainContent.kt`:** Se actualizó su firma para aceptar la lambda `onSettingsClick` y pasarla al componente `Header`.
+
+**4. Ocultar Barra Inferior y Funcionalidad del Botón de Retroceso en `StockScreen`**
+*   **Problema:** `StockScreen` siempre mostraba la `CozyBottomNavBar`, y el botón de retroceso en su `MinimalHeader` no funcionaba correctamente debido a que la navegación entre las pantallas principales se gestionaba por estado en `MainScreen`, no por el `NavController` convencional.
+*   **Solución Implementada:**
+    *   **`MainScreen.kt`:** En el `Scaffold` principal, se añadió una condición al `bottomBar`. Ahora, `CozyBottomNavBar` solo se compone si `currentRoute` *no es* `CozyBottomNavRoutes.STOCK`, ocultando la barra de navegación inferior en esta pantalla.
+    *   **`StockScreen.kt`:** La firma del composable se modificó para aceptar una lambda `onBack: () -> Unit` en lugar de `navController: NavController`. Esta lambda se pasa al `MinimalHeader` para su acción de retroceso.
+    *   **`MainScreen.kt`:** Al llamar a `StockScreen`, se proporcionó la lambda `onBack = { currentRoute = CozyBottomNavRoutes.HOME }`, asegurando que el botón de retroceso cambie el estado de `MainScreen` para volver a la pantalla de inicio.
+
+**5. Implementación de Pantallas de Esqueleto (Skeleton Loaders) para Carga Inicial**
+*   **Objetivo:** Reemplazar el `PullRefreshIndicator` por una interfaz de usuario más amigable (`skeleton loader`) durante la carga inicial de datos al navegar a una pantalla. El `PullRefreshIndicator` ahora solo se activará con el gesto manual del usuario.
+*   **Cambios Realizados:**
+    *   **`StockViewModel.kt` y `HistorialMovimientosViewModel.kt`:** Se añadió una propiedad `isInitialLoad: Boolean = true` a `StockUiState` y `HistorialMovimientosState` respectivamente. Esta propiedad se inicializa en `true` y se establece en `false` una vez que la operación de carga inicial (llamada desde el bloque `init` del ViewModel) ha finalizado, independientemente de si fue exitosa o no.
+    *   **`StockScreenSkeletonLoader.kt` y `HistorialMovimientosSkeletonLoader.kt`:** Se crearon nuevos componentes Composable que simulan el diseño de sus pantallas correspondientes (Tarjetas de Stock, Ítems de Historial) utilizando `Box`es con un fondo `shimmerBrush` para indicar un estado de carga.
+    *   **`StockScreen.kt` y `HistorialMovimientosScreen.kt`:** La UI principal de ambas pantallas se envolvió en una estructura `if (uiState.isInitialLoad) { ShowSkeletonLoader() } else { ShowRealContent() }`. Esto asegura que el esqueleto se muestre exclusivamente durante la primera carga de la pantalla, y que el `PullRefreshIndicator` (para actualizaciones manuales) solo se componga y sea visible después de que la carga inicial haya terminado.
+
+**6. Estandarización de Animaciones de Transición entre Pantallas**
+*   **Estrategia Adoptada:**
+    *   **Pantallas Principales (navegadas por Bottom Nav):** Utilizan animaciones de desvanecimiento (`fade`).
+    *   **Pantallas Secundarias/Detalle (navegadas a un nivel más profundo):** Utilizan animaciones de deslizamiento horizontal (`slide-in/out`).
+*   **Implementación:**
+    *   **`MainScreen.kt`:** Se envolvió el bloque `when(currentRoute)` con una animación `Crossfade`. Esto proporciona una transición suave de desvanecimiento al cambiar entre las pantallas principales (Home, Stock, Historial, Campos) a través de la barra de navegación inferior.
+    *   **`AppNavigation.kt`:** Se añadieron las animaciones `enterTransition` (deslizamiento horizontal desde la derecha) y `popExitTransition` (deslizamiento horizontal hacia la derecha al salir) a las rutas `SETTINGS` y `CREATE_UNIDAD_PRODUCTIVA`. Estas animaciones se copiaron de la implementación ya existente en `MOVIMIENTO_FORM` para asegurar una experiencia de navegación coherente para todas las pantallas secundarias y de detalle.
+
+---
+
+# Avances de la Sesión Actual
+
+Esta sesión se centró en mejorar la navegación general, estandarizar transiciones y emprender una refactorización significativa de la paleta de colores de la aplicación, resolviendo múltiples errores y problemas de inconsistencia.
+
+## 1. Mejoras en la Barra de Navegación Inferior (CozyBottomNavBar)
+
+*   **Visibilidad Consistente:** Se aseguró que la barra de navegación inferior sea visible en todas las pantallas principales (incluyendo "Mi Stock") eliminando la lógica de visibilidad condicional en `MainScreen.kt`.
+*   **Corrección de Superposición de Contenido:** Se aplicó correctamente el `padding` inferior del `Scaffold` principal de `MainScreen` a las pantallas hijas (`StockScreen`, `HistorialMovimientosScreen`, `CamposScreen`). Esto evita que el contenido se dibuje por debajo de la barra de navegación inferior, asegurando que el área de desplazamiento se ajuste correctamente.
+*   **Indicador Visual de Selección:** Se añadió una pequeña línea de color (`36.dp` de ancho) alineada con el borde superior del ítem seleccionado en `CozyBottomNavBar`, mejorando la retroalimentación visual del usuario.
+*   **Corrección de Espaciado:** Se solucionaron problemas de espaciado entre los ítems de la barra de navegación inferior eliminando un modificador `weight` incorrecto de `CozyBottomNavItem`, permitiendo que el `Arrangement.SpaceEvenly` del contenedor padre funcione como se esperaba.
+*   **Color de Fondo:** Se estableció el color de fondo de la `CozyBottomNavBar` a blanco.
+
+## 2. Transiciones y Navegación
+
+*   **Corrección de Bug de Navegación ("Seleccionar Campo"):** Se corrigió un error donde el botón de regresar en la pantalla "Seleccionar Campo" (`SeleccionCampoScreen`) volvía incorrectamente a "Mi Stock". Ahora, al presionar regresar, se navega explícitamente a la pestaña `HOME` de `MainScreen`, asegurando un comportamiento predecible.
+*   **Animación de Regreso Estandarizada:** Se aplicó una animación consistente de "deslizamiento hacia la derecha" (`popExitTransition`) para el regreso en todas las rutas relevantes (`MOVIMIENTO`, `CHANGE_PASSWORD`, `FORGOT_PASSWORD`), unificando la experiencia de usuario al navegar hacia atrás.
+*   **Selección de Pestaña Inicial de la Pantalla Principal:** Se modificó `MainScreen` para aceptar un parámetro `startRoute` opcional, permitiendo que la navegación externa especifique qué pestaña de la barra inferior (HOME, STOCK, HISTORIAL, CAMPOS) debe mostrarse inicialmente.
+*   **Navegación de SeleccionCampoScreen:** Se actualizó la barra de navegación inferior de `SeleccionCampoScreen` para que al seleccionar cualquier ítem, navegue a `MainScreen` con la `startRoute` adecuada.
+*   **Corrección de Bug "Screen for add":** Se eliminó el error que mostraba "Screen for add" al presionar repetidamente el botón "ADD" desde `SeleccionCampoScreen`, ignorando clicks subsecuentes en el botón "ADD" de esa pantalla.
+
+## 3. Componentes de UI y Tematización
+
+*   **TopBar en CamposScreen:** Se integró un `MinimalHeader` en `CamposScreen`, alineándolo con otras pantallas principales, y se configuró su botón de regreso para navegar correctamente a la pestaña `HOME`.
+*   **Spinners en lugar de Esqueletos de Carga:** Se reemplazaron las animaciones de carga tipo esqueleto por un `CircularProgressIndicator` centrado para el estado de carga inicial en `StockScreen` y `HistorialMovimientosScreen`, mejorando la retroalimentación visual.
+*   **Fondo de MinimalHeader:** Se revirtió el color de fondo del `MinimalHeader` a transparente, dejando el `CozyBottomNavBar` con fondo blanco según la preferencia del usuario.
+
+## 4. Estandarización de la Paleta de Colores (Refactorización Mayor)
+
+*   **Definición de Nueva Paleta "SINC":** Se colaboró en la definición de una nueva paleta de colores "SINC" simplificada y unificada. Esta paleta se centra en el color principal "bordó" (`SincPrimary`, `SincPrimaryDark`, `SincPrimaryLight`), blanco (`SincSurface`, `SincOnPrimary`) y tonos de gris (`SincBackground`, `SincTextPrimary`, `SincTextSecondary`, `SincDivider`), junto con un color para errores (`SincError`).
+*   **Reescritura de `Color.kt`:** El archivo `app/src/main/java/com/sinc/mobile/ui/theme/Color.kt` fue reescrito para contener exclusivamente la nueva paleta "SINC", eliminando todas las definiciones de colores antiguos.
+*   **Actualización de `Theme.kt`:** Se modificó `app/src/main/java/com/sinc/mobile/ui/theme/Theme.kt` para utilizar la nueva paleta "SINC" en su `lightColorScheme` y se deshabilitó el tema oscuro para simplificar el enfoque inicial.
+*   **Corrección de Errores de Compilación (Refactorización Archivo por Archivo):** Se abordaron sistemáticamente numerosos errores de "Unresolved reference" en todo el módulo `app` (incluyendo `CamposScreen.kt`, `CreateUnidadProductivaScreen.kt`, `ActionButton.kt`, `BottomNavBar.kt`, `ProgressBar.kt`, `Step1Ubicacion.kt`, `Step2FormularioBasico.kt`, `HistorialMovimientosScreen.kt`, `MovimientoFormScreen.kt`, `MovimientoItemCard.kt`, `MovimientoSkeletonLoader.kt`, `MovimientoTopBar.kt`, `UnidadSelectionStep.kt`, `FilterChipGroup.kt`, `StockAccordion.kt`, `StockViewSelector.kt`, `Banner.kt`, `CustomDropdown.kt`, `ExpandingDropdown.kt`, `FormDropdown.kt`, `FormFieldWrapper.kt`, `InfoCard.kt`, `LoadingOverlay.kt`, `OverlayDropdown.kt`, `QuantitySelector.kt`) reemplazando las variables de color antiguas por sus equivalentes semánticos de `MaterialTheme.colorScheme`.
+*   **Eliminación de Archivos de Mockup:** Se eliminó el directorio `app/src/main/java/com/sinc/mobile/app/features/maquetas`, ya que contenía pantallas de maqueta no utilizadas, simplificando el proyecto.
+*   **Corrección de Error Tipográfico en `Theme.kt`:** Se corrigió un error tipográfico en `Theme.kt` de `Build.VERSION_VERSION.SDK_INT` a `Build.VERSION.SDK_INT`.
+
+Estos cambios aseguran una experiencia de usuario más pulida y una base de código más mantenible y consistente en términos de diseño y navegación.
+
+# Avances de la Sesión Actual
+
+Esta sesión se centró en la creación y refinamiento de una maqueta de la pantalla de carga de stock, aplicando un diseño "Clean & Airy" y resolviendo varios desafíos técnicos.
+
+## 1. Creación de Maqueta del Formulario de Movimiento (`MovimientoFormMaquetaScreen.kt`)
+
+-   **Hito**: Creación de una maqueta inicial para el formulario de carga de stock, con el objetivo de probar un nuevo diseño "Clean & Airy" (limpio, minimalista y moderno) antes de aplicarlo a la pantalla real.
+-   **Detalles**:
+    -   Se creó el archivo `MovimientoFormMaquetaScreen.kt` en un nuevo paquete `app/src/main/java/com/sinc/mobile/app/features/maquetas/`.
+    -   Se implementó la estructura básica de la pantalla utilizando `Scaffold` y `LazyColumn` para un contenido escrolleable y un padding horizontal consistente.
+    -   Se añadió el componente `MinimalHeader` en la parte superior, respetando los `statusBarsPadding()` para una correcta alineación con la barra de estado del sistema.
+    -   Se integró la ilustración principal del formulario (`ilustracion_ovinos-removebg-preview.png`). Para ello, se movió el archivo `.png` desde la raíz del proyecto a `app/src/main/res/drawable/` para que pudiera ser cargado como un recurso.
+
+## 2. Integración Temporal de Navegación
+
+-   **Hito**: Se configuró una ruta de navegación temporal para acceder a la maqueta desde la aplicación.
+-   **Detalles**:
+    -   Se añadió la constante `MOVIMIENTO_FORM_MAQUETA` al objeto `Routes` en `AppNavigation.kt`.
+    -   Se creó un nuevo `composable` en `AppNavigation.kt` para renderizar `MovimientoFormMaquetaScreen`, incluyendo transiciones de deslizamiento horizontal consistentes con otras pantallas de detalle.
+    -   Se añadió un botón temporal "Ir a Maqueta" en `MainContent` (parte de `HomeScreen`) para facilitar la navegación a la maqueta durante el desarrollo.
+
+## 3. Refinamiento y Estilización de Componentes en la Maqueta
+
+-   **Hito**: Se aplicaron múltiples ajustes de diseño y estilos a los componentes de la maqueta según las especificaciones.
+-   **Detalles**:
+    -   **Consistencia de Radio de Bordes**: Se estandarizó el `RoundedCornerShape` a `16.dp` para los `DropdownField` y `Chip`s, promoviendo una estética unificada.
+    -   **Botón "Guardar"**: Se refactorizó para que fuera parte del `bottomBar` del `Scaffold` (fijo y siempre visible) con un tamaño más sutil (altura de `40.dp`, forma `RoundedCornerShape(20.dp)`) y padding central. Se eliminó la lógica de visibilidad condicional para simplificar la maqueta.
+    -   **Diseño de la Sección "Especie"**: Se reorganizó para que el texto "Especie" y los chips de selección ("Ovinos", "Caprinos") estuvieran en la misma fila horizontal, utilizando `Arrangement.SpaceBetween` para una distribución adecuada.
+    -   **Visibilidad de Borde de Desplegables**: Se ajustó la opacidad del borde de `OutlinedTextField` en estado no enfocado a `0.7f` para que fuera más visible.
+    -   **Estilo de Chips (Motivo y Especie)**:
+        *   Se redujo el tamaño de los chips ajustando su `padding` interno y `fontSize`.
+        *   Se implementó el esquema de colores especificado:
+            *   **No seleccionado**: Fondo transparente, borde de `1.dp` con `MaterialTheme.colorScheme.primary` (bordó), texto con `MaterialTheme.colorScheme.onSurface`.
+            *   **Seleccionado**: Fondo con `MaterialTheme.colorScheme.primary` (bordó), sin borde, texto con `MaterialTheme.colorScheme.onPrimary` (blanco).
+
+## 4. Implementación de Seleccionadores con Bottom Sheet
+
+-   **Hito**: Se modificó el comportamiento de los campos "Categoría" y "Raza" para utilizar un `ModalBottomSheet` de Material 3 para la selección de opciones.
+-   **Detalles**:
+    -   Se integró el `ModalBottomSheet` de Material 3 en `MovimientoFormMaquetaScreen.kt`, gestionando su visibilidad con un estado `showSheet`.
+    -   Se creó una `sealed class SheetContent` para definir dinámicamente el título y las opciones de cada bottom sheet (para "Categoría" y "Raza").
+    -   Se creó el composable `SheetContentLayout` para renderizar las opciones dentro del bottom sheet.
+    -   El `DropdownField` fue modificado para aceptar un `onClick` lambda, que al ser invocado, establece el `sheetContent` adecuado y activa la visibilidad del bottom sheet. Para mantener la apariencia de `OutlinedTextField` no interactivo pero clickable, se envolvió en un `Box` con un `clickable` modifier.
+
+## 5. Resolución de Errores y Compilación Exitosa
+
+-   **Hito**: Se resolvieron varios errores de compilación introducidos durante las iteraciones de desarrollo de la maqueta.
+-   **Detalles**:
+    -   Inicialmente, se corrigieron errores de referencias no resueltas (`rememberVectorPainter`, `Icons.Default.Pets`) y de tipos (`ImageVector` pasado a `@Composable () -> Unit`) en los `StepperButton`s.
+    -   Una vez reintroducida la lógica compleja, se produjo un `Internal compiler error` al usar `derivedStateOf`. Se solucionó refactorizando la gestión de estado de la barra inferior dinámica para usar `LaunchedEffect`, lo que evitó el error.
+    -   Finalmente, se resolvieron conflictos de importación que surgieron al reintroducir los componentes de la maqueta.
+    -   El proyecto compiló exitosamente tras cada fase de corrección y ajuste, asegurando la estabilidad del código.
+
+---
+**Estado Actual**: La maqueta del formulario de carga de stock está completa con el diseño especificado, incluyendo la interacción de los seleccionadores de categoría y raza mediante bottom sheets. El proyecto compila sin errores.
