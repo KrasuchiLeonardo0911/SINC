@@ -61,24 +61,20 @@ fun MovimientoFormMaquetaContent() {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = com.sinc.mobile.R.drawable.ilustracion_ovinos_maqueta),
-                    contentDescription = "Ilustración de Animales",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 8.dp),
-                    contentScale = ContentScale.Fit
+            Column {
+                Text(
+                    text = "Cargar Movimiento",
+                    style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 )
+                Text(
+                    text = "Complete los datos del lote.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.DarkGray)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
@@ -114,14 +110,13 @@ fun MovimientoFormMaquetaContent() {
             MotivoSelector()
         }
 
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // 6. Sección "Cantidad"
         item {
             QuantityStepper()
-        }
-
-        // Add extra space at the bottom to ensure scrolling is possible
-        item {
-            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }

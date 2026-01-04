@@ -52,9 +52,22 @@ fun MovimientoReviewMaquetaContent() {
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                Column {
+                    Text(
+                        text = "Revisar Movimientos",
+                        style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = "Revise y confirme los datos.",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.DarkGray)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
             items(pendingMovements, key = { it.id }) { movement ->
                 PendingMovementItemRow(movement = movement)
             }

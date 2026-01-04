@@ -52,13 +52,11 @@ fun MovimientoStepperMaquetaScreen(
     val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
 
-    val titles = listOf("Paso 1: Cargar Movimiento", "Paso 2: Revisar y Confirmar")
-
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
         topBar = {
             MinimalHeader(
-                title = titles[pagerState.currentPage],
+                title = "",
                 onBackPress = onBackPress,
                 modifier = Modifier.statusBarsPadding(),
                 actions = {
