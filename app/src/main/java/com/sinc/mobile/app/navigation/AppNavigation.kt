@@ -208,7 +208,9 @@ fun AppNavigation(
                 ) + fadeOut(animationSpec = tween(300))
             }
         ) {
-            com.sinc.mobile.app.features.maquetas.MovimientoFormMaquetaScreen()
+            com.sinc.mobile.app.features.maquetas.MovimientoStepperMaquetaScreen(
+                onBackPress = { navController.popBackStack() }
+            )
         }
     }
 }

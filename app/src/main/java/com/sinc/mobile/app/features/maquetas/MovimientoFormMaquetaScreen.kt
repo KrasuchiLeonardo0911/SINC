@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,7 +39,7 @@ sealed class SheetContent(val title: String, val items: List<String>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovimientoFormMaquetaScreen() {
+fun MovimientoFormMaquetaContent() {
     var showSheet by remember { mutableStateOf(false) }
     var sheetContent by remember { mutableStateOf<SheetContent?>(null) }
 
@@ -57,102 +58,70 @@ fun MovimientoFormMaquetaScreen() {
         }
     }
 
-    Scaffold(
-        modifier = Modifier.navigationBarsPadding(),
-        topBar = {
-            MinimalHeader(
-                title = "Carga de Stock (Maqueta)",
-                onBackPress = {},
-                modifier = Modifier.statusBarsPadding()
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(bottom = 8.dp, top = 4.dp),
+                    .height(160.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Button(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.height(40.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 32.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(text = "Guardar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
+                Image(
+                    painter = painterResource(id = com.sinc.mobile.R.drawable.ilustracion_ovinos_maqueta),
+                    contentDescription = "Ilustración de Animales",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 8.dp),
+                    contentScale = ContentScale.Fit
+                )
             }
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = com.sinc.mobile.R.drawable.ilustracion_ovinos_maqueta),
-                        contentDescription = "Ilustración de Animales",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 8.dp),
-                        contentScale = ContentScale.Fit
-                    )
+
+        // 3. Sección "Especie"
+        item {
+            EspecieSelector()
+        }
+
+        // 4. Campos de Selección
+        item {
+            DropdownField(
+                label = "Categoría",
+                placeholder = "Seleccionar categoría",
+                onClick = {
+                    sheetContent = SheetContent.Categoria
+                    showSheet = true
                 }
-            }
+            )
+        }
+        item {
+            DropdownField(
+                label = "Raza",
+                placeholder = "Seleccionar raza",
+                onClick = {
+                    sheetContent = SheetContent.Raza
+                    showSheet = true
+                }
+            )
+        }
 
-            // 3. Sección "Especie"
-            item {
-                EspecieSelector()
-            }
+        // 5. Sección "Motivo"
+        item {
+            MotivoSelector()
+        }
 
-            // 4. Campos de Selección
-            item {
-                DropdownField(
-                    label = "Categoría",
-                    placeholder = "Seleccionar categoría",
-                    onClick = {
-                        sheetContent = SheetContent.Categoria
-                        showSheet = true
-                    }
-                )
-            }
-            item {
-                DropdownField(
-                    label = "Raza",
-                    placeholder = "Seleccionar raza",
-                    onClick = {
-                        sheetContent = SheetContent.Raza
-                        showSheet = true
-                    }
-                )
-            }
+        // 6. Sección "Cantidad"
+        item {
+            QuantityStepper()
+        }
 
-            // 5. Sección "Motivo"
-            item {
-                MotivoSelector()
-            }
-
-            // 6. Sección "Cantidad"
-            item {
-                QuantityStepper()
-            }
-
-            // Add extra space at the bottom to ensure scrolling is possible
-            item {
-                Spacer(modifier = Modifier.height(100.dp))
-            }
+        // Add extra space at the bottom to ensure scrolling is possible
+        item {
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
@@ -355,8 +324,8 @@ fun StepperButton(icon: @Composable () -> Unit, isPrimary: Boolean = false, enab
 
 @Preview(showBackground = true)
 @Composable
-fun MovimientoFormMaquetaScreenPreview() {
+fun MovimientoFormMaquetaContentPreview() {
     SincMobileTheme {
-        MovimientoFormMaquetaScreen()
+        MovimientoFormMaquetaContent()
     }
 }
