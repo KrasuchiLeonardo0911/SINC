@@ -141,7 +141,7 @@ fun MovimientoFormStepContent(
             Column {
                 Text(
                     text = "Cargar Movimiento",
-                    style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 )
                 Text(
                     text = "Complete los datos del lote.",

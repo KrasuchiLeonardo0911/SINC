@@ -48,7 +48,7 @@ fun MovimientoReviewStepContent(
                 Column {
                     Text(
                         text = "Revisar Movimientos",
-                        style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     )
                     Text(
                         text = "Revise y confirme los datos. Los movimientos idénticos se agrupan.",
