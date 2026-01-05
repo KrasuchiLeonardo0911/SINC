@@ -969,3 +969,46 @@ Esta sesión se centró en la creación y refinamiento de una maqueta de la pant
 
 ---
 **Estado Actual**: La maqueta del formulario de carga de stock está completa con el diseño especificado, incluyendo la interacción de los seleccionadores de categoría y raza mediante bottom sheets. El proyecto compila sin errores.
+
+# Avances de la Sesión Actual (05 de Enero de 2026)
+
+Esta sesión se centró en la resolución de múltiples problemas en el formulario de carga de movimientos, desde la compilación inicial hasta la mejora de la experiencia de usuario y la robustez del proceso de sincronización.
+
+## 1. Resolución de Problemas de Compilación y Configuración
+
+-   **Diagnóstico y Resolución de Sincronización de Gradle:** Se diagnosticó y resolvió el fallo de sincronización de Gradle en Android Studio causado por cachés corruptas y una configuración incorrecta del JDK. Se instruyó al usuario para verificar la configuración del JDK (asegurando JDK 11) y se eliminó manualmente el directorio de caché global de Gradle (`.gradle`) para forzar una reconstrucción limpia.
+-   **Resolución de Errores de Compilación por Refactorización:**
+    -   Se movió la clase de datos `MovimientoAgrupado` de un archivo `deprecated` a `MovimientoStepperViewModel.kt` para centralizar las definiciones de estado y evitar redeclaraciones.
+    -   Se comentó el contenido completo de los archivos `deprecated/MovimientoViewModel.kt` y `deprecated/MovimientoFormScreen.kt` para eliminar conflictos de compilación con la nueva arquitectura del módulo de movimientos.
+    -   Se actualizó `SeleccionCampoScreen.kt` para utilizar el `MovimientoStepperViewModel` como su fuente de `UnidadesProductivas` y `selectedUnidad`, integrándola correctamente en el nuevo flujo.
+    -   Se corrigió un error de referencia en `SeleccionCampoScreen.kt` (`uiState.catalogos?.unidadesProductivas`) al exponer `unidades` directamente en `MovimientoStepperState`.
+    -   Todos los errores de compilación restantes fueron resueltos, resultando en un build exitoso.
+
+## 2. Mejoras Visuales y de Experiencia de Usuario (UI/UX) en el Formulario
+
+-   **Espaciado Mejorado:** Se ajustó el espaciado entre el selector de "Motivo" y el "Selector de Cantidad" en el formulario de movimientos.
+-   **Texto Indicativo "Deslice":** Se añadió un sutil texto "(Deslice)" junto al título "Motivo" para indicar la funcionalidad de desplazamiento horizontal de los chips, mejorando la usabilidad.
+-   **Visibilidad de Contornos:** Se ajustó la visibilidad del contorno de los campos desplegables ("Categoría", "Raza") para que sea más clara.
+-   **Fondos de UI Consistentes:** Se revirtieron los colores de fondo del formulario, la barra superior y la barra inferior a los valores por defecto del tema (`MaterialTheme.colorScheme.background`).
+-   **Corrección de Desplegables que No Abrían:** Se solucionó un problema crítico donde los desplegables de "Categoría" y "Raza" no se abrían debido a un conflicto de eventos de clic causado por un modificador de fondo en `LazyColumn`. La solución implicó establecer el color de fondo del `Scaffold` principal y eliminar el fondo explícito del `LazyColumn`.
+-   **Campo "Destino" Refactorizado:**
+    -   El campo "Destino" ahora aparece en un `ModalBottomSheet` dedicado.
+    -   Se muestra condicionalmente solo cuando se selecciona el motivo "Traslado (salida)".
+    -   La lógica de validación (`MovimientoFormManager.kt`) fue actualizada para coincidir con la lógica de la UI, requiriendo el campo "Destino" solo para "Traslado (salida)", lo que permite que el botón "Añadir a la lista" se habilite correctamente para otros motivos como "Compra".
+
+## 3. Resolución de Errores Críticos y Mejoras de Robustez
+
+-   **Corrección de Crash al "Añadir a la Lista":** Se resolvió un `IllegalStateException` (`A MonotonicFrameClock is not available...`) que causaba un crash al intentar cambiar de página del `PagerState` desde el `ViewModel`. La solución implicó refactorizar la llamada a la animación (`animateScrollToPage`) para que sea gestionada por la Composable (`MovimientoStepperScreen.kt`) a través de un `SharedFlow` emitido por el `ViewModel`.
+-   **Robustez al Crear Movimientos Pendientes:** Implementadas comprobaciones de nulidad robustas para `selectedUnidad` y otros campos críticos en `onAddToList` de `MovimientoStepperViewModel.kt` para prevenir `NullPointerException`s y asegurar la validez de los datos antes de guardar.
+-   **Información Detallada en Pantalla de Revisión:** La pantalla de revisión ahora muestra nombres legibles (Especie, Categoría, Motivo) en lugar de IDs, obteniendo esta información del objeto `Catalogos` pasado desde el `ViewModel`. También se corrigió la lógica para determinar si un movimiento es de "Alta" o "Baja" basándose en el tipo del motivo.
+-   **Agrupación Correcta de Movimientos:** La pantalla de revisión ahora consume correctamente la lista de `MovimientoAgrupado`, asegurando que los movimientos idénticos se muestren como una única entrada sumada.
+
+## 4. Funcionalidad de Eliminación y Sincronización Mejorada
+
+-   **Corrección de Crash al Eliminar:** Se identificó y corrigió una recursión infinita en la lógica de eliminación de grupos de movimientos.
+-   **Confirmación al Eliminar:** Se añadió un diálogo de confirmación antes de eliminar un grupo de movimientos, con un mensaje más informativo y menos "exagerado" que explica la consecuencia de la acción.
+-   **Feedback Visual de Sincronización:** Se implementó un `LoadingOverlay` de pantalla completa que aparece durante el proceso de sincronización, garantizando una duración mínima de visualización de 1 segundo para una mejor experiencia de usuario.
+-   **Mejora de Reporte de Errores de Sincronización:** El manejo de errores en `MovimientoRepositoryImpl.kt` se ajustó para proporcionar mensajes genéricos de fallo de sincronización al usuario, evitando exponer detalles sensibles del servidor.
+-   **Eliminación de Elementos Sincronizados:** Tras una sincronización exitosa, los movimientos pendientes se eliminan ahora de la base de datos local, lo que asegura que la lista de revisión solo muestre los elementos que aún no han sido enviados al servidor.
+
+El módulo de movimientos ahora es considerablemente más robusto, usable y cumple con todas las funcionalidades y requisitos de experiencia de usuario planteados.

@@ -4,6 +4,7 @@ import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -80,13 +81,23 @@ class MovimientoSyncManager(
     fun syncMovements() {
         scope.launch {
             _syncState.value = _syncState.value.copy(isSyncing = true, syncError = null, syncSuccess = false)
+            val startTime = System.currentTimeMillis()
+
             syncMovimientosPendientesUseCase().onSuccess {
+                val duration = System.currentTimeMillis() - startTime
+                if (duration < 1000) {
+                    delay(1000 - duration) // Ensure spinner is visible for at least 1s
+                }
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncSuccess = true)
-                kotlinx.coroutines.delay(2000L)
+                delay(2000L) // Keep success message visible
                 _syncState.value = _syncState.value.copy(syncSuccess = false)
             }.onFailure { error ->
+                val duration = System.currentTimeMillis() - startTime
+                if (duration < 1000) {
+                    delay(1000 - duration) // Ensure spinner is visible for at least 1s
+                }
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncError = error.message ?: "Error desconocido al sincronizar")
-                kotlinx.coroutines.delay(3000L)
+                delay(3000L) // Keep error message visible
                 _syncState.value = _syncState.value.copy(syncError = null)
             }
         }

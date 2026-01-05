@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
+import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SincMobileTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -90,6 +91,9 @@ fun MovimientoStepperScreen(
         )
     }
 
+    // Full screen loading for sync
+    LoadingOverlay(isLoading = uiState.syncState.isSyncing)
+
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -120,7 +124,8 @@ fun MovimientoStepperScreen(
                     } else {
                         uiState.syncState.movimientosAgrupados.isNotEmpty()
                     },
-                    isLoading = uiState.isSaving || uiState.syncState.isSyncing,
+                    // We removed the button loading state as we now have a full screen overlay
+                    isLoading = false,
                     onClick = {
                         if (pagerState.currentPage == 0) {
                             viewModel.onAddToList()
