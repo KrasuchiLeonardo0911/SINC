@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.maquetas
+package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -26,12 +26,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,15 +43,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SincMobileTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MovimientoStepperMaquetaScreen(
-    onBackPress: () -> Unit
+fun MovimientoStepperScreen(
+    onBackPress: () -> Unit,
+    viewModel: MovimientoStepperViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
 
@@ -81,26 +87,56 @@ fun MovimientoStepperMaquetaScreen(
                     pagerState = pagerState,
                     onClick = {
                         if (pagerState.currentPage == 0) {
-                            scope.launch {
-                                pagerState.animateScrollToPage(1)
-                            }
+                            viewModel.onAddToList(pagerState)
                         } else {
-                            // TODO: Trigger final sync
+                            viewModel.onSync()
                         }
                     }
                 )
             }
         }
     ) { paddingValues ->
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) { page ->
-            when (page) {
-                0 -> MovimientoFormMaquetaContent() // Simplified Form
-                1 -> MovimientoReviewMaquetaContent() // Simplified Review List
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        if (uiState.formManager != null) {
+                            MovimientoFormStepContent(
+                                formState = uiState.formManager!!.formState.value,
+                                onEspecieSelected = uiState.formManager!!::onEspecieSelected,
+                                onCategoriaSelected = uiState.formManager!!::onCategoriaSelected,
+                                onRazaSelected = uiState.formManager!!::onRazaSelected,
+                                onMotivoSelected = uiState.formManager!!::onMotivoSelected,
+                                onCantidadChanged = uiState.formManager!!::onCantidadChanged,
+                                onDestinoChanged = uiState.formManager!!::onDestinoChanged
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Error: El formulario no pudo ser inicializado.")
+                            }
+                        }
+                    }
+                    1 -> MovimientoReviewStepContent(
+                        movimientos = uiState.syncState.movimientosAgrupados.mapNotNull { it.originales.firstOrNull() },
+                        onDelete = viewModel::onDelete,
+                        onEdit = { /* TODO */ }
+                    )
+                }
             }
         }
     }
@@ -137,7 +173,7 @@ private fun PagerIndicator(pagerState: PagerState) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BottomBarButton(pagerState: PagerState, onClick: () -> Unit) {
-    val buttonText = if (pagerState.currentPage == 0) "Siguiente" else "Sincronizar y Guardar"
+    val buttonText = if (pagerState.currentPage == 0) "Añadir a la Lista" else "Sincronizar y Guardar"
 
     Box(
         modifier = Modifier
@@ -158,11 +194,10 @@ private fun BottomBarButton(pagerState: PagerState, onClick: () -> Unit) {
     }
 }
 
-// No placeholder content needed, will call composables from other files
 @Preview
 @Composable
-fun MovimientoStepperMaquetaScreenPreview() {
+fun MovimientoStepperScreenPreview() {
     SincMobileTheme {
-        MovimientoStepperMaquetaScreen(onBackPress = {})
+        MovimientoStepperScreen(onBackPress = {})
     }
 }

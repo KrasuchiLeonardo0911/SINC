@@ -1,4 +1,4 @@
-package com.sinc.mobile.app.features.maquetas
+package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,34 +20,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.ui.theme.SincMobileTheme
+import java.time.LocalDateTime
 
-
-data class PendingMovement(
-    val id: Int,
-    val especie: String,
-    val cantidad: Int,
-    val categoria: String,
-    val raza: String,
-    val motivo: String,
-    val type: String // "alta" or "baja"
-)
-
-val samplePendingMovements = listOf(
-    PendingMovement(1, "Ovino", 5, "Cordero/a", "Criolla", "Compra", "alta"),
-    PendingMovement(2, "Caprino", 3, "Cabrito/a", "Angora", "Nacimiento", "alta"),
-    PendingMovement(3, "Ovino", 2, "Oveja", "Corriedale", "Venta", "baja"),
-    PendingMovement(4, "Ovino", 1, "Carnero", "Texel", "Muerte", "baja"),
-)
 
 val MovementGreen = Color(0xFF28A745)
 val MovementRed = Color(0xFFDC3545)
 
 @Composable
-fun MovimientoReviewMaquetaContent() {
-    val pendingMovements = samplePendingMovements // Sample data
-
-    if (pendingMovements.isEmpty()) {
+fun MovimientoReviewStepContent(
+    movimientos: List<MovimientoPendiente>,
+    onEdit: (Long) -> Unit,
+    onDelete: (MovimientoPendiente) -> Unit
+) {
+    if (movimientos.isEmpty()) {
         EmptyStateReview()
     } else {
         LazyColumn(
@@ -68,8 +55,12 @@ fun MovimientoReviewMaquetaContent() {
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
-            items(pendingMovements, key = { it.id }) { movement ->
-                PendingMovementItemRow(movement = movement)
+            items(movimientos, key = { it.id }) { movement ->
+                PendingMovementItemRow(
+                    movement = movement,
+                    onEdit = onEdit,
+                    onDelete = onDelete
+                )
             }
         }
     }
@@ -77,13 +68,17 @@ fun MovimientoReviewMaquetaContent() {
 
 @Composable
 fun PendingMovementItemRow(
-    movement: PendingMovement,
-    onEdit: (Int) -> Unit = {},
-    onDelete: (Int) -> Unit = {}
+    movement: MovimientoPendiente,
+    onEdit: (Long) -> Unit,
+    onDelete: (MovimientoPendiente) -> Unit
 ) {
-    val indicatorColor = if (movement.type == "alta") MovementGreen else MovementRed
-    val indicatorIcon = if (movement.type == "alta") Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
-    val indicatorText = if (movement.type == "alta") "Alta" else "Baja"
+    // This logic needs to be based on the real model now.
+    // We'll assume a 'type' property or infer it from 'motivo'.
+    // For the mockup, we'll make a guess.
+    val isAlta = movement.motivoMovimientoId < 10 // Hypothetical IDs for altas vs bajas
+    val indicatorColor = if (isAlta) MovementGreen else MovementRed
+    val indicatorIcon = if (isAlta) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
+    val indicatorText = if (isAlta) "Alta" else "Baja"
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -121,12 +116,12 @@ fun PendingMovementItemRow(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "${movement.cantidad} x ${movement.especie} (${movement.categoria})",
+                    text = "${movement.cantidad} x Especie ID: ${movement.especieId}", // Simplified text
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Motivo: ${movement.motivo}",
+                    text = "Motivo ID: ${movement.motivoMovimientoId}", // Simplified text
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -141,7 +136,7 @@ fun PendingMovementItemRow(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                IconButton(onClick = { onDelete(movement.id) }) {
+                IconButton(onClick = { onDelete(movement) }) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
                         contentDescription = "Eliminar",
@@ -189,15 +184,24 @@ fun EmptyStateReview() {
 
 @Preview(showBackground = true, name = "Review Screen Content")
 @Composable
-fun MovimientoReviewMaquetaContentPreview() {
+fun MovimientoReviewStepContentPreview() {
+    val sampleMovements = listOf(
+        MovimientoPendiente(1, 1, 1, 1, 1, 5, 1, null, null, LocalDateTime.now(), false),
+        MovimientoPendiente(2, 1, 2, 2, 2, 3, 2, null, null, LocalDateTime.now(), false),
+        MovimientoPendiente(3, 1, 1, 3, 3, 2, 11, null, null, LocalDateTime.now(), false), // Baja
+    )
     SincMobileTheme {
-        MovimientoReviewMaquetaContent()
+        MovimientoReviewStepContent(
+            movimientos = sampleMovements,
+            onEdit = {},
+            onDelete = {}
+        )
     }
 }
 
 @Preview(showBackground = true, name = "Review Screen Empty")
 @Composable
-fun MovimientoReviewMaquetaScreenEmptyPreview() {
+fun MovimientoReviewStepScreenEmptyPreview() {
     SincMobileTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EmptyStateReview()

@@ -18,7 +18,7 @@ import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
 import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
 import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
-import com.sinc.mobile.app.features.movimiento.MovimientoFormScreen
+import com.sinc.mobile.app.features.movimiento.MovimientoStepperScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
@@ -36,7 +36,6 @@ object Routes {
     const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
-    const val MOVIMIENTO_FORM_MAQUETA = "movimiento_form_maqueta"
 }
 
 @Composable
@@ -182,33 +181,8 @@ fun AppNavigation(
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             }
-        ) { backStackEntry ->
-            val unidadId = backStackEntry.arguments?.getString("unidadId")
-            // A null check is good practice, though the route requires the argument.
-            if (unidadId != null) {
-                MovimientoFormScreen(
-                    navController = navController,
-                    unidadId = unidadId
-                )
-            }
-        }
-
-        composable(
-            route = Routes.MOVIMIENTO_FORM_MAQUETA,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeOut(animationSpec = tween(300))
-            }
         ) {
-            com.sinc.mobile.app.features.maquetas.MovimientoStepperMaquetaScreen(
+            MovimientoStepperScreen(
                 onBackPress = { navController.popBackStack() }
             )
         }

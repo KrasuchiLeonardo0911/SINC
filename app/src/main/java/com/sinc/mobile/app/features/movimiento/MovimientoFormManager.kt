@@ -33,7 +33,7 @@ class MovimientoFormManager(
     init {
         _formState.value = _formState.value.copy(
             filteredMotivos = catalogos?.motivosMovimiento ?: emptyList(),
-            filteredEspecies = catalogos?.especies ?: emptyList()
+            filteredEspecies = catalogos?.especies?.filter { it.nombre == "Ovino" || it.nombre == "Caprino" } ?: emptyList()
         )
     }
 

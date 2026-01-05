@@ -1,12 +1,12 @@
 package com.sinc.mobile.app.features.movimiento
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -31,8 +31,8 @@ class MovimientoSyncManager(
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
     private val scope: CoroutineScope
 ) {
-    private val _syncState = mutableStateOf(MovimientoSyncState())
-    val syncState: State<MovimientoSyncState> = _syncState
+    private val _syncState = MutableStateFlow(MovimientoSyncState())
+    val syncState: StateFlow<MovimientoSyncState> = _syncState
 
     init {
         loadAndGroupMovimientos()
@@ -86,7 +86,7 @@ class MovimientoSyncManager(
                 kotlinx.coroutines.delay(2000L)
                 _syncState.value = _syncState.value.copy(syncSuccess = false)
             }.onFailure {
-                android.util.Log.e("SyncError", "Fallo al sincronizar movimientos", it)
+                // Log.e("SyncError", "Fallo al sincronizar movimientos", it) // Removed platform-specific log
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncError = it.message ?: "Error al sincronizar")
                 kotlinx.coroutines.delay(3000L)
                 _syncState.value = _syncState.value.copy(syncError = null)
