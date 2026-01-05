@@ -54,14 +54,13 @@ class MovimientoRepositoryImpl @Inject constructor(
 
                 if (response.isSuccessful) {
                     movimientos.forEach { movimiento ->
-                        movimientoPendienteDao.update(movimiento.copy(sincronizado = true).toEntity())
+                        movimientoPendienteDao.delete(movimiento.toEntity()) // Changed to delete
                     }
                 } else {
                     // If one batch fails, we stop and return failure.
                     // A more robust implementation could collect failures and continue.
-                    val errorBody = response.errorBody()?.string() ?: "Sin cuerpo de error"
-                    val errorCode = response.code()
-                    return Result.failure(Exception("Error ($errorCode) para UP $upId: $errorBody"))
+                    // Changed to a generic error message
+                    return Result.failure(Exception("Ocurrió un error al sincronizar movimientos."))
                 }
             }
             Result.success(Unit)

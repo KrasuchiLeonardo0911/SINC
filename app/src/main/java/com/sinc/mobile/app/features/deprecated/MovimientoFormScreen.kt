@@ -1,3 +1,4 @@
+/*
 package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.foundation.background
@@ -140,3 +141,4 @@ fun MovimientoFormScreen(
         }
     }
 }
+*/

@@ -1,13 +1,9 @@
 package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.PagerState
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sinc.mobile.app.features.movimiento.MovimientoFormManager
-import com.sinc.mobile.app.features.movimiento.MovimientoSyncManager
-import com.sinc.mobile.app.features.movimiento.MovimientoSyncState
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.domain.model.UnidadProductiva
@@ -18,12 +14,26 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+// Core data classes for this feature's state
+data class MovimientoAgrupado(
+    val unidadProductivaId: Int,
+    val especieId: Int,
+    val categoriaId: Int,
+    val razaId: Int,
+    val motivoMovimientoId: Int,
+    val cantidadTotal: Int,
+    val originales: List<MovimientoPendiente>
+)
+
 data class MovimientoStepperState(
     val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
     val error: String? = null,
     val selectedUnidad: UnidadProductiva? = null,
     val formManager: MovimientoFormManager? = null,
     val syncState: MovimientoSyncState = MovimientoSyncState(),
+    val catalogos: Catalogos? = null,
+    val unidades: List<UnidadProductiva> = emptyList() // Add this
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -41,6 +51,9 @@ class MovimientoStepperViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MovimientoStepperState())
     val uiState = _uiState.asStateFlow()
 
+    private val _navigateToPage = MutableSharedFlow<Int>()
+    val navigateToPage = _navigateToPage.asSharedFlow()
+
     private val syncManager: MovimientoSyncManager
 
     private var catalogos: Catalogos? = null
@@ -50,11 +63,10 @@ class MovimientoStepperViewModel @Inject constructor(
         syncManager = MovimientoSyncManager(
             getMovimientosPendientesUseCase,
             syncMovimientosPendientesUseCase,
-            deleteMovimientoLocalUseCase,
+            deleteMovimientoLocalUseCase, // Pass the use case directly
             viewModelScope
         )
 
-        // Observe the sync state from the manager
         viewModelScope.launch {
             syncManager.syncState.collect {
                 _uiState.value = _uiState.value.copy(syncState = it)
@@ -73,45 +85,63 @@ class MovimientoStepperViewModel @Inject constructor(
                 getCatalogosUseCase()
             ) { unidades, catalogosData ->
                 val selectedUnidad = unidades.find { it.id.toString() == unidadId }
-                catalogos = catalogosData // Cache catalogos for form resets
+                catalogos = catalogosData
 
-                // Update state in one go
                 _uiState.value = _uiState.value.copy(
                     selectedUnidad = selectedUnidad,
                     formManager = MovimientoFormManager(catalogosData),
-                    isLoading = false // As soon as we have a value from both flows, we're ready
+                    catalogos = catalogosData,
+                    unidades = unidades, // Populate units
+                    isLoading = false
                 )
-            }.launchIn(viewModelScope) // The combine flow is launched and will keep running
+            }.launchIn(viewModelScope)
         }
     }
 
-    fun onAddToList(pagerState: PagerState) {
-        val formState = _uiState.value.formManager?.formState?.value ?: return
-        if (!formState.isFormValid) {
+    fun onAddToList() {
+        val formManager = _uiState.value.formManager ?: return
+        val formState = formManager.formState.value
+        val unidad = _uiState.value.selectedUnidad ?: return
+
+        formManager.onDestinoChanged(formState.destino)
+        val currentFormState = formManager.formState.value
+
+        if (!currentFormState.isFormValid) {
             return
         }
 
-        viewModelScope.launch {
-            val movimiento = MovimientoPendiente(
-                id = 0,
-                unidadProductivaId = _uiState.value.selectedUnidad!!.id,
-                especieId = formState.selectedEspecie!!.id,
-                categoriaId = formState.selectedCategoria!!.id,
-                razaId = formState.selectedRaza!!.id,
-                cantidad = formState.cantidad.toIntOrNull() ?: 0,
-                motivoMovimientoId = formState.selectedMotivo!!.id,
-                destinoTraslado = null,
-                observaciones = null,
-                fechaRegistro = LocalDateTime.now(),
-                sincronizado = false
-            )
+        val especieId = currentFormState.selectedEspecie!!.id
+        val categoriaId = currentFormState.selectedCategoria!!.id
+        val razaId = currentFormState.selectedRaza!!.id
+        val motivoId = currentFormState.selectedMotivo!!.id
+        val cantidadNum = currentFormState.cantidad.toIntOrNull() ?: 0
 
-            saveMovimientoLocalUseCase(movimiento).onSuccess {
-                // Reset form by creating a new manager
-                _uiState.value = _uiState.value.copy(formManager = MovimientoFormManager(catalogos))
-                pagerState.animateScrollToPage(1)
-            }.onFailure {
-                // TODO: Show error
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true)
+            try {
+                val movimiento = MovimientoPendiente(
+                    id = 0,
+                    unidadProductivaId = unidad.id,
+                    especieId = especieId,
+                    categoriaId = categoriaId,
+                    razaId = razaId,
+                    cantidad = cantidadNum,
+                    motivoMovimientoId = motivoId,
+                    destinoTraslado = currentFormState.destino.takeIf { it.isNotBlank() },
+                    observaciones = null,
+                    fechaRegistro = LocalDateTime.now(),
+                    sincronizado = false
+                )
+                saveMovimientoLocalUseCase(movimiento).onSuccess {
+                    _uiState.value = _uiState.value.copy(formManager = MovimientoFormManager(catalogos))
+                    _navigateToPage.emit(1)
+                }.onFailure {
+                    // TODO: Show error in UI
+                }
+            } catch (e: Exception) {
+                // Should not happen with the new logic, but kept for safety
+            } finally {
+                _uiState.value = _uiState.value.copy(isSaving = false)
             }
         }
     }
@@ -120,9 +150,7 @@ class MovimientoStepperViewModel @Inject constructor(
         syncManager.syncMovements()
     }
 
-    fun onDelete(movimiento: MovimientoPendiente) {
-        viewModelScope.launch {
-            deleteMovimientoLocalUseCase(movimiento)
-        }
+    fun deleteMovimientoGroup(grupo: MovimientoAgrupado) {
+        syncManager.deleteMovimientoGroup(grupo)
     }
 }

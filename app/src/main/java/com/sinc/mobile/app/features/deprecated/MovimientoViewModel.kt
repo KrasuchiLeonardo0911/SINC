@@ -1,3 +1,4 @@
+/*
 package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.runtime.State
@@ -164,3 +165,4 @@ class MovimientoViewModel @Inject constructor(
         }
     }
 }
+*/

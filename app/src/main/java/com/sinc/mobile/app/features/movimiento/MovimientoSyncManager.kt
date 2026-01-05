@@ -1,6 +1,5 @@
 package com.sinc.mobile.app.features.movimiento
 
-import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
@@ -10,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
+// This is the key for grouping movements. Made internal to this file as it's an implementation detail.
 private data class MovimientoGroupKey(
     val unidadProductivaId: Int,
     val especieId: Int,
@@ -28,7 +28,7 @@ data class MovimientoSyncState(
 class MovimientoSyncManager(
     private val getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
     private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
-    private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
+    private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase, // Accept the use case
     private val scope: CoroutineScope
 ) {
     private val _syncState = MutableStateFlow(MovimientoSyncState())
@@ -68,12 +68,11 @@ class MovimientoSyncManager(
         }
     }
 
+    // This function now contains the actual deletion logic
     fun deleteMovimientoGroup(grupo: MovimientoAgrupado) {
         scope.launch {
             grupo.originales.forEach { movimiento ->
-                deleteMovimientoLocalUseCase(movimiento).onFailure {
-                    // Optionally handle error for single deletion failure
-                }
+                deleteMovimientoLocalUseCase(movimiento)
             }
         }
     }
@@ -85,9 +84,8 @@ class MovimientoSyncManager(
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncSuccess = true)
                 kotlinx.coroutines.delay(2000L)
                 _syncState.value = _syncState.value.copy(syncSuccess = false)
-            }.onFailure {
-                // Log.e("SyncError", "Fallo al sincronizar movimientos", it) // Removed platform-specific log
-                _syncState.value = _syncState.value.copy(isSyncing = false, syncError = it.message ?: "Error al sincronizar")
+            }.onFailure { error ->
+                _syncState.value = _syncState.value.copy(isSyncing = false, syncError = error.message ?: "Error desconocido al sincronizar")
                 kotlinx.coroutines.delay(3000L)
                 _syncState.value = _syncState.value.copy(syncError = null)
             }

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.ui.theme.SincMobileTheme
 import java.time.LocalDateTime
@@ -30,11 +31,12 @@ val MovementRed = Color(0xFFDC3545)
 
 @Composable
 fun MovimientoReviewStepContent(
-    movimientos: List<MovimientoPendiente>,
+    movimientosAgrupados: List<MovimientoAgrupado>,
+    catalogos: Catalogos?,
     onEdit: (Long) -> Unit,
-    onDelete: (MovimientoPendiente) -> Unit
+    onDelete: (MovimientoAgrupado) -> Unit
 ) {
-    if (movimientos.isEmpty()) {
+    if (movimientosAgrupados.isEmpty()) {
         EmptyStateReview()
     } else {
         LazyColumn(
@@ -49,15 +51,16 @@ fun MovimientoReviewStepContent(
                         style = MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "Revise y confirme los datos.",
+                        text = "Revise y confirme los datos. Los movimientos idénticos se agrupan.",
                         style = MaterialTheme.typography.bodyMedium.copy(color = Color.DarkGray)
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
-            items(movimientos, key = { it.id }) { movement ->
+            items(movimientosAgrupados, key = { it.motivoMovimientoId + it.especieId + it.categoriaId + it.razaId }) { group ->
                 PendingMovementItemRow(
-                    movement = movement,
+                    grupo = group,
+                    catalogos = catalogos,
                     onEdit = onEdit,
                     onDelete = onDelete
                 )
@@ -68,14 +71,19 @@ fun MovimientoReviewStepContent(
 
 @Composable
 fun PendingMovementItemRow(
-    movement: MovimientoPendiente,
+    grupo: MovimientoAgrupado,
+    catalogos: Catalogos?,
     onEdit: (Long) -> Unit,
-    onDelete: (MovimientoPendiente) -> Unit
+    onDelete: (MovimientoAgrupado) -> Unit
 ) {
-    // This logic needs to be based on the real model now.
-    // We'll assume a 'type' property or infer it from 'motivo'.
-    // For the mockup, we'll make a guess.
-    val isAlta = movement.motivoMovimientoId < 10 // Hypothetical IDs for altas vs bajas
+    // Find the names from the catalog
+    val especieName = catalogos?.especies?.find { it.id == grupo.especieId }?.nombre ?: "Especie ID: ${grupo.especieId}"
+    val categoriaName = catalogos?.categorias?.find { it.id == grupo.categoriaId }?.nombre ?: "Categoría ID: ${grupo.categoriaId}"
+    val motivo = catalogos?.motivosMovimiento?.find { it.id == grupo.motivoMovimientoId }
+    val motivoName = motivo?.nombre ?: "Motivo ID: ${grupo.motivoMovimientoId}"
+
+    // Determine movement type from catalog
+    val isAlta = motivo?.tipo?.equals("alta", ignoreCase = true) == true
     val indicatorColor = if (isAlta) MovementGreen else MovementRed
     val indicatorIcon = if (isAlta) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
     val indicatorText = if (isAlta) "Alta" else "Baja"
@@ -116,12 +124,16 @@ fun PendingMovementItemRow(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "${movement.cantidad} x Especie ID: ${movement.especieId}", // Simplified text
+                    text = "$especieName ($categoriaName)",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Motivo ID: ${movement.motivoMovimientoId}", // Simplified text
+                    text = "Cantidad Total: ${grupo.cantidadTotal}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = motivoName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -129,14 +141,14 @@ fun PendingMovementItemRow(
 
             // Actions
             Row {
-                IconButton(onClick = { onEdit(movement.id) }) {
+                IconButton(onClick = { /*TODO*/ }, enabled = false) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Editar",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
                 }
-                IconButton(onClick = { onDelete(movement) }) {
+                IconButton(onClick = { onDelete(grupo) }) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
                         contentDescription = "Eliminar",
@@ -186,13 +198,12 @@ fun EmptyStateReview() {
 @Composable
 fun MovimientoReviewStepContentPreview() {
     val sampleMovements = listOf(
-        MovimientoPendiente(1, 1, 1, 1, 1, 5, 1, null, null, LocalDateTime.now(), false),
-        MovimientoPendiente(2, 1, 2, 2, 2, 3, 2, null, null, LocalDateTime.now(), false),
-        MovimientoPendiente(3, 1, 1, 3, 3, 2, 11, null, null, LocalDateTime.now(), false), // Baja
+        MovimientoAgrupado(1, 1, 1, 1, 1, 10, emptyList()),
     )
     SincMobileTheme {
         MovimientoReviewStepContent(
-            movimientos = sampleMovements,
+            movimientosAgrupados = sampleMovements,
+            catalogos = null, // In preview, we expect IDs to be shown
             onEdit = {},
             onDelete = {}
         )

@@ -31,8 +31,13 @@ class MovimientoFormManager(
     val formState: State<MovimientoFormState> = _formState
 
     init {
+        val excludedMotivos = listOf("Alta por Venta Cancelada", "Baja por Declaración")
+        val initialMotivos = catalogos?.motivosMovimiento?.filterNot {
+            it.nombre in excludedMotivos
+        } ?: emptyList()
+
         _formState.value = _formState.value.copy(
-            filteredMotivos = catalogos?.motivosMovimiento ?: emptyList(),
+            filteredMotivos = initialMotivos,
             filteredEspecies = catalogos?.especies?.filter { it.nombre == "Ovino" || it.nombre == "Caprino" } ?: emptyList()
         )
     }
@@ -86,9 +91,7 @@ class MovimientoFormManager(
 
     private fun validateForm() {
         val s = _formState.value
-        val isDestinoRequired = s.selectedMotivo?.nombre?.contains("Traslado", ignoreCase = true) == true ||
-                s.selectedMotivo?.nombre?.contains("Venta", ignoreCase = true) == true ||
-                s.selectedMotivo?.nombre?.contains("Compra", ignoreCase = true) == true
+        val isDestinoRequired = s.selectedMotivo?.nombre == "Traslado (salida)"
 
         val isValid = s.selectedEspecie != null &&
                 s.selectedCategoria != null &&

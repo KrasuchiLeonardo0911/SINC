@@ -17,6 +17,8 @@ import com.sinc.mobile.app.features.movimiento.components.UnidadSelectionStep
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
@@ -26,10 +28,12 @@ import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 @Composable
 fun SeleccionCampoScreen(
     modifier: Modifier = Modifier,
-    viewModel: MovimientoViewModel = hiltViewModel(),
+    // Use MovimientoStepperViewModel as it manages the state for the overall movement process
+    viewModel: MovimientoStepperViewModel = hiltViewModel(),
     navController: NavController
 ) {
-    val state = viewModel.state.value
+    // Observe the UI state from MovimientoStepperViewModel
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         modifier = modifier
@@ -38,7 +42,7 @@ fun SeleccionCampoScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MinimalHeader(
-                title = "Seleccionar Campo", // Changed title
+                title = "Seleccionar Campo",
                 onBackPress = {
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.HOME) { inclusive = true }
@@ -66,15 +70,16 @@ fun SeleccionCampoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp) // Corrected padding
+            contentPadding = PaddingValues(16.dp)
         ) {
             // --- 1. Selección de Campo ---
             item {
                 UnidadSelectionStep(
-                    unidades = state.unidades,
-                    selectedUnidad = state.selectedUnidad,
+                    unidades = uiState.unidades, // Use units from MovimientoStepperViewModel
+                    selectedUnidad = uiState.selectedUnidad, // Selected unit should come from ViewModel
                     onUnidadSelected = { unidad ->
-                        // Navigate to the form screen with the selected ID
+                        // This screen just selects. The ViewModel's selectedUnidad will be updated via navigation state.
+                        // Navigating to the form will then use this selectedUnidad.
                         navController.navigate(Routes.createMovimientoFormRoute(unidad.id.toString()))
                     }
                 )

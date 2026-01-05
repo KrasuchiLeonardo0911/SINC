@@ -1,7 +1,6 @@
 package com.sinc.mobile.app.features.movimiento
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,7 +38,7 @@ sealed class SheetContent {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovimientoFormStepContent(
     formState: MovimientoFormState,
@@ -50,7 +51,10 @@ fun MovimientoFormStepContent(
 ) {
     var showSheet by remember { mutableStateOf(false) }
     var sheetContent by remember { mutableStateOf<SheetContent?>(null) }
+    var showDestinoSheet by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
 
+    // --- Bottom sheet for Categoría and Raza ---
     if (showSheet && sheetContent != null) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
@@ -81,6 +85,48 @@ fun MovimientoFormStepContent(
                 }
                 else -> {}
             }
+        }
+    }
+
+    // --- Bottom sheet for Destino ---
+    if (showDestinoSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showDestinoSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(text = "Información de Destino", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = formState.destino,
+                    onValueChange = onDestinoChanged,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    placeholder = { Text("Ej: Establecimiento vecino") },
+                    shape = RoundedCornerShape(16.dp),
+                )
+                Button(onClick = { showDestinoSheet = false }) {
+                    Text("Guardar Destino")
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+            // Request focus when the sheet is shown
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+        }
+    }
+
+    // --- Trigger for Destino Sheet ---
+    LaunchedEffect(formState.selectedMotivo) {
+        if (formState.selectedMotivo?.nombre == "Traslado (Salida)") {
+            showDestinoSheet = true
         }
     }
 
@@ -160,25 +206,7 @@ fun MovimientoFormStepContent(
             )
         }
 
-        // 7. Campo Destino (condicional)
-        item {
-            val isDestinoVisible = formState.selectedMotivo?.nombre?.contains("Traslado", ignoreCase = true) == true ||
-                    formState.selectedMotivo?.nombre?.contains("Venta", ignoreCase = true) == true ||
-                    formState.selectedMotivo?.nombre?.contains("Compra", ignoreCase = true) == true
-
-            androidx.compose.animation.AnimatedVisibility(visible = isDestinoVisible) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = "Destino", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                    OutlinedTextField(
-                        value = formState.destino,
-                        onValueChange = onDestinoChanged,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Ej: Establecimiento vecino") },
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                }
-            }
-        }
+        // The old destino field is now removed from here.
     }
 }
 
