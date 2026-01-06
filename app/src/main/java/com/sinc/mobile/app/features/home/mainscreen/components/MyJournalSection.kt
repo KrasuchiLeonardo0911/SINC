@@ -39,12 +39,12 @@ fun MyJournalSection() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "My Journal",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                text = "Mis Campos",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = "See all",
-                style = MaterialTheme.typography.bodyMedium.copy(color = CozyYellow)
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -66,7 +66,7 @@ fun MyJournalCard() {
     Card(
         modifier = Modifier
             .width(300.dp)
-            .height(180.dp),
+            .height(220.dp),
         shape = RoundedCornerShape(20.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

@@ -47,74 +47,22 @@ fun CozyBottomNavBar(
         BottomNavItem("Campos", CozyBottomNavRoutes.CAMPOS, Icons.Outlined.Map)
     )
 
-    val leftItems = items.subList(0, 2)
-    val rightItems = items.subList(2, 4)
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(48.dp) // Altura reducida
             .background(Color.White)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceAround // Distribuir uniformemente
     ) {
-        // Left Section
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            leftItems.forEach { item ->
-                CozyBottomNavItem(
-                    item = item,
-                    isSelected = selectedRoute == item.route,
-                    onClick = { onItemSelected(item.route) }
-                )
-            }
+        items.forEach { item ->
+            CozyBottomNavItem(
+                item = item,
+                isSelected = selectedRoute == item.route,
+                onClick = { onItemSelected(item.route) }
+            )
         }
-
-        // Center Button
-        AddButtonItem(onClick = { onItemSelected(CozyBottomNavRoutes.ADD) })
-
-        // Right Section
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            rightItems.forEach { item ->
-                CozyBottomNavItem(
-                    item = item,
-                    isSelected = selectedRoute == item.route,
-                    onClick = { onItemSelected(item.route) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-
-fun RowScope.AddButtonItem(onClick: () -> Unit) {
-
-    Box(
-        modifier = Modifier
-            .size(50.dp)
-            .shadow(elevation = 8.dp, shape = CircleShape)
-            .clip(CircleShape)
-            .background(CozyYellow)
-            .clickable(onClick = onClick),
-
-        contentAlignment = Alignment.Center
-
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Add,
-            contentDescription = "Add",
-            tint = CozyTextMain,
-            modifier = Modifier.size(28.dp)
-        )
     }
 }
 

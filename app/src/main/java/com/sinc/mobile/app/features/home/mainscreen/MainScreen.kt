@@ -1,35 +1,37 @@
 package com.sinc.mobile.app.features.home.mainscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.sinc.mobile.app.features.home.mainscreen.components.Header
 import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
 import com.sinc.mobile.app.features.home.mainscreen.components.QuickJournalSection
 import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
-import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.theme.*
 import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
-
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.home.MainViewModel
 import com.sinc.mobile.app.navigation.Routes
-
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Arrangement
+
 
 @Composable
 fun MainScreen(
@@ -43,7 +45,7 @@ fun MainScreen(
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
-        containerColor = SoftGray,
+        containerColor = Color(0xFFF5F5F7), // Neutral gray background
         bottomBar = {
             CozyBottomNavBar(
                 selectedRoute = currentRoute,
@@ -101,15 +103,47 @@ fun MainContent(
     Column(
         modifier = Modifier
             .padding(paddingValues)
-            .padding(16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Header(onSettingsClick = onSettingsClick)
-        Spacer(modifier = Modifier.height(24.dp))
-        WeekdaySelector()
-        Spacer(modifier = Modifier.height(24.dp))
-        MyJournalSection()
-        Spacer(modifier = Modifier.height(24.dp))
-        QuickJournalSection()
-        Spacer(modifier = Modifier.height(24.dp))
+        // Combined Header and Weekday Selector Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+        ) {
+            // Header content
+            Column(modifier = Modifier.padding(16.dp)) {
+                Header(onSettingsClick = onSettingsClick)
+            }
+
+            // Divider
+            HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
+
+            // Weekday Selector content
+            Column(modifier = Modifier.padding(16.dp)) {
+                WeekdaySelector()
+            }
+        }
+
+        // MyJournal Section (Mis Campos)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp)
+        ) {
+            MyJournalSection()
+        }
+
+        // QuickJournal Section (Resumen)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp)
+        ) {
+            QuickJournalSection()
+        }
     }
 }

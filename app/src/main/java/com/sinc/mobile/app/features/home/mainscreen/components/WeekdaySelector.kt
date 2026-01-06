@@ -36,7 +36,7 @@ fun WeekdaySelector() {
                 Text(text = day, style = MaterialTheme.typography.bodySmall.copy(color = DarkerGray))
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround,
@@ -45,7 +45,7 @@ fun WeekdaySelector() {
             dates.forEach { date ->
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(if (date == selectedDate) CozyYellow else Color.Transparent),
                     contentAlignment = Alignment.Center

@@ -41,12 +41,8 @@ fun QuickJournalSection() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Quick Journal",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-            )
-            Text(
-                text = "See all",
-                style = MaterialTheme.typography.bodyMedium.copy(color = CozyYellow)
+                text = "Resumen",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -93,7 +89,9 @@ fun QuickJournalCard(
     tags: List<String>
 ) {
     Card(
-        modifier = Modifier.size(160.dp),
+        modifier = Modifier
+            .width(160.dp)
+            .height(120.dp),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
