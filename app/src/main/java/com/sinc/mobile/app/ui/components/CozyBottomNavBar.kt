@@ -85,7 +85,7 @@ fun RowScope.CozyBottomNavItem(
         contentAlignment = Alignment.Center // Center content vertically and horizontally
     ) {
         // Indicator Line
-        val indicatorColor = if (isSelected) CozyTextMain else Color.Transparent
+        val indicatorColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter) // Align to the very top of the Box

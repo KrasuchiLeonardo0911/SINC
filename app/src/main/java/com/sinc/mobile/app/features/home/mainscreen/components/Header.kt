@@ -21,6 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import com.sinc.mobile.R
+
 @Composable
 fun Header(onSettingsClick: () -> Unit) {
     Row(
@@ -28,22 +33,22 @@ fun Header(onSettingsClick: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Left: Text
         Text(
-            text = "Hi, Jose Maria",
-            style = MaterialTheme.typography.headlineMedium.copy(
+            text = "Hola, Productor", // Reverted text
+            style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface // Keep text color consistent with theme
             )
         )
-        Box(
+
+        // Right: Logo (replaces user icon)
+        Image(
+            painter = painterResource(id = R.drawable.logoovinos),
+            contentDescription = "Logo",
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape)
-                .background(Color.Gray)
-                .clickable { onSettingsClick() }, // Make the Box clickable
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = "User", tint = Color.White)
-        }
+                .clickable { onSettingsClick() } // Keep clickable functionality
+        )
     }
 }

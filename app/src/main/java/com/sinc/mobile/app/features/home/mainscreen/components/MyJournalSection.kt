@@ -40,10 +40,11 @@ fun MyJournalSection() {
         ) {
             Text(
                 text = "Mis Campos",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "See all",
+                text = "Ver todo",
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary)
             )
         }
@@ -67,7 +68,7 @@ fun MyJournalCard() {
         modifier = Modifier
             .width(300.dp)
             .height(220.dp),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -76,35 +77,6 @@ fun MyJournalCard() {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            // Scrim for text readability at the top
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent), // Darker at top, transparent at bottom
-                            endY = 300f // Controls how far down the gradient extends
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Top // Align text to the top
-            ) {
-                Text(
-                    text = "Crea y Geolocaliza tu Campo",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                )
-                Text(
-                    text = "Registra tus unidades productivas en el mapa.",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-                )
-            }
         }
     }
 }

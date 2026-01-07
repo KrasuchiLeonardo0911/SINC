@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,23 +24,28 @@ import com.sinc.mobile.app.ui.theme.*
 
 @Composable
 fun WeekdaySelector() {
-    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val days = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
     val dates = listOf("7", "8", "9", "10", "11", "12", "13")
     val selectedDate = "10"
 
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceEvenly // Use SpaceEvenly for better alignment
         ) {
             days.forEach { day ->
-                Text(text = day, style = MaterialTheme.typography.bodySmall.copy(color = DarkerGray))
+                Column(
+                    modifier = Modifier.width(36.dp), // Give each day a consistent width
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = day, style = MaterialTheme.typography.bodySmall.copy(color = DarkerGray))
+                }
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.SpaceEvenly, // Use SpaceEvenly for dates as well
             verticalAlignment = Alignment.CenterVertically
         ) {
             dates.forEach { date ->
@@ -47,14 +53,14 @@ fun WeekdaySelector() {
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(if (date == selectedDate) CozyYellow else Color.Transparent),
+                        .background(if (date == selectedDate) MaterialTheme.colorScheme.primary else Color.Transparent),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = date,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (date == selectedDate) Color.White else Color.Black
+                            color = if (date == selectedDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }

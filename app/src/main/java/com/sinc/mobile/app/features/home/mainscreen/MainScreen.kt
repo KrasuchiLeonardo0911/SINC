@@ -45,7 +45,7 @@ fun MainScreen(
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
-        containerColor = Color(0xFFF5F5F7), // Neutral gray background
+        containerColor = CozyMediumGray,
         bottomBar = {
             CozyBottomNavBar(
                 selectedRoute = currentRoute,

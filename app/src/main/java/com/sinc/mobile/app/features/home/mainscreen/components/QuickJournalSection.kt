@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,7 +43,8 @@ fun QuickJournalSection() {
         ) {
             Text(
                 text = "Resumen",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -51,7 +53,6 @@ fun QuickJournalSection() {
         ) {
             item {
                 QuickJournalCard(
-                    backgroundColor = PalePink,
                     icon = Icons.Default.Home,
                     title = "Pause & reflect",
                     question = "What are you grateful for today?",
@@ -60,7 +61,6 @@ fun QuickJournalSection() {
             }
             item {
                 QuickJournalCard(
-                    backgroundColor = SoftLilac,
                     icon = Icons.Default.Person,
                     title = "Set Intentions",
                     question = "How do you want to feel?",
@@ -69,7 +69,6 @@ fun QuickJournalSection() {
             }
             item {
                 QuickJournalCard(
-                    backgroundColor = MintGreen,
                     icon = Icons.Default.Notifications,
                     title = "Embrace Chan...",
                     question = "Let go and ...",
@@ -82,7 +81,6 @@ fun QuickJournalSection() {
 
 @Composable
 fun QuickJournalCard(
-    backgroundColor: Color,
     icon: ImageVector,
     title: String,
     question: String,
@@ -91,24 +89,40 @@ fun QuickJournalCard(
     Card(
         modifier = Modifier
             .width(160.dp)
-            .height(120.dp),
-        shape = RoundedCornerShape(20.dp)
+            .height(120.dp)
+            .border(1.dp, DarkerGray, RoundedCornerShape(12.dp)), // DarkerGray for outline
+        shape = RoundedCornerShape(12.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = Color.White // White background
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(backgroundColor)
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface // Adjust icon color
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface // Adjust text color
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = question, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = question,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface // Adjust text color
+                )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 tags.forEach { tag ->
