@@ -2,24 +2,36 @@ package com.sinc.mobile.app.features.home.mainscreen.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,36 +39,62 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sinc.mobile.R
-import com.sinc.mobile.app.ui.theme.*
+
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 
 @Composable
 fun MyJournalSection() {
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Mis Campos",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Ver todo",
-                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary)
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+        // The illustration card placeholder, centered
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
             item {
                 MyJournalCard()
             }
-            item {
-                EveningCard()
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Actions row below the card
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround // Space them out evenly
+        ) {
+            // Ver Stock
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Visibility,
+                    contentDescription = "Ver Stock",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(text = "Ver Stock", style = MaterialTheme.typography.bodySmall)
+            }
+            // Agregar Stock
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Agregar Stock",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(text = "Agregar Stock", style = MaterialTheme.typography.bodySmall)
+            }
+            // Ver Historial
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = "Ver Historial",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(text = "Ver Historial", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -64,40 +102,49 @@ fun MyJournalSection() {
 
 @Composable
 fun MyJournalCard() {
+    // This card now only holds the placeholder and the button
     Card(
         modifier = Modifier
-            .width(300.dp)
-            .height(220.dp),
+            .width(320.dp)
+            .height(250.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // New Illustration
             Image(
-                painter = painterResource(id = R.drawable.tarjeta_crear_campos),
-                contentDescription = "Card Background",
+                painter = painterResource(id = R.drawable.campo_acuarela),
+                contentDescription = "Main Screen Illustration",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-        }
-    }
-}
 
-@Composable
-fun EveningCard() {
-    Card(
-        modifier = Modifier
-            .width(120.dp)
-            .height(180.dp),
-        shape = RoundedCornerShape(20.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize().background(Color(0xFFF0EAE2)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Evening",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.rotate(-90f)
+            // Scrim for text readability over the image (if needed, otherwise remove)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Transparent),
+                            endY = 400f
+                        )
+                    )
             )
+
+            // Button on the bottom right
+            Button(
+                onClick = { /* TODO */ },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), // Reduce internal padding
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White, // White background
+                    contentColor = MaterialTheme.colorScheme.primary // Primary color text
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(text = "Mis Campos")
+            }
         }
     }
 }
