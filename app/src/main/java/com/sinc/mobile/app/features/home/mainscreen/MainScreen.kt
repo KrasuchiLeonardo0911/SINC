@@ -92,11 +92,7 @@ fun MainScreen(
                 CozyBottomNavBar(
                     selectedRoute = currentRoute,
                     onItemSelected = { newRoute ->
-                        if (newRoute != CozyBottomNavRoutes.ADD) {
-                            currentRoute = newRoute
-                        } else {
-                            navController.navigate(com.sinc.mobile.app.navigation.Routes.MOVIMIENTO)
-                        }
+                        currentRoute = newRoute
                     }
                 )
             }
@@ -107,7 +103,11 @@ fun MainScreen(
                         paddingValues = paddingValues,
                         onSettingsClick = { navController.navigate(Routes.SETTINGS) },
                         onDateClick = { showLogisticsPanel = true },
-                        today = today
+                        today = today,
+                        onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
+                        onAddClick = { navController.navigate(Routes.MOVIMIENTO) },
+                        onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
+                        onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
                     )
                     CozyBottomNavRoutes.STOCK -> StockScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
@@ -124,6 +124,37 @@ fun MainScreen(
                         },
                         onBack = { currentRoute = CozyBottomNavRoutes.HOME }
                     )
+                    CozyBottomNavRoutes.PROFILE -> {
+                        // Use LaunchedEffect to navigate to settings and then pop back to home
+                        // This avoids showing a blank screen and keeps the bottom bar state consistent
+                        LaunchedEffect(Unit) {
+                            navController.navigate(Routes.SETTINGS)
+                            currentRoute = CozyBottomNavRoutes.HOME // Go back to home state after navigating
+                        }
+                        // Display the home content while navigating
+                        MainContent(
+                            paddingValues = paddingValues,
+                            onSettingsClick = { navController.navigate(Routes.SETTINGS) },
+                            onDateClick = { showLogisticsPanel = true },
+                            today = today,
+                            onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
+                            onAddClick = { navController.navigate(Routes.MOVIMIENTO) },
+                            onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
+                            onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
+                        )
+                    }
+                    CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Pantalla de '$route' en construcción")
+                        }
+                    }
                     else -> {
                         Column(
                             modifier = Modifier
@@ -144,7 +175,11 @@ fun MainContent(
     paddingValues: PaddingValues,
     onSettingsClick: () -> Unit,
     onDateClick: () -> Unit,
-    today: LocalDate
+    today: LocalDate,
+    onStockClick: () -> Unit,
+    onAddClick: () -> Unit,
+    onHistoryClick: () -> Unit,
+    onCamposClick: () -> Unit
 ) {
     // Main Screen Content is now just the UI
     Column(
@@ -174,7 +209,14 @@ fun MainContent(
                 .fillMaxWidth()
                 .background(Color.White)
                 .padding(16.dp)
-        ) { MyJournalSection() }
+        ) {
+            MyJournalSection(
+                onStockClick = onStockClick,
+                onAddClick = onAddClick,
+                onHistoryClick = onHistoryClick,
+                onCamposClick = onCamposClick
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()

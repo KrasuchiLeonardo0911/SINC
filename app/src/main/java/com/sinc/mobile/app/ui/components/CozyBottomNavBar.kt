@@ -6,13 +6,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,10 +42,10 @@ fun CozyBottomNavBar(
     onItemSelected: (String) -> Unit
 ) {
     val items = listOf(
-        BottomNavItem("Home", CozyBottomNavRoutes.HOME, Icons.Filled.Home),
-        BottomNavItem("Stock", CozyBottomNavRoutes.STOCK, Icons.Filled.BarChart),
-        BottomNavItem("Historial", CozyBottomNavRoutes.HISTORIAL, Icons.AutoMirrored.Filled.List),
-        BottomNavItem("Campos", CozyBottomNavRoutes.CAMPOS, Icons.Outlined.Map)
+        BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
+        BottomNavItem("Ayuda", CozyBottomNavRoutes.HELP, Icons.Outlined.HelpOutline),
+        BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person),
+        BottomNavItem("Alertas", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
     Row(
@@ -102,12 +103,12 @@ fun RowScope.CozyBottomNavItem(
                 .padding(top = 0.dp) // Reduce space between top of bar and icons
         ) {
             val icon = if (isSelected) {
-                // Relleno para el estado activo (ej. Icons.Filled.Home)
+                // Relleno para el estado activo
                 when (item.route) {
                     CozyBottomNavRoutes.HOME -> Icons.Filled.Home
-                    CozyBottomNavRoutes.STOCK -> Icons.Filled.BarChart
-                    CozyBottomNavRoutes.HISTORIAL -> Icons.AutoMirrored.Filled.List
-                    CozyBottomNavRoutes.CAMPOS -> Icons.Filled.Map
+                    CozyBottomNavRoutes.HELP -> Icons.Filled.Help
+                    CozyBottomNavRoutes.PROFILE -> Icons.Filled.Person
+                    CozyBottomNavRoutes.NOTIFICATIONS -> Icons.Filled.Notifications
                     else -> item.icon // Fallback
                 }
             } else {

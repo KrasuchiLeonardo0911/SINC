@@ -46,7 +46,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 
 @Composable
-fun MyJournalSection() {
+fun MyJournalSection(
+    onStockClick: () -> Unit,
+    onAddClick: () -> Unit,
+    onHistoryClick: () -> Unit,
+    onCamposClick: () -> Unit,
+) {
     Column {
         // The illustration card placeholder, centered
         LazyRow(
@@ -54,7 +59,7 @@ fun MyJournalSection() {
             horizontalArrangement = Arrangement.Center
         ) {
             item {
-                MyJournalCard()
+                MyJournalCard(onCamposClick = onCamposClick)
             }
         }
 
@@ -67,7 +72,13 @@ fun MyJournalSection() {
             horizontalArrangement = Arrangement.SpaceAround // Space them out evenly
         ) {
             // Ver Stock
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = onStockClick)
+                    .padding(8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Visibility,
                     contentDescription = "Ver Stock",
@@ -77,7 +88,13 @@ fun MyJournalSection() {
                 Text(text = "Ver Stock", style = MaterialTheme.typography.bodySmall)
             }
             // Agregar Stock
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = onAddClick)
+                    .padding(8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Agregar Stock",
@@ -87,7 +104,13 @@ fun MyJournalSection() {
                 Text(text = "Agregar Stock", style = MaterialTheme.typography.bodySmall)
             }
             // Ver Historial
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = onHistoryClick)
+                    .padding(8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.History,
                     contentDescription = "Ver Historial",
@@ -101,7 +124,7 @@ fun MyJournalSection() {
 }
 
 @Composable
-fun MyJournalCard() {
+fun MyJournalCard(onCamposClick: () -> Unit) {
     // This card now only holds the placeholder and the button
     Card(
         modifier = Modifier
@@ -132,7 +155,7 @@ fun MyJournalCard() {
 
             // Button on the bottom right
             Button(
-                onClick = { /* TODO */ },
+                onClick = onCamposClick,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp),
