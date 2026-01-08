@@ -82,16 +82,33 @@ fun SlidingPanel(
             )
         }
 
-        // Draggable container for the sliding panel and handle
+        // Container for the sliding panel
         Box(
             Modifier
                 .fillMaxHeight()
                 .width(panelWidth)
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Color.White,
+                shadowElevation = 8.dp
+            ) {
+                panelContent()
+            }
+        }
+
+        val extraTouchArea = 24.dp
+        val extraTouchAreaPx = with(LocalDensity.current) { (extraTouchArea / 2).toPx() }
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(handleWidth + extraTouchArea) // Handle width + extra touch area
+                .offset { IntOffset(offsetX.value.roundToInt() - (handleWidthPx + extraTouchAreaPx).roundToInt(), 0) }
                 .draggable(
                     orientation = Orientation.Horizontal,
                     state = draggableState,
-                    enabled = offsetX.value > 0f, // Only allow dragging if not fully open
+                    enabled = showPanel && offsetX.value > 0f, // Only allow dragging if panel is shown and not fully open
                     onDragStopped = {
                         coroutineScope.launch {
                             // If dragged more than 40% of the handle's width
@@ -112,19 +129,9 @@ fun SlidingPanel(
                     }
                 )
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color.White,
-                shadowElevation = 8.dp
-            ) {
-                panelContent()
-            }
-
             // Only show the handle if the panel is not fully open
             if (offsetX.value > 0f && showPanel) {
-                Box(
-                    modifier = Modifier.offset { IntOffset(-handleWidthPx.roundToInt(), 0) }
-                ) {
+                Box(modifier = Modifier.offset(x = extraTouchArea / 2)) {
                     handleContent()
                 }
             }

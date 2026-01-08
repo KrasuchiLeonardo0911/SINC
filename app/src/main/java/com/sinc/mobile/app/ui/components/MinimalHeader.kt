@@ -32,7 +32,7 @@ import com.sinc.mobile.ui.theme.SincMobileTheme
 
 @Composable
 fun MinimalHeader(
-    title: String,
+    title: String? = null,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {}
@@ -46,19 +46,12 @@ fun MinimalHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Icono de Retorno
-        // Usamos 'Icon' directamente con un modifier de clickable sin ripple
-        // o con ripple sutil para que no desplace el layout.
         Icon(
-            // Usamos la versión ROUNDED para que las puntas del chevron sean suaves como en la imagen
             imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
             contentDescription = "Atrás",
             tint = Color(0xFF111111), // Negro casi puro
             modifier = Modifier
                 .size(36.dp) // Aumentamos el tamaño visual del icono
-                // Ajuste negativo opcional: Los iconos suelen tener padding interno transparente.
-                // A veces visualmente se ven desplazados.
-                // Si sientes que está muy a la derecha, descomenta la siguiente línea:
-                // .offset(x = (-8).dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null, // Quitamos el efecto de ripple gris circular que ensucia el diseño minimalista
@@ -66,16 +59,18 @@ fun MinimalHeader(
                 )
         )
 
-        Spacer(modifier = Modifier.width(8.dp)) // Redujimos el espacio porque el icono ahora es más grande
+        if (!title.isNullOrBlank()) {
+            Spacer(modifier = Modifier.width(8.dp)) // Redujimos el espacio porque el icono ahora es más grande
 
-        // Título del Encabezado
-        Text(
-            text = title,
-            color = Color(0xFF1F2937), // Negro suave
-            fontSize = 18.sp,          // Tamaño ajustado al diseño original
-            fontWeight = FontWeight.Medium, // CAMBIO CLAVE: De SemiBold a Medium
-            letterSpacing = 0.sp       // Quitamos el tracking negativo
-        )
+            // Título del Encabezado
+            Text(
+                text = title,
+                color = Color(0xFF1F2937), // Negro suave
+                fontSize = 18.sp,          // Tamaño ajustado al diseño original
+                fontWeight = FontWeight.Medium, // CAMBIO CLAVE: De SemiBold a Medium
+                letterSpacing = 0.sp       // Quitamos el tracking negativo
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 

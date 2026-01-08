@@ -30,13 +30,13 @@ import java.util.Locale
 
 @Composable
 fun LogisticsScreen(
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    today: LocalDate
 ) {
-    // Mock data for visual representation
-    val currentMonth = YearMonth.of(2026, 1)
+    // Current month and year for display, based on `today`
+    val currentMonth = YearMonth.of(today.year, today.month)
     val firstDayOfMonth = currentMonth.atDay(1)
     val daysInMonth = currentMonth.lengthOfMonth()
-    var selectedDate by remember { mutableStateOf(LocalDate.of(2026, 1, 15)) }
 
     // Calculate offset for the first day of the week (Sunday)
     val firstDayOfWeek = DayOfWeek.SUNDAY
@@ -49,7 +49,6 @@ fun LogisticsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MinimalHeader(
-                title = "Ciclo de logistica",
                 onBackPress = onBackPress,
                 modifier = Modifier.statusBarsPadding() // Ensure it respects the status bar
             )
@@ -73,7 +72,7 @@ fun LogisticsScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            MonthYearSelectors()
+            MonthYearSelectors(currentMonth = currentMonth)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -82,27 +81,24 @@ fun LogisticsScreen(
             CalendarGrid(
                 startOffset = startOffset,
                 days = calendarDays,
-                selectedDate = selectedDate,
-                onDateSelected = { day ->
-                    selectedDate = currentMonth.atDay(day)
-                }
+                today = today
             )
         }
     }
 }
 
 @Composable
-private fun MonthYearSelectors() {
+private fun MonthYearSelectors(currentMonth: YearMonth) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         SelectorChip(
-            text = "Enero",
+            text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()),
             modifier = Modifier.weight(1f)
         )
         SelectorChip(
-            text = "2026",
+            text = currentMonth.year.toString(),
             modifier = Modifier.weight(1f)
         )
     }
@@ -154,8 +150,7 @@ private fun CalendarHeader() {
 private fun CalendarGrid(
     startOffset: Int,
     days: List<Int>,
-    selectedDate: LocalDate,
-    onDateSelected: (Int) -> Unit
+    today: LocalDate
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
@@ -168,33 +163,31 @@ private fun CalendarGrid(
         }
 
         items(days) { day ->
-            val isSelected = selectedDate.dayOfMonth == day
+            val isToday = (day == today.dayOfMonth && today.month == YearMonth.of(today.year, today.month).month && today.year == YearMonth.of(today.year, today.month).year)
             DayCell(
                 day = day,
-                isSelected = isSelected,
-                onClick = { onDateSelected(day) }
+                isToday = isToday
             )
         }
     }
 }
 
 @Composable
-private fun DayCell(day: Int, isSelected: Boolean, onClick: () -> Unit) {
-    val cellColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+private fun DayCell(day: Int, isToday: Boolean) {
+    val cellColor = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent
+    val textColor = if (isToday) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
 
     Box(
         modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(cellColor)
-            .clickable(onClick = onClick),
+            .background(cellColor),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = day.toString(),
             color = textColor,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
             fontSize = 14.sp
         )
     }

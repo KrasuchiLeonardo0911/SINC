@@ -55,6 +55,8 @@ import com.sinc.mobile.app.ui.components.SlidingPanel
 import kotlinx.coroutines.delay
 
 
+import java.time.LocalDate
+
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -62,54 +64,74 @@ fun MainScreen(
     viewModel: MainViewModel = hiltViewModel() // Inject MainViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState() // Observe uiState
-
     var currentRoute by rememberSaveable { mutableStateOf(startRoute) }
+    var showLogisticsPanel by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = Modifier.navigationBarsPadding(),
-        containerColor = CozyMediumGray,
-        bottomBar = {
-            CozyBottomNavBar(
-                selectedRoute = currentRoute,
-                onItemSelected = { newRoute ->
-                    if (newRoute != CozyBottomNavRoutes.ADD) {
-                        currentRoute = newRoute
-                    } else {
-                        navController.navigate(com.sinc.mobile.app.navigation.Routes.MOVIMIENTO)
-                    }
-                }
+    val today = remember { LocalDate.now() } // Get current date once
+
+    SlidingPanel(
+        showPanel = showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME),
+        onDismiss = { showLogisticsPanel = false },
+        onFullyOpen = { /* No action needed */ },
+        handleContent = {
+            LogisticsDraggableHandle(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 73.dp) // Adjusted to align with WeekdaySelector
             )
+        },
+        panelContent = {
+            LogisticsScreen(onBackPress = { showLogisticsPanel = false }, today = today)
         }
-    ) { paddingValues ->
-        Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
-            when (route) {
-                CozyBottomNavRoutes.HOME -> MainContent(
-                    paddingValues = paddingValues,
-                    onSettingsClick = { navController.navigate(Routes.SETTINGS) }
+    ) {
+        // This is the main content that will be behind the panel
+        Scaffold(
+            modifier = Modifier.navigationBarsPadding(),
+            containerColor = CozyMediumGray,
+            bottomBar = {
+                CozyBottomNavBar(
+                    selectedRoute = currentRoute,
+                    onItemSelected = { newRoute ->
+                        if (newRoute != CozyBottomNavRoutes.ADD) {
+                            currentRoute = newRoute
+                        } else {
+                            navController.navigate(com.sinc.mobile.app.navigation.Routes.MOVIMIENTO)
+                        }
+                    }
                 )
-                CozyBottomNavRoutes.STOCK -> StockScreen(
-                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                    onBack = { currentRoute = CozyBottomNavRoutes.HOME } // Pass onBack lambda
-                )
-                CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
-                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                    onBack = { currentRoute = CozyBottomNavRoutes.HOME }
-                )
-                CozyBottomNavRoutes.CAMPOS -> CamposScreen(
-                    mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                    onNavigateToCreateUnidadProductiva = {
-                        navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
-                    },
-                    onBack = { currentRoute = CozyBottomNavRoutes.HOME }
-                )
-                // Add placeholders for other routes
-                else -> {
-                    Column(
-                        modifier = Modifier
-                            .padding(paddingValues)
-                            .padding(16.dp)
-                    ) {
-                        Text(text = "Screen for $route")
+            }
+        ) { paddingValues ->
+            Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
+                when (route) {
+                    CozyBottomNavRoutes.HOME -> MainContent(
+                        paddingValues = paddingValues,
+                        onSettingsClick = { navController.navigate(Routes.SETTINGS) },
+                        onDateClick = { showLogisticsPanel = true },
+                        today = today
+                    )
+                    CozyBottomNavRoutes.STOCK -> StockScreen(
+                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME } // Pass onBack lambda
+                    )
+                    CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
+                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                    )
+                    CozyBottomNavRoutes.CAMPOS -> CamposScreen(
+                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                        onNavigateToCreateUnidadProductiva = {
+                            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
+                        },
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                    )
+                    else -> {
+                        Column(
+                            modifier = Modifier
+                                .padding(paddingValues)
+                                .padding(16.dp)
+                        ) {
+                            Text(text = "Screen for $route")
+                        }
                     }
                 }
             }
@@ -120,65 +142,44 @@ fun MainScreen(
 @Composable
 fun MainContent(
     paddingValues: PaddingValues,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onDateClick: () -> Unit,
+    today: LocalDate
 ) {
-    var showLogisticsPanel by rememberSaveable { mutableStateOf(false) }
-
-    SlidingPanel(
-        showPanel = showLogisticsPanel,
-        onDismiss = { showLogisticsPanel = false },
-        onFullyOpen = {
-            // No action needed on fully open for now, as content is pre-rendered.
-        },
-        handleContent = {
-            LogisticsDraggableHandle(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = 90.dp) // Adjusted to align with WeekdaySelector
-            )
-        },
-        panelContent = {
-            LogisticsScreen(onBackPress = { showLogisticsPanel = false })
-        }
+    // Main Screen Content is now just the UI
+    Column(
+        modifier = Modifier
+            .padding(paddingValues)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Main Screen Content
         Column(
             modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .background(Color.White)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Header(onSettingsClick = onSettingsClick)
-                }
-                HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
-                Column(modifier = Modifier.padding(16.dp)) {
-                    WeekdaySelector(
-                        onDateClick = {
-                            if (!showLogisticsPanel) {
-                                showLogisticsPanel = true
-                            }
-                        }
-                    )
-                }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Header(onSettingsClick = onSettingsClick)
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(16.dp)
-            ) { MyJournalSection() }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(16.dp)
-            ) { QuickJournalSection() }
+            HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
+            Column(modifier = Modifier.padding(16.dp)) {
+                WeekdaySelector(
+                    onDateClick = onDateClick,
+                    today = today
+                )
+            }
         }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp)
+        ) { MyJournalSection() }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp)
+        ) { QuickJournalSection() }
     }
 }

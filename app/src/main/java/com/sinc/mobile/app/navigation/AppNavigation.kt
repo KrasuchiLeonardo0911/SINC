@@ -189,42 +189,5 @@ fun AppNavigation(
                 navController = navController
             )
         }
-
-
-        composable(
-            route = Routes.MOVIMIENTO_FORM,
-            arguments = listOf(navArgument("unidadId") { type = NavType.StringType }),
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeOut(animationSpec = tween(300))
-            }
-        ) {
-            MovimientoStepperScreen(
-                onBackPress = { navController.popBackStack() },
-                navController = navController
-            )
-        }
-
-        composable(
-            route = Routes.LOGISTICS,
-            enterTransition = {
-                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
-            }
-        ) {
-            LogisticsScreen(
-                onBackPress = { navController.popBackStack() }
-            )
-        }
     }
 }
