@@ -11,6 +11,7 @@ import com.sinc.mobile.domain.use_case.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -40,7 +41,7 @@ data class MovimientoStepperState(
 @HiltViewModel
 class MovimientoStepperViewModel @Inject constructor(
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
-    private val getCatalogosUseCase: GetCatalogosUseCase,
+    private val getMovimientoCatalogosUseCase: GetMovimientoCatalogosUseCase,
     private val saveMovimientoLocalUseCase: SaveMovimientoLocalUseCase,
     getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
     private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
@@ -80,21 +81,30 @@ class MovimientoStepperViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoading = true)
 
         viewModelScope.launch {
-            combine(
+            // Explicitly define types to help Kapt
+            val flow: Flow<Pair<List<UnidadProductiva>, Catalogos>> = combine(
                 getUnidadesProductivasUseCase(),
-                getCatalogosUseCase()
-            ) { unidades, catalogosData ->
-                val selectedUnidad = unidades.find { it.id.toString() == unidadId }
-                catalogos = catalogosData
+                getMovimientoCatalogosUseCase()
+            ) { unidades, catalogos ->
+                Pair(unidades, catalogos)
+            }
+            val initialData: Pair<List<UnidadProductiva>, Catalogos> = flow.first()
 
-                _uiState.value = _uiState.value.copy(
-                    selectedUnidad = selectedUnidad,
-                    formManager = MovimientoFormManager(catalogosData),
-                    catalogos = catalogosData,
-                    unidades = unidades, // Populate units
-                    isLoading = false
-                )
-            }.launchIn(viewModelScope)
+            // Artificial delay to ensure spinner is visible
+            delay(400)
+
+            // Update the state all at once
+            val (unidades, catalogosData) = initialData
+            val selectedUnidad = unidades.find { it.id.toString() == unidadId }
+            catalogos = catalogosData
+
+            _uiState.value = _uiState.value.copy(
+                selectedUnidad = selectedUnidad,
+                formManager = MovimientoFormManager(catalogosData),
+                catalogos = catalogosData,
+                unidades = unidades, // Populate units
+                isLoading = false
+            )
         }
     }
 

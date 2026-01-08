@@ -7,5 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface CatalogosRepository {
     fun getCatalogos(): Flow<Catalogos>
+    fun getMovimientoCatalogos(): Flow<Catalogos>
     suspend fun syncCatalogos(): Result<Unit, Error>
 }

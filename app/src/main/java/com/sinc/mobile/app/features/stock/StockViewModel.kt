@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -88,18 +89,47 @@ class StockViewModel @Inject constructor(
     )
 
     init {
-        collectUnidadesProductivas()
-        processAndCollectStock()
-        refresh()
+        // This flow collection will update the UI with data from the DB whenever it changes.
+        viewModelScope.launch {
+            combine(
+                getUnidadesProductivasUseCase(),
+                getStockUseCase()
+            ) { unidades, stock ->
+                val processed = stock?.let { processStock(it) }
+                _uiState.update {
+                    it.copy(
+                        unidadesProductivas = unidades,
+                        stock = stock,
+                        processedStock = processed,
+                    )
+                }
+            }.launchIn(this)
+        }
+
+        // Perform the initial sync, managing the initial loading spinner
+        initialSync()
+    }
+
+    private fun initialSync() {
+        viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            syncStockUseCase()
+            syncUnidadesProductivasUseCase()
+            val duration = System.currentTimeMillis() - startTime
+            if (duration < 500) { // Ensure spinner is visible for at least 500ms
+                delay(500 - duration)
+            }
+            _uiState.update { it.copy(isInitialLoad = false) }
+        }
     }
 
     fun refresh() {
-
         viewModelScope.launch {
-
             if (_uiState.value.isLoading) return@launch
             _uiState.update { it.copy(isLoading = true, error = null) }
             val startTime = System.currentTimeMillis()
+
+            // Perform network sync
             val stockSyncResult = syncStockUseCase()
             syncUnidadesProductivasUseCase()
 
@@ -108,29 +138,12 @@ class StockViewModel @Inject constructor(
             }
 
             val duration = System.currentTimeMillis() - startTime
-
             if (duration < 1000) {
                 delay(1000 - duration)
             }
-            _uiState.update { it.copy(isLoading = false, isInitialLoad = false) }
-        }
-    }
-    private fun collectUnidadesProductivas() {
-        getUnidadesProductivasUseCase().onEach { unidades ->
-            _uiState.update { it.copy(unidadesProductivas = unidades) }
-        }.launchIn(viewModelScope)
-    }
 
-    private fun processAndCollectStock() {
-        viewModelScope.launch {
-            getStockUseCase().collect { stock ->
-                if (stock == null) {
-                    _uiState.update { it.copy(stock = null, processedStock = null) }
-                } else {
-                    val processed = processStock(stock)
-                    _uiState.update { it.copy(stock = stock, processedStock = processed) }
-                }
-            }
+            // End loading state
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

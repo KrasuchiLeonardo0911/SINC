@@ -118,41 +118,50 @@ class CatalogosRepositoryImpl @Inject constructor(
     private fun TipoPastoDto.toEntity(): TipoPastoEntity = TipoPastoEntity(id, nombre)
 
     override fun getCatalogos(): Flow<Catalogos> {
-        val combinedFlows1 = combine(
+        return combine(
             especieDao.getAllEspecies(),
             razaDao.getAllRazas(),
             categoriaAnimalDao.getAllCategorias(),
             motivoMovimientoDao.getAllMotivosMovimiento(),
-            municipioDao.getAllMunicipios()
-        ) { especies, razas, categorias, motivos, municipios ->
-            Triple(especies, razas, Triple(categorias, motivos, municipios))
-        }
-
-        val combinedFlows2 = combine(
+            municipioDao.getAllMunicipios(),
             condicionTenenciaDao.getAllCondicionesTenencia(),
             fuenteAguaDao.getAllFuentesAgua(),
             tipoSueloDao.getAllTiposSuelo(),
             tipoPastoDao.getAllTiposPasto()
-        ) { condiciones, fuentes, suelos, pastos ->
-            Pair(condiciones, Triple(fuentes, suelos, pastos))
+        ) { results ->
+            @Suppress("UNCHECKED_CAST")
+            Catalogos(
+                especies = (results[0] as List<EspecieEntity>).map { it.toDomain() },
+                razas = (results[1] as List<RazaEntity>).map { it.toDomain() },
+                categorias = (results[2] as List<CategoriaAnimalEntity>).map { it.toDomain() },
+                motivosMovimiento = (results[3] as List<MotivoMovimientoEntity>).map { it.toDomain() },
+                municipios = (results[4] as List<MunicipioEntity>).map { it.toDomain() },
+                condicionesTenencia = (results[5] as List<CondicionTenenciaEntity>).map { it.toDomain() },
+                fuentesAgua = (results[6] as List<FuenteAguaEntity>).map { it.toDomain() },
+                tiposSuelo = (results[7] as List<TipoSueloEntity>).map { it.toDomain() },
+                tiposPasto = (results[8] as List<TipoPastoEntity>).map { it.toDomain() }
+            )
         }
+    }
 
-        return combine(combinedFlows1, combinedFlows2) { triple1, pair1 ->
-            val (especies, razas, triple2) = triple1
-            val (categorias, motivos, municipios) = triple2
-            val (condiciones, triple3) = pair1
-            val (fuentes, suelos, pastos) = triple3
-
+    override fun getMovimientoCatalogos(): Flow<Catalogos> {
+        return combine(
+            especieDao.getAllEspecies(),
+            razaDao.getAllRazas(),
+            categoriaAnimalDao.getAllCategorias(),
+            motivoMovimientoDao.getAllMotivosMovimiento()
+        ) { especies, razas, categorias, motivos ->
             Catalogos(
                 especies = especies.map { it.toDomain() },
                 razas = razas.map { it.toDomain() },
                 categorias = categorias.map { it.toDomain() },
                 motivosMovimiento = motivos.map { it.toDomain() },
-                municipios = municipios.map { it.toDomain() },
-                condicionesTenencia = condiciones.map { it.toDomain() },
-                fuentesAgua = fuentes.map { it.toDomain() },
-                tiposSuelo = suelos.map { it.toDomain() },
-                tiposPasto = pastos.map { it.toDomain() }
+                // Return empty lists for unused catalogs
+                municipios = emptyList(),
+                condicionesTenencia = emptyList(),
+                fuentesAgua = emptyList(),
+                tiposSuelo = emptyList(),
+                tiposPasto = emptyList()
             )
         }
     }
