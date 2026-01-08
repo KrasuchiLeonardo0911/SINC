@@ -1,0 +1,12 @@
+genial, bueno la pantalla tiene un selector de dias, actualmente es estatico pero la idea es darle una funcionalidad
+  relacionado a la logistica en un futuro, para ello pense en primero hacer que el componente al presionar en cualquier
+  fecha sirva para navegar a otra pantalla donde estara la info de logistica, pero la navegaicion pense que debia ser
+  asi: al presionar en una de las fechas(esto es para evitar accidentes, si pusieramos que pase algo al preionar en
+  cualquier parte del selector muy a menudo ocacionaria cosas no deseadas) se asome un pequeño tirable o agarrador desde
+  la derecha, este agarrador no debe tener la altura de la pantalla completa sinoi solo un poco mas greande que el
+  componente del selector, dando la impresion de que es un saliente del que hay que tirar, ademas debe tener info o
+  algun icono que informe sobre el gesto que hay que hacer para abrir la pantlla, de esta forma el usuario aprenderia
+  solo interactuando con la app, una vez que se abre la pantalla deberia hacer la animacion de desplegarse desde el
+  costado y luego ir a la pantalla nueva, que no es un panel sino uan patalla diferente con su propio estado y logica
+  etc, la pantalla por ahora se puede quedar en blanco, una vez refinemos el comportamiento de apertura y despliege
+  hacemso el cotenido de la patalla

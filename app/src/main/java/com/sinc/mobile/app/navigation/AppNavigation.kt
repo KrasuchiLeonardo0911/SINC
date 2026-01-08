@@ -19,6 +19,7 @@ import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosSc
 import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoStepperScreen
+import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
@@ -36,6 +37,7 @@ object Routes {
     const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
+    const val LOGISTICS = "logistics"
 }
 
 @Composable
@@ -185,6 +187,43 @@ fun AppNavigation(
             MovimientoStepperScreen(
                 onBackPress = { navController.popBackStack() },
                 navController = navController
+            )
+        }
+
+
+        composable(
+            route = Routes.MOVIMIENTO_FORM,
+            arguments = listOf(navArgument("unidadId") { type = NavType.StringType }),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { 1000 },
+                    animationSpec = tween(300)
+                ) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            MovimientoStepperScreen(
+                onBackPress = { navController.popBackStack() },
+                navController = navController
+            )
+        }
+
+        composable(
+            route = Routes.LOGISTICS,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            LogisticsScreen(
+                onBackPress = { navController.popBackStack() }
             )
         }
     }

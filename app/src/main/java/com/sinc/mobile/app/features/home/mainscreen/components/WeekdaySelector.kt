@@ -1,6 +1,7 @@
 package com.sinc.mobile.app.features.home.mainscreen.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,10 +24,12 @@ import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.theme.*
 
 @Composable
-fun WeekdaySelector() {
+fun WeekdaySelector(
+    onDateClick: () -> Unit
+) {
     val days = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
     val dates = listOf("7", "8", "9", "10", "11", "12", "13")
-    val selectedDate = "10"
+    val selectedDate = "10" // Today's date is always selected
 
     Column {
         Row(
@@ -53,7 +56,8 @@ fun WeekdaySelector() {
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(if (date == selectedDate) MaterialTheme.colorScheme.primary else Color.Transparent),
+                        .background(if (date == selectedDate) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .clickable { onDateClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
