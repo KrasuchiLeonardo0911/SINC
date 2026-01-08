@@ -1012,3 +1012,42 @@ Esta sesión se centró en la resolución de múltiples problemas en el formular
 -   **Eliminación de Elementos Sincronizados:** Tras una sincronización exitosa, los movimientos pendientes se eliminan ahora de la base de datos local, lo que asegura que la lista de revisión solo muestre los elementos que aún no han sido enviados al servidor.
 
 El módulo de movimientos ahora es considerablemente más robusto, usable y cumple con todas las funcionalidades y requisitos de experiencia de usuario planteados.
+
+## Avances de la Sesión Actual
+
+### Nueva Funcionalidad: Panel Deslizable de Logística
+
+-   **Objetivo:** Implementar una nueva interacción para acceder a la información de logística desde la pantalla principal (`MainScreen`) mediante un panel deslizable. Esta interacción busca ser más intuitiva y física, reemplazando una navegación tradicional.
+
+-   **Mecanismo:** Un "tirador" visual aparece desde el lateral derecho al tocar una fecha en el `WeekdaySelector`. Al arrastrar este tirador, un panel blanco se despliega cubriendo la pantalla. Una vez abierto, el contenido de logística se carga con un indicador visual.
+
+-   **Pasos de Implementación y Refinamientos Clave:**
+    1.  **Creación de Componentes Base:**
+        *   Se creó `LogisticsScreen.kt` (pantalla en blanco inicial para el contenido de logística).
+        *   Se creó `LogisticsDraggableHandle.kt` (el componente visual del tirador).
+        *   Se creó `SlidingScreen.kt` (una simple superficie blanca que actúa como el panel deslizable, luego reemplazada por el contenido de `LogisticsScreen`).
+    2.  **Integración de Navegación (Inicial):**
+        *   Se añadió la ruta `LOGISTICS` y el `composable` correspondiente en `AppNavigation.kt`. (Posteriormente se refactorizó para incrustar el contenido directamente sin `NavController`).
+    3.  **Habilitar Interacción del Selector de Días:**
+        *   Se modificó `WeekdaySelector.kt` para que las fechas fueran clickables, disparando el evento para mostrar el tirador.
+        *   Se desvinculó la selección visual de la fecha de la aparición del tirador; la fecha "hoy" permanece estática.
+    4.  **Implementación de la Lógica del Panel Deslizable en `MainContent` (`MainScreen.kt`):**
+        *   Se gestionó el estado `showLogisticsHandle` para controlar la visibilidad del mecanismo.
+        *   Se utilizó `Animatable` para `offsetX` para animar suavemente la posición horizontal del panel y el tirador.
+        *   Se implementó la lógica de arrastre (`Modifier.draggable`) para controlar `offsetX`.
+        *   Se definió una función `hideLogisticsPanel()` para cerrar el panel mediante animación.
+        *   **Estado de Carga:** Se introdujo `isLoadingLogistics` para mostrar un `CircularProgressIndicator` mientras se simula la carga del contenido, mejorando la retroalimentación al usuario.
+        *   **Contenido Incrustado:** `LogisticsScreen` se incrustó directamente dentro del panel deslizable, eliminando la necesidad de `NavController` para esta interacción específica y permitiendo una animación más fluida.
+    5.  **Refinamientos de Experiencia de Usuario (UX):**
+        *   **Control de Apertura:** Se añadió una condición en `onDateClick` para que el tirador solo aparezca si no está ya visible, evitando interrupciones en su estado actual.
+        *   **Cerrar al Hacer Clic Fuera (`Dismiss on outside click`):** Se implementó un "scrim" (una capa semitransparente clickable) que aparece sobre el contenido principal cuando el panel está asomando. Un clic en el scrim cierra el panel.
+        *   **Ajuste de Posición del Tirador:** Se modificó el `padding(top = 100.dp)` del `LogisticsDraggableHandle` para posicionarlo más abajo y alinearlo visualmente.
+        *   **Ajuste de Protrusión del Tirador:** Se ajustó la variable `peekOutDistance` para controlar cuánto sobresale el tirador, asegurando que solo la parte interactiva sea visible al asomarse.
+        *   **Sensibilidad del Arrastre:** Se ajustó el umbral de arrastre en `onDragStopped` para que el panel se abra completamente con un gesto más ligero e intuitivo.
+
+-   **Errores Resueltos durante la Implementación:**
+    *   Múltiples errores de "Unresolved reference" (`WeekdaySelector`, `Alignment`, `animate`, `width`, `Surface`, `CircularProgressIndicator`, `LogisticsScreen`, `MutableInteractionSource`) debido a la falta o incorrecta inclusión de importaciones tras refactorizaciones y a problemas de sincronización en mi entendimiento del estado del archivo. Estos fueron corregidos uno a uno.
+    *   Bug visual: El tirador no era visible/arrastrable debido a un error de posicionamiento (`offset` negativo) que lo situaba fuera del área táctil de su contenedor `draggable`. Se corrigió para que el tirador estuviera correctamente dentro del área arrastrable.
+    *   Bug: El tirador no se desplegaba completamente debido a un umbral de arrastre incorrecto (`screenWidthPx * 0.5f`), lo que requería un arrastre excesivo para activarlo. Se ajustó a un umbral más sensible (`(screenWidthPx - peekOutDistance) - (peekOutDistance * 0.5f)`).
+
+-   **Estado Actual:** La funcionalidad del panel deslizable está implementada con la interacción deseada y los ajustes visuales principales. El proyecto debería compilar correctamente (suponiendo que las últimas correcciones se han aplicado y sincronizado con el entorno de compilación).
