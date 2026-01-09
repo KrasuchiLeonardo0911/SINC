@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -44,9 +45,10 @@ import com.sinc.mobile.app.ui.components.MinimalHeader
 @Composable
 fun SeleccionCampoScreen(
     modifier: Modifier = Modifier,
-    // Use MovimientoStepperViewModel as it manages the state for the overall movement process
     viewModel: MovimientoStepperViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    onBack: () -> Unit,
+    mainScaffoldBottomPadding: Dp,
 ) {
     // Observe the UI state from MovimientoStepperViewModel
     val uiState by viewModel.uiState.collectAsState()
@@ -60,11 +62,7 @@ fun SeleccionCampoScreen(
         topBar = {
             MinimalHeader(
                 title = "Seleccionar Campo",
-                onBackPress = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                    }
-                },
+                onBackPress = onBack,
                 modifier = Modifier
                     .statusBarsPadding()
             )
@@ -73,7 +71,8 @@ fun SeleccionCampoScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .padding(bottom = mainScaffoldBottomPadding),
             contentAlignment = Alignment.Center
         ) {
             if (uiState.isLoading) {

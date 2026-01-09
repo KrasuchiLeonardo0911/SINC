@@ -1051,3 +1051,53 @@ El módulo de movimientos ahora es considerablemente más robusto, usable y cump
     *   Bug: El tirador no se desplegaba completamente debido a un umbral de arrastre incorrecto (`screenWidthPx * 0.5f`), lo que requería un arrastre excesivo para activarlo. Se ajustó a un umbral más sensible (`(screenWidthPx - peekOutDistance) - (peekOutDistance * 0.5f)`).
 
 -   **Estado Actual:** La funcionalidad del panel deslizable está implementada con la interacción deseada y los ajustes visuales principales. El proyecto debería compilar correctamente (suponiendo que las últimas correcciones se han aplicado y sincronizado con el entorno de compilación).
+
+# Avances de la Sesión Actual (08 de Enero de 2026)
+
+Esta sesión se centró en mejoras significativas de la experiencia de usuario, refactorización de navegación y optimización del rendimiento en varias pantallas clave de la aplicación.
+
+## 1. Refactorización del Panel Deslizable de Logística (`SlidingPanel` y `LogisticsScreen`)
+
+*   **Extracción de Lógica a `SlidingPanel.kt`**: La compleja lógica del panel deslizable se extrajo de `MainScreen.kt` a un componente reutilizable `SlidingPanel.kt`.
+*   **Integración en `MainScreen.kt`**: `MainScreen.kt` fue refactorizado para utilizar este nuevo componente, simplificando su código.
+*   **API Mejorada del `SlidingPanel`**: Se mejoró la interfaz de `SlidingPanel` con un callback `onFullyOpen`, permitiendo que el contenido del panel reaccione cuando se abre completamente.
+*   **Ajustes de Alineación y Comportamiento**:
+    *   Se ajustó la alineación vertical del tirador (`LogisticsDraggableHandle`) para que coincidiera con el selector de días de la semana (`WeekdaySelector`).
+    *   Se corrigió el comportamiento de arrastre del `SlidingPanel` para que solo fuera arrastrable cuando está en su estado "asomado" (peeking) y se bloqueara (no arrastrable) una vez completamente abierto.
+    *   Se amplió la zona táctil del tirador para mejorar la usabilidad.
+    *   Se corrigió una brecha visual entre el tirador y el panel.
+*   **Implementación del Selector de Fecha (Date Picker) en `LogisticsScreen`**:
+    *   El contenido del panel de logística se reemplazó con un diseño detallado de selector de fecha personalizado, siguiendo las especificaciones del usuario.
+    *   El `WeekdaySelector` de `MainScreen` y el nuevo calendario en `LogisticsScreen` se sincronizaron para mostrar la fecha real actual.
+    *   El `MinimalHeader` en `LogisticsScreen` se ajustó para mostrar solo una flecha de retroceso (sin título).
+    *   El scrim (la capa oscura de superposición) del `SlidingPanel` se ajustó para cubrir toda la pantalla, incluida la barra de navegación inferior, solucionando un problema visual.
+
+## 2. Refactorización y Funcionalidad de Navegación
+
+*   **Botones de `MyJournalSection` Funcionales**: Los botones de acción "Ver Stock", "Agregar Stock", "Ver Historial" y "Mis Campos" en la sección de `MyJournalSection` de la pantalla principal ahora navegan correctamente a sus respectivas funcionalidades.
+*   **Efecto Ripple Circular**: Se corrigió el efecto "ripple" (la sombra al presionar) en los botones de acción de `MyJournalSection` para que fuera circular, mejorando la coherencia visual.
+*   **Rediseño de la Barra de Navegación Inferior (`CozyBottomNavBar`)**:
+    *   La barra de navegación inferior se rediseñó para incluir 4 elementos principales: Inicio, Ayuda, Perfil y Notificaciones.
+    *   Se añadieron pantallas de marcador de posición para las nuevas rutas de Ayuda y Notificaciones.
+    *   La navegación al perfil se integró para dirigir al usuario a la pantalla de Configuración (`Routes.SETTINGS`).
+
+## 3. Optimización de Rendimiento y Transiciones de Carga
+
+*   **Resolución de Lentitud en "Agregar Stock" (Carga de Catálogos)**:
+    *   Se identificó un cuello de botella de rendimiento en `CatalogosRepositoryImpl.kt` causado por el uso anidado del operador `combine` y la carga innecesaria de datos pesados (municipios con procesamiento GeoJSON) para el formulario de "Agregar Stock".
+    *   Se creó un nuevo `GetMovimientoCatalogosUseCase` (más ligero) y se actualizó la interfaz y la implementación de `CatalogosRepository` para proporcionar un método específico que carga solo los 4 catálogos requeridos por el flujo de movimiento de stock.
+    *   `MovimientoStepperViewModel` se actualizó para utilizar este nuevo caso de uso más eficiente, lo que debería resultar en una carga mucho más rápida de la pantalla de "Seleccionar Campo".
+    *   Se resolvieron errores de compilación (`None of the following candidates is applicable because of a receiver type mismatch`) relacionados con la sintaxis del operador `combine` y se añadió tipado explícito para ayudar a Kapt en `MovimientoStepperViewModel`.
+*   **Transición de Carga en `StockScreen`**:
+    *   Se refactorizó `StockViewModel` para mejorar el rendimiento de carga inicial, mostrando los datos de la base de datos local primero y luego actualizando desde la red en segundo plano. Esto asegura que la pantalla de stock aparezca rápidamente, con un spinner perceptible en la navegación inicial si es necesario.
+*   **Transición de Carga en `CamposScreen`**: Se añadió un retraso artificial de 400ms y un spinner centrado en `CamposViewModel` y `CamposScreen` para proporcionar una animación de carga perceptible, incluso cuando no hay datos complejos que cargar.
+*   **Optimización de Navegación de Retorno desde "Seleccionar Campo"**:
+    *   La navegación desde "Seleccionar Campo" (`SeleccionCampoScreen`) a la pantalla principal era lenta debido a una recreación innecesaria de `MainScreen` al usar `navController.navigate` con `popUpTo`.
+    *   Se refactorizó esta navegación para convertir `SeleccionCampoScreen` en un estado interno de `MainScreen` (manejado por `Crossfade`), similar a cómo funciona `CamposScreen`.
+    *   Esto hace que la navegación de retorno sea un cambio de estado ligero y rápido, resultando en una transición casi instantánea.
+*   **Eliminación del Cargador Esqueleto de `MainScreen`**: El cargador esqueleto introducido temporalmente para la pantalla principal ha sido eliminado, ya que las mejoras en la navegación hacen que no sea necesario.
+
+## 4. Estado General del Proyecto
+
+*   Todas las funcionalidades solicitadas y las mejoras de rendimiento/UX se han implementado.
+*   El proyecto compila exitosamente, sin errores conocidos.

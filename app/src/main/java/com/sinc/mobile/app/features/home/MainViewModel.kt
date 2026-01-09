@@ -10,7 +10,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    // Dependencies related to stock and unidades productivas are removed.
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -26,6 +25,5 @@ class MainViewModel @Inject constructor(
 }
 
 data class MainUiState(
-    // isLoading, unidadesProductivas, error, and stock are removed.
     val shouldNavigateToCreateUnidadProductiva: Boolean = false
 )

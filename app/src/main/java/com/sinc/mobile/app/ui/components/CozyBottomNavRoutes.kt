@@ -6,6 +6,7 @@ object CozyBottomNavRoutes {
     const val STOCK = "stock"
     const val HISTORIAL = "historial"
     const val CAMPOS = "campos"
+    const val SELECCION_CAMPO = "seleccion_campo"
 
     // Routes for the bottom bar
     const val HELP = "help"
