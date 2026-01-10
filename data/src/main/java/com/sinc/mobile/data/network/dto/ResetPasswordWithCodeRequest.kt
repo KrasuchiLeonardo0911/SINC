@@ -1,14 +1,16 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ResetPasswordWithCodeRequest(
-    @SerializedName("email")
+    @SerialName("email")
     val email: String,
-    @SerializedName("code")
+    @SerialName("code")
     val code: String,
-    @SerializedName("password")
+    @SerialName("password")
     val password: String,
-    @SerializedName("password_confirmation")
+    @SerialName("password_confirmation")
     val passwordConfirmation: String
 )

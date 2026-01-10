@@ -1,5 +1,6 @@
 package com.sinc.mobile.data.repository
 
+import android.util.Log
 import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.local.entities.*
 import com.sinc.mobile.data.network.api.AuthApiService
@@ -7,19 +8,12 @@ import com.sinc.mobile.data.network.dto.*
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.model.*
 import com.sinc.mobile.domain.repository.CatalogosRepository
+import com.sinc.mobile.domain.model.DomainGeoPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.serialization.json.*
 import java.io.IOException
 import javax.inject.Inject
-import android.util.Log
-
-import com.sinc.mobile.domain.model.DomainGeoPoint
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.reflect.TypeToken
 
 class CatalogosRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
@@ -33,7 +27,7 @@ class CatalogosRepositoryImpl @Inject constructor(
     private val fuenteAguaDao: FuenteAguaDao,
     private val tipoSueloDao: TipoSueloDao,
     private val tipoPastoDao: TipoPastoDao,
-    private val gson: Gson // Inject Gson
+    private val json: Json // Inject Kotlinx.serialization Json
 ) : CatalogosRepository {
 
     // Mappers from Entity to Domain
@@ -48,16 +42,16 @@ class CatalogosRepositoryImpl @Inject constructor(
      * arrays of numbers (the coordinate pairs).
      */
     private fun findCoordinateRing(element: JsonElement?): JsonArray? {
-        if (element !is JsonArray || element.size() == 0) return null
+        if (element !is JsonArray || element.isEmpty()) return null
 
-        val firstChild = element[0]
-        if (firstChild !is JsonArray || firstChild.size() == 0) return null
+        val firstChild = element.getOrNull(0)
+        if (firstChild !is JsonArray || firstChild.isEmpty()) return null
 
-        val firstGrandchild = firstChild[0]
+        val firstGrandchild = firstChild.getOrNull(0)
         // If the first grandchild is NOT an array, it must be a coordinate number.
         // This means the `firstChild` is the coordinate pair `[lon, lat]`.
         // Therefore, the current `element` is the ring (the array of pairs).
-        if (!firstGrandchild.isJsonArray) {
+        if (firstGrandchild !is JsonArray) {
             return element
         }
 
@@ -72,15 +66,14 @@ class CatalogosRepositoryImpl @Inject constructor(
             DomainGeoPoint(latitud, longitud)
         } else null
 
-        val poligono = geojson_boundary?.let { json ->
+        val poligono = geojson_boundary?.let { jsonString ->
             try {
-                val jsonElement = JsonParser.parseString(json)
-                if (!jsonElement.isJsonObject) {
+                val jsonElement = json.parseToJsonElement(jsonString)
+                if (jsonElement !is JsonObject) {
                     Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: Not a JSON Object.")
                     return@let null
                 }
-                val jsonObject = jsonElement.asJsonObject
-                val coordinates = jsonObject.getAsJsonArray("coordinates")
+                val coordinates = jsonElement["coordinates"] as? JsonArray
 
                 // This will find the array that contains the coordinate PAIRS.
                 // For a Polygon, it will be the first and only ring.
@@ -88,14 +81,14 @@ class CatalogosRepositoryImpl @Inject constructor(
                 val exteriorRing = findCoordinateRing(coordinates)
 
                 exteriorRing?.mapNotNull { element ->
-                    val rawCoords = element.asJsonArray
-                    if (rawCoords.size() >= 2) {
-                        DomainGeoPoint(rawCoords[1].asDouble, rawCoords[0].asDouble)
+                    val rawCoords = element as? JsonArray
+                    if (rawCoords != null && rawCoords.size >= 2) {
+                        DomainGeoPoint(rawCoords[1].jsonPrimitive.double, rawCoords[0].jsonPrimitive.double)
                     } else null
                 }
             } catch (e: Exception) {
                 Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: ${e.message}")
-                Log.d("CatalogosRepo", "Problematic JSON: $json")
+                Log.d("CatalogosRepo", "Problematic JSON: $jsonString")
                 null
             }
         }

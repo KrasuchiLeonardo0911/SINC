@@ -128,7 +128,7 @@ fun SeleccionCampoScreen(
                     }
                     // Filter units based on search query
                     val filteredUnidades = uiState.unidades?.filter {
-                        it.nombre.contains(searchQuery, ignoreCase = true) ||
+                        it.nombre?.contains(searchQuery, ignoreCase = true) == true ||
                                 it.identificadorLocal?.contains(searchQuery, ignoreCase = true) == true
                     } ?: emptyList()
 

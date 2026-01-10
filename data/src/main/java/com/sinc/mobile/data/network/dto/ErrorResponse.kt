@@ -1,7 +1,9 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ErrorResponse(
-    @SerializedName("message") val message: String
+    @SerialName("message") val message: String
 )

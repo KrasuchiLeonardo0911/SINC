@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SINC</string>
+    <string name="unexpected_error">Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.</string>
 </resources>

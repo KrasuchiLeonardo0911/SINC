@@ -1,9 +1,11 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class LoginRequest(
-    @SerializedName("email") val email: String,
-    @SerializedName("password") val password: String,
-    @SerializedName("device_name") val deviceName: String
+    @SerialName("email") val email: String,
+    @SerialName("password") val password: String,
+    @SerialName("device_name") val deviceName: String
 )

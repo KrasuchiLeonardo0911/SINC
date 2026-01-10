@@ -1,7 +1,6 @@
 package com.sinc.mobile.data.repository
 
 import android.util.Log
-import com.google.gson.Gson
 import com.sinc.mobile.data.network.api.TicketApiService
 import com.sinc.mobile.data.network.dto.CreateTicketRequest
 import com.sinc.mobile.data.network.dto.ErrorResponse
@@ -10,13 +9,14 @@ import com.sinc.mobile.domain.model.ticket.CreateTicketData
 import com.sinc.mobile.domain.repository.TicketRepository
 import com.sinc.mobile.domain.util.Result
 import com.sinc.mobile.domain.util.Error
+import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
 class TicketRepositoryImpl @Inject constructor(
     private val apiService: TicketApiService,
-    private val gson: Gson
+    private val json: Json
 ) : TicketRepository {
 
     override suspend fun createTicket(ticketData: CreateTicketData): Result<Unit, Error> {
@@ -34,7 +34,7 @@ class TicketRepositoryImpl @Inject constructor(
             } else {
                 val errorBody = response.errorBody()?.string()
                 Log.e("TicketRepo", "Response Error: ${response.code()} - $errorBody")
-                val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                val errorResponse = json.decodeFromString<ErrorResponse>(errorBody ?: "")
                 Result.Failure(GenericError(errorResponse.message ?: "Error desconocido"))
             }
         } catch (e: HttpException) {

@@ -1,8 +1,10 @@
 package com.sinc.mobile.data.model
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class StockDataDto(
-    @SerializedName("unidades_productivas") val unidadesProductivas: List<UnidadProductivaStockDto>,
-    @SerializedName("stock_total_general") val stockTotalGeneral: Int
+    @SerialName("unidades_productivas") val unidadesProductivas: List<UnidadProductivaStockDto>,
+    @SerialName("stock_total_general") val stockTotalGeneral: Int
 )

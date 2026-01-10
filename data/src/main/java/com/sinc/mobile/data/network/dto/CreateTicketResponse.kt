@@ -1,8 +1,10 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class CreateTicketResponse(
-    @SerializedName("message") val message: String,
-    @SerializedName("ticket_id") val ticketId: Int
+    @SerialName("message") val message: String,
+    @SerialName("ticket_id") val ticketId: Int
 )

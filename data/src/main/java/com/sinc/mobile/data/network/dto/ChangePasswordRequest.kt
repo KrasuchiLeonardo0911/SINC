@@ -1,12 +1,14 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ChangePasswordRequest(
-    @SerializedName("current_password")
+    @SerialName("current_password")
     val currentPassword: String,
-    @SerializedName("password")
+    @SerialName("password")
     val password: String,
-    @SerializedName("password_confirmation")
+    @SerialName("password_confirmation")
     val passwordConfirmation: String
 )

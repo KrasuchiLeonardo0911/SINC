@@ -22,7 +22,7 @@ fun UnidadSelectionStep(
         items = unidades,
         selectedItem = selectedUnidad,
         onItemSelected = onUnidadSelected,
-        getItemName = { it.nombre },
+        getItemName = { it.nombre ?: "Sin nombre" },
         placeholder = "Seleccionar campo",
         triggerIcon = { _ ->
             val iconColor = MaterialTheme.colorScheme.onPrimary

@@ -64,7 +64,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             MinimalHeader(
-                title = "Configuración",
+                title = "Configuración (en construcción)",
                 onBackPress = onNavigateBack,
                 modifier = Modifier.statusBarsPadding()
             )
@@ -81,7 +81,7 @@ fun SettingsScreen(
 
             // Profile Card
             ProfileCard(
-                name = "Jose Maria", // Hardcoded for now
+                name = "Productor", // Hardcoded for now
                 onEditClick = { /* TODO: Navigate to profile edit screen */ }
             )
 

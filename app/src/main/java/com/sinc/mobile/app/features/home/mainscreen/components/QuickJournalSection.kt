@@ -54,25 +54,19 @@ fun QuickJournalSection() {
             item {
                 QuickJournalCard(
                     icon = Icons.Default.Home,
-                    title = "Pause & reflect",
-                    question = "What are you grateful for today?",
-                    tags = listOf("Today", "Personal")
+                    title = "En construcción",
                 )
             }
             item {
                 QuickJournalCard(
                     icon = Icons.Default.Person,
-                    title = "Set Intentions",
-                    question = "How do you want to feel?",
-                    tags = listOf("Today", "Family")
+                    title = "En construcción",
                 )
             }
             item {
                 QuickJournalCard(
                     icon = Icons.Default.Notifications,
-                    title = "Embrace Chan...",
-                    question = "Let go and ...",
-                    tags = listOf("Today")
+                    title = "En construcción",
                 )
             }
         }
@@ -83,8 +77,6 @@ fun QuickJournalSection() {
 fun QuickJournalCard(
     icon: ImageVector,
     title: String,
-    question: String,
-    tags: List<String>
 ) {
     Card(
         modifier = Modifier
@@ -100,35 +92,21 @@ fun QuickJournalCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurface // Adjust icon color
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface // Adjust text color
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = question,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface // Adjust text color
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                tags.forEach { tag ->
-                    Chip(text = tag)
-                }
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onSurface // Adjust icon color
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface // Adjust text color
+            )
         }
     }
 }

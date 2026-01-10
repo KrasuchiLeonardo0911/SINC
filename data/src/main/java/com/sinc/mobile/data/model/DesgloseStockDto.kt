@@ -1,9 +1,11 @@
 package com.sinc.mobile.data.model
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class DesgloseStockDto(
-    @SerializedName("categoria") val categoria: String,
-    @SerializedName("raza") val raza: String,
-    @SerializedName("cantidad") val cantidad: Int
+    @SerialName("categoria") val categoria: String,
+    @SerialName("raza") val raza: String,
+    @SerialName("cantidad") val cantidad: Int
 )

@@ -1,8 +1,10 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class MovimientosBatchRequest(
-    @SerializedName("upId") val upId: Int,
-    @SerializedName("movimientos") val movimientos: List<MovimientoRequest>
+    @SerialName("upId") val upId: Int,
+    @SerialName("movimientos") val movimientos: List<MovimientoRequest>
 )

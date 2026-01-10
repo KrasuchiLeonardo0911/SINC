@@ -1,27 +1,26 @@
 package com.sinc.mobile.data.local
 
 import androidx.room.TypeConverter
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.sinc.mobile.data.model.UnidadProductivaStock
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class StockTypeConverter {
-    private val gson = Gson()
+    private val json = Json { ignoreUnknownKeys = true }
 
     @TypeConverter
     fun fromUnidadProductivaStockList(unidades: List<UnidadProductivaStock>?): String? {
         if (unidades == null) {
             return null
         }
-        return gson.toJson(unidades)
+        return json.encodeToString(unidades)
     }
 
     @TypeConverter
-    fun toUnidadProductivaStockList(json: String?): List<UnidadProductivaStock>? {
-        if (json == null) {
+    fun toUnidadProductivaStockList(jsonString: String?): List<UnidadProductivaStock>? {
+        if (jsonString == null) {
             return null
         }
-        val type = object : TypeToken<List<UnidadProductivaStock>>() {}.type
-        return gson.fromJson(json, type)
+        return json.decodeFromString<List<UnidadProductivaStock>>(jsonString)
     }
 }

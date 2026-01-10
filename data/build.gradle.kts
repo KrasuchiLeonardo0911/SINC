@@ -1,8 +1,9 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    alias(libs.plugins.kotlin.ksp)
     id("dagger.hilt.android.plugin")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -29,20 +30,20 @@ dependencies {
 
     implementation(project(":domain"))
 
-    // Retrofit & GSON
+    // Retrofit & Kotlinx Serialization
     implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.gson)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp.logging.interceptor)
 
     // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -57,7 +58,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.google.truth)
     androidTestImplementation(libs.hilt.android.testing) // Hilt testing dependency
-    kaptAndroidTest(libs.hilt.android.compiler) // Hilt compiler for androidTest
+    kspAndroidTest(libs.hilt.android.compiler) // Hilt compiler for androidTest
     androidTestImplementation(libs.androidx.arch.core.testing)
     androidTestImplementation(libs.mockwebserver) // Added for testing API calls
 }

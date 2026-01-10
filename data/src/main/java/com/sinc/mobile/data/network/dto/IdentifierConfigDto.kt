@@ -1,17 +1,20 @@
 package com.sinc.mobile.data.network.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * A generic wrapper for API responses that follow the { "data": [...] } structure.
  */
+@Serializable
 data class ApiResponse<T>(
     val data: T
 )
 
+@Serializable
 data class IdentifierConfigDto(
-    @SerializedName("type") val type: String,
-    @SerializedName("label") val label: String,
-    @SerializedName("hint") val hint: String?,
-    @SerializedName("regex") val regex: String
+    @SerialName("type") val type: String,
+    @SerialName("label") val label: String,
+    @SerialName("hint") val hint: String?,
+    @SerialName("regex") val regex: String
 )

@@ -89,16 +89,18 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
 private fun UnidadProductivaDto.toEntity(): UnidadProductivaEntity {
     return UnidadProductivaEntity(
         id = this.id,
-        nombre = this.nombre,
+        nombre = this.nombre ?: "",
         identificadorLocal = this.identificadorLocal,
-        superficie = this.superficie,
+        superficie = this.superficie?.toFloatOrNull() ?: 0f,
         latitud = this.latitud?.toDoubleOrNull(),
         longitud = this.longitud?.toDoubleOrNull(),
-        municipioId = this.municipioId,
-        condicionTenenciaId = this.condicionTenenciaId,
+        municipioId = this.municipioId ?: 0,
+        condicionTenenciaId = this.pivot?.condicionTenenciaId,
         fuenteAguaId = this.fuenteAguaId,
         tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId
+        tipoPastoId = this.tipoPastoId,
+        activo = this.activo == 1,
+        completo = this.completo == 1
     )
 }
 
@@ -107,11 +109,11 @@ private fun UnidadProductivaDto.toDomain(): UnidadProductiva {
         id = this.id,
         nombre = this.nombre,
         identificadorLocal = this.identificadorLocal,
-        superficie = this.superficie,
+        superficie = this.superficie?.toFloatOrNull(),
         latitud = this.latitud?.toDoubleOrNull(),
         longitud = this.longitud?.toDoubleOrNull(),
         municipioId = this.municipioId,
-        condicionTenenciaId = this.condicionTenenciaId,
+        condicionTenenciaId = this.pivot?.condicionTenenciaId,
         fuenteAguaId = this.fuenteAguaId,
         tipoSueloId = this.tipoSueloId,
         tipoPastoId = this.tipoPastoId

@@ -1,26 +1,28 @@
 package com.sinc.mobile.data.model
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class MovimientoHistorialDto(
-    @SerializedName("id")
+    @SerialName("id")
     val id: Long,
-    @SerializedName("fecha_registro")
+    @SerialName("fecha_registro")
     val fechaRegistro: String,
-    @SerializedName("cantidad")
+    @SerialName("cantidad")
     val cantidad: Int,
-    @SerializedName("especie")
+    @SerialName("especie")
     val especie: String,
-    @SerializedName("categoria")
+    @SerialName("categoria")
     val categoria: String,
-    @SerializedName("raza")
+    @SerialName("raza")
     val raza: String,
-    @SerializedName("motivo")
+    @SerialName("motivo")
     val motivo: String,
-    @SerializedName("tipo_movimiento")
+    @SerialName("tipo_movimiento")
     val tipoMovimiento: String,
-    @SerializedName("unidad_productiva")
+    @SerialName("unidad_productiva")
     val unidadProductiva: String,
-    @SerializedName("destino_traslado")
+    @SerialName("destino_traslado")
     val destinoTraslado: String?
 )

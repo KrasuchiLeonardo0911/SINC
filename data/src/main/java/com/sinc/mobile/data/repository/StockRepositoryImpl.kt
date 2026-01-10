@@ -1,9 +1,9 @@
 package com.sinc.mobile.data.repository
 
-import com.google.gson.Gson
 import com.sinc.mobile.data.local.dao.StockDao
 import com.sinc.mobile.data.mapper.toDomain
 import com.sinc.mobile.data.mapper.toEntity
+import com.sinc.mobile.data.model.StockResponseDto
 import com.sinc.mobile.data.network.api.StockApiService
 import com.sinc.mobile.data.network.dto.ErrorResponse
 import com.sinc.mobile.domain.model.GenericError
@@ -12,6 +12,7 @@ import com.sinc.mobile.domain.repository.StockRepository
 import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -19,7 +20,7 @@ import javax.inject.Inject
 class StockRepositoryImpl @Inject constructor(
     private val apiService: StockApiService,
     private val stockDao: StockDao,
-    private val gson: Gson
+    private val json: Json
 ) : StockRepository {
 
     override fun getStock(): Flow<Stock> {
@@ -31,14 +32,15 @@ class StockRepositoryImpl @Inject constructor(
             val response = apiService.getStock()
             if (response.isSuccessful) {
                 response.body()?.let { responseBody ->
-                    val stockResponseDto = gson.fromJson(responseBody.charStream(), com.sinc.mobile.data.model.StockResponseDto::class.java)
+                    val responseString = responseBody.string()
+                    val stockResponseDto = json.decodeFromString<StockResponseDto>(responseString)
                     val stockEntity = stockResponseDto.data.toEntity()
                     stockDao.insertStock(stockEntity)
                     Result.Success(Unit)
                 } ?: Result.Failure(GenericError("Respuesta vacía del servidor."))
             } else {
                 val errorBody = response.errorBody()?.string()
-                val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                val errorResponse = json.decodeFromString<ErrorResponse>(errorBody ?: "")
                 Result.Failure(GenericError(errorResponse.message ?: "Error desconocido en el servidor"))
             }
         } catch (e: HttpException) {

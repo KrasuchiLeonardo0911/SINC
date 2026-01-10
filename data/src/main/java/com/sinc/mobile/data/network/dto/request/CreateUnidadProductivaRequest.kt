@@ -1,16 +1,18 @@
 package com.sinc.mobile.data.network.dto.request
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class CreateUnidadProductivaRequest(
-    @SerializedName("nombre") val nombre: String,
-    @SerializedName("identificador_local") val identificadorLocal: String,
-    @SerializedName("superficie") val superficie: Float,
-    @SerializedName("latitud") val latitud: Float,
-    @SerializedName("longitud") val longitud: Float,
-    @SerializedName("municipio_id") val municipioId: Int,
-    @SerializedName("condicion_tenencia_id") val condicionTenenciaId: Int?,
-    @SerializedName("fuente_agua_id") val fuenteAguaId: Int?,
-    @SerializedName("tipo_suelo_id") val tipoSueloId: Int?,
-    @SerializedName("tipo_pasto_id") val tipoPastoId: Int?
+    @SerialName("nombre") val nombre: String,
+    @SerialName("identificador_local") val identificadorLocal: String,
+    @SerialName("superficie") val superficie: Float,
+    @SerialName("latitud") val latitud: Float,
+    @SerialName("longitud") val longitud: Float,
+    @SerialName("municipio_id") val municipioId: Int,
+    @SerialName("condicion_tenencia_id") val condicionTenenciaId: Int?,
+    @SerialName("fuente_agua_id") val fuenteAguaId: Int?,
+    @SerialName("tipo_suelo_id") val tipoSueloId: Int?,
+    @SerialName("tipo_pasto_id") val tipoPastoId: Int?
 )

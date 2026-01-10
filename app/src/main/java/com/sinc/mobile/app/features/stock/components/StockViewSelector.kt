@@ -28,7 +28,7 @@ fun StockViewSelector(
         getItemName = {
             when (it) {
                 is String -> it
-                is UnidadProductiva -> it.nombre
+                is UnidadProductiva -> it.nombre ?: "Sin nombre"
                 else -> "Seleccionar vista"
             }
         },

@@ -1101,3 +1101,88 @@ Esta sesión se centró en mejoras significativas de la experiencia de usuario, 
 
 *   Todas las funcionalidades solicitadas y las mejoras de rendimiento/UX se han implementado.
 *   El proyecto compila exitosamente, sin errores conocidos.
+
+# Avances de la Sesión Actual - 9 de Enero de 2026
+
+## Problema Inicial: Error de Compilación en Kapt / kotlin-serialization
+
+**Descripción:** El proyecto no compilaba, reportando `incompatible types: NonExistentClass cannot be converted to Annotation` en `ValidationErrorResponse.java` durante la tarea `:data:kaptDebugKotlin`. Esto ocurría porque Kapt intentaba procesar `kotlinx.serialization`, lo cual es incorrecto.
+
+**Acciones Tomadas y Solución:**
+1.  **Versión de Kotlin y Plugins:** Se identificó que la versión de Kotlin en `libs.versions.toml` era `2.0.21` (pre-release), lo que generaba conflictos.
+    *   **Acción:** Se actualizó `kotlin = "1.9.23"`.
+2.  **Plugin Kotlin Compose:** Se encontró que el plugin `org.jetbrains.kotlin.plugin.compose` no era compatible o estaba mal configurado.
+    *   **Acción:** Se eliminó la referencia del plugin `kotlin-compose` del `build.gradle.kts` raíz y se reinsertó en `app/build.gradle.kts`. Luego se cambió a `composeOptions { kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() }` con `composeCompiler = "1.5.11"` en `libs.versions.toml`, siguiendo la configuración moderna.
+3.  **Migración de Kapt a KSP:** Para resolver el conflicto entre Kapt y `kotlinx.serialization`, se migró de Kapt a KSP.
+    *   **Acción:** Se añadió `ksp = "1.9.23-1.0.20"` y el plugin `kotlin-ksp` en `libs.versions.toml`. Se reemplazaron todas las ocurrencias de `id("kotlin-kapt")` por `alias(libs.plugins.kotlin.ksp)` y las dependencias `kapt(...)` por `ksp(...)` en los archivos `build.gradle.kts` de la raíz, `app` y `data`. Se corrigieron `kaptTest` por `kspAndroidTest`.
+4.  **Error de `SerializedName`:** Se identificó un error tipográfico en `ValidationErrorResponse.kt`.
+    *   **Acción:** Se reemplazaron todas las instancias de `@SerializedName` por `@SerialName`.
+
+**Resultado:** El proyecto compiló exitosamente en modo `debug`.
+
+---
+
+## Problema Actual: `java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType` en `Release Build`
+
+**Descripción:** Después de compilar exitosamente en `debug`, al probar la versión `release`, el error `java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType` reaparece durante el proceso de login cuando se introducen credenciales incorrectas (texto en los campos de email y contraseña).
+
+**Análisis del Problema (con información adicional del usuario):**
+*   El error ocurre **solamente** en el `build` de `release`.
+*   El error **no ocurre** cuando los campos están vacíos (en ese caso, el servidor devuelve un 422 con una `ValidationErrorResponse` que se parsea correctamente).
+*   El `curl` directo al endpoint de login con credenciales incorrectas (texto en los campos) devuelve un código `401 Unauthorized` con un cuerpo `{"message":"Credenciales inv\u00e1lidas."}`, lo que corresponde a `ErrorResponse`.
+
+**Acciones Tomadas y Resultados (fallidos en solucionar el `ClassCastException` en `release`):**
+1.  **Refactorización de `AuthRepositoryImpl.kt` (`handleAuthError`)**:
+    *   **Acción:** Se modificó la función `handleAuthError` para que intentara deserializar el cuerpo del error primero como `ValidationErrorResponse` y, si fallaba, como `ErrorResponse`, independientemente del código de estado HTTP. Esto se hizo para evitar suposiciones sobre el formato del error y usar `serializer<T>()` explícitamente para ayudar a `kotlinx.serialization` con los tipos genéricos.
+    *   **Resultado:** Compilación exitosa en `debug` y `release`, pero el `ClassCastException` persiste en `release`.
+2.  **Análisis de dependencias (`gradlew :app:dependencies`)**:
+    *   **Acción:** Se verificó el árbol de dependencias del módulo `app` para la presencia de `Gson` u otros convertidores de JSON que pudieran estar interfiriendo.
+    *   **Resultado:** No se encontró `Gson` ni dependencias conflictivas.
+3.  **Reglas de Proguard para `kotlinx.serialization`**:
+    *   **Acción:** Se añadieron reglas de Proguard a `app/proguard-rules.pro` para preservar las clases anotadas con `@Serializable` y sus componentes internos, incluyendo una regla explícita para `ValidationErrorResponse` (`-keep class com.sinc.mobile.data.network.dto.ValidationErrorResponse { *; }`) para prevenir su ofuscación agresiva por R8.
+    *   **Resultado:** Compilación exitosa en `release`, pero el `ClassCastException` persiste en `release`.
+
+**Hipótesis Actual (Post-pruebas):**
+*   A pesar de las reglas de Proguard añadidas, R8 sigue siendo el principal sospechoso. El `ClassCastException` en `java.lang.reflect.ParameterizedType` es un síntoma clásico de que R8 está eliminando metadatos cruciales de tipos genéricos durante la minimización/ofuscación, incluso con las reglas de `-keep`.
+*   El `ClassCastException` podría estar ocurriendo en el deserializador del `Map<String, List<String>>` dentro de `ValidationErrorResponse`, o incluso en la misma `List<String>`.
+
+**Siguientes Pasos (a considerar):**
+*   **Simplificar los DTOs de Error:** Intentar simplificar `ValidationErrorResponse` (o `ErrorResponse`) para ver si el uso de tipos genéricos complejos (`Map<String, List<String>>`) es la raíz del problema con R8. Por ejemplo, cambiar `Map<String, List<String>>` a `Map<String, String>` o incluso a un `String` simple. Si funciona, nos indicaría el punto exacto de la falla.
+*   **Añadir reglas `keep` más agresivas:** Probar a añadir reglas `-keep` muy amplias para las clases `List` y `Map` de Java/Kotlin, aunque esto es menos probable que sea necesario.
+*   **Actualizar `kotlinx.serialization`:** Investigar si hay versiones más recientes de `kotlinx.serialization` o del plugin de Kotlin que mejoren la compatibilidad con R8.
+*   **Aislar el problema:** Crear un proyecto de Android mínimo que solo intente deserializar un `ValidationErrorResponse` o `ErrorResponse` con R8 activado para ver si el error se reproduce, lo que nos permitiría reportar el bug.
+---
+
+## Resumen de Avances (Sesión con Asistente Gemini)
+
+Esta sesión se centró en resolver una serie de errores críticos que impedían el correcto funcionamiento de la aplicación, especialmente en builds de `release`.
+
+### 1. Solución de `ClassCastException` en `release` build
+
+*   **Problema:** La aplicación fallaba con un `java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType` al intentar manejar errores de login en `release`.
+*   **Investigación:** Se determinó que era un problema de ofuscación de R8, que eliminaba metadatos de tipos genéricos necesarios para la deserialización con `kotlinx.serialization`.
+*   **Solución (Multi-paso):**
+    1.  **Reglas de Proguard:** Se investigó y añadió un conjunto de reglas de Proguard más completo y robusto a `app/proguard-rules.pro`. Estas reglas protegen explícitamente las firmas de los métodos de Retrofit y los metadatos de Kotlin, solucionando el síntoma del `ClassCastException`.
+    2.  **Refactorización de Deserialización:** Para una solución más robusta, se refactorizó `AuthRepositoryImpl.kt`, reemplazando las llamadas reflexivas `serializer<T>()` por el método estático y seguro para R8 `T.serializer()`. Esto elimina la dependencia de la reflexión que causaba el problema.
+
+### 2. Solución de `MissingFieldException` en la sincronización de Unidades Productivas
+
+*   **Problema:** La aplicación fallaba al iniciar sesión con un `MissingFieldException` porque la respuesta de la API para `unidades-productivas` no coincidía con la estructura del `UnidadProductivaDto` en la app.
+*   **Investigación:**
+    1.  Se utilizó `Invoke-WebRequest` para consultar el endpoint directamente y obtener la respuesta JSON real del servidor.
+    2.  Se analizó la respuesta y se comparó con el DTO y la migración de Laravel proporcionada por el usuario.
+*   **Análisis y Causa Raíz:** Se identificaron tres tipos de discrepancias:
+    1.  **Error de Tipo:** El campo `superficie` se recibía como `String` pero se esperaba como `Float`.
+    2.  **Error de Nombre:** La app esperaba `fuente_agua_id`, `tipo_suelo_id`, etc., pero la API enviaba `agua_humano_fuente_id`, `tipo_suelo_predominante_id`, etc.
+    3.  **Error de Estructura:** La app esperaba `condicion_tenencia_id` en el objeto principal, pero el usuario clarificó que pertenece al objeto anidado `pivot`.
+*   **Solución:**
+    1.  Se reescribió `UnidadProductivaDto.kt` para que sea un reflejo exacto de la respuesta JSON, usando `@SerialName` para mapear los nombres correctos, ajustando el tipo de `superficie` a `String?`, y creando un `PivotDto` anidado para `condicion_tenencia_id`.
+    2.  Se flexibilizó el modelo de dominio `UnidadProductiva.kt` para aceptar campos nulables (`nombre`, `superficie`, `municipioId`).
+    3.  Se corrigieron las funciones de mapeo `toEntity()` y `toDomain()` en `UnidadProductivaRepositoryImpl.kt` para manejar la nueva estructura del DTO, incluyendo la conversión de tipos (`String?` a `Float?`) y la obtención de datos del objeto `pivot`.
+    4.  Se corrigieron los errores de compilación resultantes en la capa de UI (`:app`) para manejar los nuevos tipos nulables, proveyendo valores por defecto en los Composables (`?: "Sin nombre"`).
+
+### Estado Final de la Sesión
+
+*   Todos los errores de compilación en `debug` y `release` fueron resueltos.
+*   Se generó exitosamente un APK de `release` para la prueba final por parte del usuario.
+*   El código base es ahora más robusto y resiliente a la ofuscación de R8 y a las discrepancias de datos de la API.

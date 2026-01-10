@@ -1,8 +1,10 @@
 package com.sinc.mobile.data.model
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class StockResponseDto(
-    @SerializedName("data") val data: StockDataDto,
-    @SerializedName("message") val message: String
+    @SerialName("data") val data: StockDataDto,
+    @SerialName("message") val message: String
 )

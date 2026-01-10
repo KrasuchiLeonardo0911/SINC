@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
+import com.sinc.mobile.BuildConfig
+import com.sinc.mobile.domain.model.GenericError
 
 import com.sinc.mobile.domain.use_case.SyncDataUseCase
 
@@ -48,10 +51,13 @@ class LoginViewModel @Inject constructor(
                         _state.value = _state.value.copy(isSyncing = false) // Clear syncing state
                         _navigationEvent.emit(NavigationEvent.NavigateToHome)
                     } else if (syncResult is com.sinc.mobile.domain.util.Result.Failure) {
+                        val errorMessage = (syncResult.error as? GenericError)?.message ?: "Error desconocido durante la sincronización."
+                        if (BuildConfig.DEBUG) {
+                            Log.e("LoginSyncError", "Sync failed: $errorMessage")
+                        }
                         _state.value = _state.value.copy(
                             isSyncing = false,
-                            error = (syncResult.error as? com.sinc.mobile.domain.model.GenericError)?.message
-                                ?: "Error durante la sincronización."
+                            error = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde."
                         )
                     }
                 }
@@ -62,7 +68,10 @@ class LoginViewModel @Inject constructor(
                     _state.value = _state.value.copy(isLoading = false, error = "Error de red. Revisa tu conexión.")
                 }
                 is AuthResult.UnknownError -> {
-                    _state.value = _state.value.copy(isLoading = false, error = result.message)
+                    if (BuildConfig.DEBUG) {
+                        Log.e("LoginError", "Unknown login error: ${result.message}")
+                    }
+                    _state.value = _state.value.copy(isLoading = false, error = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.")
                 }
             }
         }

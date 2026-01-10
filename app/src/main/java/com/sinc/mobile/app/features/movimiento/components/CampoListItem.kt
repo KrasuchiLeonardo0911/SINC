@@ -48,7 +48,7 @@ fun CampoListItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = unidad.nombre,
+                    text = unidad.nombre ?: "Sin nombre",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = if (isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -74,7 +74,7 @@ fun CampoListItem(
             if (isEnabled) {
                 Icon(
                     imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = "Seleccionar ${unidad.nombre}",
+                    contentDescription = "Seleccionar ${unidad.nombre ?: "Sin nombre"}",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
