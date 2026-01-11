@@ -47,7 +47,7 @@ class ForgotPasswordViewModel @Inject constructor(
                     isLoading = false,
                     step = ForgotPasswordStep.EnterCodeAndPassword
                 )
-                _eventFlow.emit(UiEvent.ShowSnackbar("Se ha enviado un código a tu correo."))
+                _eventFlow.emit(UiEvent.ShowSnackbar("Si el correo ingresado existe en el sistema, se ha enviado el código."))
             }.onFailure {
                 _state.value = state.value.copy(isLoading = false, error = it.message)
                 _eventFlow.emit(UiEvent.ShowSnackbar(it.message ?: "Error desconocido"))

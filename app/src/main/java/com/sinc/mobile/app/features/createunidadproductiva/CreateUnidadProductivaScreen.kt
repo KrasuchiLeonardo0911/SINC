@@ -62,7 +62,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 @Composable
 fun CreateUnidadProductivaScreen(
     viewModel: CreateUnidadProductivaViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onSuccessfulCreation: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentStep = uiState.currentStep
@@ -85,7 +86,7 @@ fun CreateUnidadProductivaScreen(
                 viewModel.clearSubmissionResult()
                 // Only navigate back on success
                 if (submissionResult is com.sinc.mobile.domain.util.Result.Success) {
-                    onNavigateBack()
+                    onSuccessfulCreation()
                 }
             }
         )

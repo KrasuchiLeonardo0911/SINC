@@ -8,13 +8,10 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
-
 import com.sinc.mobile.data.network.dto.CatalogosDto
-
 import com.sinc.mobile.data.network.dto.MovimientoRequest
-import com.sinc.mobile.data.network.dto.ChangePasswordRequest
-import com.sinc.mobile.data.network.dto.RequestPasswordResetRequest
-import com.sinc.mobile.data.network.dto.ResetPasswordWithCodeRequest
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 
 interface AuthApiService {
     @Headers("Accept: application/json")
@@ -29,15 +26,29 @@ interface AuthApiService {
     @POST("api/movil/cuaderno/movimientos")
     suspend fun saveMovimientos(@Body request: MovimientoRequest): Response<ResponseBody>
 
+    @FormUrlEncoded
     @Headers("Accept: application/json")
     @POST("api/movil/password/change")
-    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ResponseBody>
+    suspend fun changePassword(
+        @Field("current_password") currentPassword: String,
+        @Field("password") password: String,
+        @Field("password_confirmation") passwordConfirmation: String
+    ): Response<ResponseBody>
 
+    @FormUrlEncoded
     @Headers("Accept: application/json")
     @POST("api/movil/password/request-reset")
-    suspend fun requestPasswordReset(@Body request: RequestPasswordResetRequest): Response<ResponseBody>
+    suspend fun requestPasswordReset(
+        @Field("email") email: String
+    ): Response<ResponseBody>
 
+    @FormUrlEncoded
     @Headers("Accept: application/json")
     @POST("api/movil/password/reset-with-code")
-    suspend fun resetPasswordWithCode(@Body request: ResetPasswordWithCodeRequest): Response<ResponseBody>
+    suspend fun resetPasswordWithCode(
+        @Field("email") email: String,
+        @Field("code") code: String,
+        @Field("password") password: String,
+        @Field("password_confirmation") passwordConfirmation: String
+    ): Response<ResponseBody>
 }

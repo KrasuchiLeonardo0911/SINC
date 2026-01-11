@@ -1,11 +1,8 @@
 package com.sinc.mobile.data.repository
 
 import com.sinc.mobile.data.network.api.AuthApiService
-import com.sinc.mobile.data.network.dto.ChangePasswordRequest
 import com.sinc.mobile.data.network.dto.ErrorResponse
 import com.sinc.mobile.data.network.dto.LoginRequest
-import com.sinc.mobile.data.network.dto.RequestPasswordResetRequest
-import com.sinc.mobile.data.network.dto.ResetPasswordWithCodeRequest
 import com.sinc.mobile.data.network.dto.ValidationErrorResponse
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.model.AuthResult
@@ -128,12 +125,11 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun changePassword(passwordData: ChangePasswordData): Result<Unit> {
         try {
-            val request = ChangePasswordRequest(
+            val response = apiService.changePassword(
                 currentPassword = passwordData.currentPassword,
                 password = passwordData.newPassword,
                 passwordConfirmation = passwordData.newPasswordConfirmation
             )
-            val response = apiService.changePassword(request)
             return if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -148,8 +144,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun requestPasswordReset(data: RequestPasswordResetData): Result<Unit> {
         try {
-            val request = RequestPasswordResetRequest(email = data.email)
-            val response = apiService.requestPasswordReset(request)
+            val response = apiService.requestPasswordReset(data.email)
             return if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -164,13 +159,12 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun resetPasswordWithCode(data: ResetPasswordWithCodeData): Result<Unit> {
         try {
-            val request = ResetPasswordWithCodeRequest(
+            val response = apiService.resetPasswordWithCode(
                 email = data.email,
                 code = data.code,
                 password = data.password,
                 passwordConfirmation = data.passwordConfirmation
             )
-            val response = apiService.resetPasswordWithCode(request)
             return if (response.isSuccessful) {
                 Result.success(Unit)
             } else {

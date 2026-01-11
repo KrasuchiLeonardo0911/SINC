@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.campos.CamposScreen
@@ -83,7 +85,7 @@ fun MainScreen(
                 when (route) {
                     CozyBottomNavRoutes.HOME -> MainContent(
                         paddingValues = paddingValues,
-                        onSettingsClick = { navController.navigate(Routes.SETTINGS) },
+                        onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
                         onDateClick = { showLogisticsPanel = true },
                         today = today,
                         onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
@@ -104,7 +106,8 @@ fun MainScreen(
                         onNavigateToCreateUnidadProductiva = {
                             navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                         },
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                        navController = navController
                     )
                     CozyBottomNavRoutes.SELECCION_CAMPO -> SeleccionCampoScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
@@ -118,16 +121,12 @@ fun MainScreen(
                             navController.navigate(Routes.SETTINGS)
                             currentRoute = CozyBottomNavRoutes.HOME // Go back to home state after navigating
                         }
-                        // Display the home content while navigating
-                        MainContent(
-                            paddingValues = paddingValues,
-                            onSettingsClick = { navController.navigate(Routes.SETTINGS) },
-                            onDateClick = { showLogisticsPanel = true },
-                            today = today,
-                            onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
-                            onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
-                            onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
-                            onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
+                        // Display a blank box to cover the content and prevent clicks during navigation
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(paddingValues)
                         )
                     }
                     CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {

@@ -19,6 +19,7 @@ import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosSc
 import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoStepperScreen
+import com.sinc.mobile.app.features.cuenca.CuencaInfoScreen
 import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
@@ -38,6 +39,7 @@ object Routes {
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
     const val LOGISTICS = "logistics"
+    const val CUENCA_INFO = "cuenca_info"
 }
 
 @Composable
@@ -95,6 +97,17 @@ fun AppNavigation(
             )
         }
         composable(
+            route = Routes.CUENCA_INFO,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            CuencaInfoScreen(navController = navController)
+        }
+        composable(
             route = Routes.CHANGE_PASSWORD,
             enterTransition = {
                 slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
@@ -143,7 +156,14 @@ fun AppNavigation(
             }
         ) {
             CreateUnidadProductivaScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSuccessfulCreation = {
+                    // Set a result on the previous screen's SavedStateHandle
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("should_refresh_ups", true)
+                    navController.popBackStack()
+                }
             )
         }
 
