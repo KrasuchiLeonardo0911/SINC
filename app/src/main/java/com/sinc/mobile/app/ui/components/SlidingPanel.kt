@@ -36,8 +36,7 @@ fun SlidingPanel(
     handleWidth: Dp = 60.dp,
     handleContent: @Composable BoxScope.() -> Unit,
     panelContent: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    mainContent: @Composable () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
     val screenWidthPx = with(LocalDensity.current) { panelWidth.toPx() }
@@ -66,8 +65,6 @@ fun SlidingPanel(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        mainContent()
-
         // Scrim to dismiss the panel on outside click
         if (showPanel && offsetX.value > 0f) {
             Box(

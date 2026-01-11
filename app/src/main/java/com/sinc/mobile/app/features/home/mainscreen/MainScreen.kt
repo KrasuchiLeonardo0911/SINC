@@ -2,13 +2,13 @@ package com.sinc.mobile.app.features.home.mainscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.campos.CamposScreen
@@ -38,8 +37,6 @@ import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.theme.*
 import com.sinc.mobile.app.ui.components.SlidingPanel
-
-
 import java.time.LocalDate
 
 @Composable
@@ -53,22 +50,7 @@ fun MainScreen(
 
     val today = remember { LocalDate.now() } // Get current date once
 
-    SlidingPanel(
-        showPanel = showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME),
-        onDismiss = { showLogisticsPanel = false },
-        onFullyOpen = { /* No action needed */ },
-        handleContent = {
-            LogisticsDraggableHandle(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = 73.dp) // Adjusted to align with WeekdaySelector
-            )
-        },
-        panelContent = {
-            LogisticsScreen(onBackPress = { showLogisticsPanel = false }, today = today)
-        }
-    ) {
-        // This is the main content that will be behind the panel
+    Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.navigationBarsPadding(),
             containerColor = CozyMediumGray,
@@ -76,7 +58,11 @@ fun MainScreen(
                 CozyBottomNavBar(
                     selectedRoute = currentRoute,
                     onItemSelected = { newRoute ->
-                        currentRoute = newRoute
+                        if (newRoute == CozyBottomNavRoutes.PROFILE) {
+                            navController.navigate(Routes.SETTINGS)
+                        } else {
+                            currentRoute = newRoute
+                        }
                     }
                 )
             }
@@ -114,21 +100,6 @@ fun MainScreen(
                         navController = navController,
                         onBack = { currentRoute = CozyBottomNavRoutes.HOME }
                     )
-                    CozyBottomNavRoutes.PROFILE -> {
-                        // Use LaunchedEffect to navigate to settings and then pop back to home
-                        // This avoids showing a blank screen and keeps the bottom bar state consistent
-                        LaunchedEffect(Unit) {
-                            navController.navigate(Routes.SETTINGS)
-                            currentRoute = CozyBottomNavRoutes.HOME // Go back to home state after navigating
-                        }
-                        // Display a blank box to cover the content and prevent clicks during navigation
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                                .padding(paddingValues)
-                        )
-                    }
                     CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {
                         Column(
                             modifier = Modifier
@@ -152,6 +123,24 @@ fun MainScreen(
                     }
                 }
             }
+        }
+
+        if (showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME)) {
+            SlidingPanel(
+                showPanel = showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME),
+                onDismiss = { showLogisticsPanel = false },
+                onFullyOpen = { /* No action needed */ },
+                handleContent = {
+                    LogisticsDraggableHandle(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(top = 73.dp) // Adjusted to align with WeekdaySelector
+                    )
+                },
+                panelContent = {
+                    LogisticsScreen(onBackPress = { showLogisticsPanel = false }, today = today)
+                }
+            )
         }
     }
 }
@@ -179,11 +168,11 @@ fun MainContent(
                 .fillMaxWidth()
                 .background(Color.White)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp)) {
                 Header(onSettingsClick = onSettingsClick)
             }
             HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 WeekdaySelector(
                     onDateClick = onDateClick,
                     today = today
