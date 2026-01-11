@@ -5,16 +5,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -63,14 +64,12 @@ fun CamposScreen(
                 modifier = Modifier.statusBarsPadding()
             )
         }
-        // FloatingActionButton removed as per user request
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(bottom = mainScaffoldBottomPadding),
-            contentAlignment = Alignment.TopCenter
         ) {
             if (uiState.isLoading && uiState.unidades.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -103,28 +102,24 @@ fun CamposScreen(
 
                     if (filteredUnidades.isEmpty()) {
                         Column(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             EmptyState(
                                 title = if (searchQuery.isNotBlank()) "No se encontraron campos" else "Aún no tienes campos registrados.",
-                                message = if (searchQuery.isNotBlank()) "Intenta con otra búsqueda." else "Presiona el botón de abajo para registrar tu primer campo.",
+                                message = if (searchQuery.isNotBlank()) "Intenta con otra búsqueda." else "Registra tu primer campo usando el botón de agregar.",
                                 icon = Icons.Outlined.Map,
                                 iconSize = 48.dp,
                                 titleStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                                 messageStyle = MaterialTheme.typography.bodySmall
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = onNavigateToCreateUnidadProductiva) {
-                                Text("Registrar Campo")
-                            }
                         }
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = 72.dp) // Adjusted padding for FAB removal
+                            contentPadding = PaddingValues(bottom = 72.dp) // Adjusted padding for FAB
                         ) {
                             items(filteredUnidades, key = { it.id }) { unidad ->
                                 CampoListItem(
@@ -136,6 +131,18 @@ fun CamposScreen(
                         }
                     }
                 }
+            }
+
+            FloatingActionButton(
+                onClick = onNavigateToCreateUnidadProductiva,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .size(52.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Filled.Add, "Registrar Campo")
             }
         }
     }

@@ -36,31 +36,6 @@ class CatalogosRepositoryImpl @Inject constructor(
     private fun CategoriaAnimalEntity.toDomain(): Categoria = Categoria(id, nombre, especie_id)
     private fun MotivoMovimientoEntity.toDomain(): MotivoMovimiento = MotivoMovimiento(id, nombre, tipo)
 
-    /**
-     * Finds the first coordinate ring (an array of [lon, lat] pairs) in a GeoJSON coordinates structure.
-     * It recursively traverses the JSON arrays until it finds an array whose direct children are
-     * arrays of numbers (the coordinate pairs).
-     */
-    private fun findCoordinateRing(element: JsonElement?): JsonArray? {
-        if (element !is JsonArray || element.isEmpty()) return null
-
-        val firstChild = element.getOrNull(0)
-        if (firstChild !is JsonArray || firstChild.isEmpty()) return null
-
-        val firstGrandchild = firstChild.getOrNull(0)
-        // If the first grandchild is NOT an array, it must be a coordinate number.
-        // This means the `firstChild` is the coordinate pair `[lon, lat]`.
-        // Therefore, the current `element` is the ring (the array of pairs).
-        if (firstGrandchild !is JsonArray) {
-            return element
-        }
-
-        // Otherwise, the grandchild is another array (e.g., a coordinate pair),
-        // which means the child is a ring, and the current element is a list of rings (a polygon)
-        // or a list of polygons. We need to go deeper.
-        return findCoordinateRing(firstChild)
-    }
-
     private fun MunicipioEntity.toDomain(): Municipio {
         val centroide = if (latitud != null && longitud != null) {
             DomainGeoPoint(latitud, longitud)
@@ -68,26 +43,49 @@ class CatalogosRepositoryImpl @Inject constructor(
 
         val poligono = geojson_boundary?.let { jsonString ->
             try {
-                val jsonElement = json.parseToJsonElement(jsonString)
-                if (jsonElement !is JsonObject) {
-                    Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: Not a JSON Object.")
+                val geoJson = json.parseToJsonElement(jsonString).jsonObject
+                val type = geoJson["type"]?.jsonPrimitive?.content
+                val coordinates = geoJson["coordinates"] as? JsonArray
+
+                if (coordinates == null) {
+                    Log.e("CatalogosRepo", "Coordinates are null for municipio $nombre")
                     return@let null
                 }
-                val coordinates = jsonElement["coordinates"] as? JsonArray
 
-                // This will find the array that contains the coordinate PAIRS.
-                // For a Polygon, it will be the first and only ring.
-                // For a MultiPolygon, it will be the first ring of the first polygon.
-                val exteriorRing = findCoordinateRing(coordinates)
+                val ring: JsonArray? = when (type) {
+                    "Polygon" -> {
+                        // For Polygon, coordinates are [ ring, hole1, ... ]
+                        // We take the first element, which is the exterior ring.
+                        coordinates.getOrNull(0) as? JsonArray
+                    }
+                    "MultiPolygon" -> {
+                        // For MultiPolygon, coordinates are [ polygon1, polygon2, ... ]
+                        // where a polygon is [ ring, hole1, ... ]
+                        // We take the first ring of the first polygon.
+                        val firstPolygon = coordinates.getOrNull(0) as? JsonArray
+                        firstPolygon?.getOrNull(0) as? JsonArray
+                    }
+                    else -> {
+                        Log.e("CatalogosRepo", "Unknown GeoJSON type '$type' for municipio $nombre")
+                        null
+                    }
+                }
 
-                exteriorRing?.mapNotNull { element ->
-                    val rawCoords = element as? JsonArray
-                    if (rawCoords != null && rawCoords.size >= 2) {
-                        DomainGeoPoint(rawCoords[1].jsonPrimitive.double, rawCoords[0].jsonPrimitive.double)
-                    } else null
+                ring?.mapNotNull { pointElement ->
+                    val point = pointElement as? JsonArray
+                    if (point != null && point.size >= 2) {
+                        // GeoJSON standard is [longitude, latitude]
+                        DomainGeoPoint(
+                            latitude = point[1].jsonPrimitive.double,
+                            longitude = point[0].jsonPrimitive.double
+                        )
+                    } else {
+                        Log.w("CatalogosRepo", "Invalid point in ring for municipio $nombre: $pointElement")
+                        null
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("CatalogosRepo", "Error parsing geojson_boundary for municipio ${nombre}: ${e.message}")
+                Log.e("CatalogosRepo", "Failed to parse geojson for municipio $nombre: ${e.message}")
                 Log.d("CatalogosRepo", "Problematic JSON: $jsonString")
                 null
             }

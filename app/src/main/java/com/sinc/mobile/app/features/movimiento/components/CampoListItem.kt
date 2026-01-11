@@ -28,8 +28,6 @@ fun CampoListItem(
     isEnabled: Boolean,
     onUnidadSelected: (UnidadProductiva) -> Unit
 ) {
-    val alpha = if (isEnabled) 1f else 0.5f // Reduce opacity for disabled items
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -38,7 +36,6 @@ fun CampoListItem(
                     onUnidadSelected(unidad)
                 }
             }
-            .alpha(alpha)
             .padding(vertical = 12.dp, horizontal = 16.dp)
     ) {
         Row(
@@ -55,21 +52,12 @@ fun CampoListItem(
                     )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                if (isEnabled) {
-                    Text(
-                        text = "RNSPA: ${unidad.identificadorLocal ?: "No disponible"}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Text(
+                    text = "RNSPA: ${unidad.identificadorLocal ?: "No disponible"}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    Text(
-                        text = "No hay un área disponible para el registro.",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.error // Or a distinct gray for errors
-                        )
-                    )
-                }
+                )
             }
             if (isEnabled) {
                 Icon(
