@@ -294,19 +294,17 @@ class CreateUnidadProductivaViewModel @Inject constructor(
             val domainGeoPoint = DomainGeoPoint(location.latitude, location.longitude)
             val foundMunicipio = findContainingMunicipio(domainGeoPoint)
 
-            if (foundMunicipio != null) {
-                _uiState.update {
-                    it.copy(
-                        selectedLocation = domainGeoPoint,
-                        selectedMunicipio = foundMunicipio,
-                        isMapVisible = false,
-                        mapErrorMessage = null
-                    )
-                }
-                kotlinx.coroutines.delay(500L)
-                _uiState.update { it.copy(currentStep = 2) }
-            } else {
-                _uiState.update {
+                            if (foundMunicipio != null) {
+                                _uiState.update {
+                                    it.copy(
+                                        selectedLocation = domainGeoPoint,
+                                        selectedMunicipio = foundMunicipio,
+                                        isMapVisible = false,
+                                        mapErrorMessage = null
+                                    )
+                                }
+                                _uiState.update { it.copy(currentStep = 2) }
+                            } else {                _uiState.update {
                     it.copy(
                         mapErrorMessage = "La ubicación seleccionada está fuera de los municipios válidos.",
                         isMapVisible = true // Keep map visible to allow correction

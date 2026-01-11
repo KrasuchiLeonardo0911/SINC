@@ -123,7 +123,7 @@ fun RowScope.CozyBottomNavItem(
                 modifier = Modifier.size(24.dp)
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = item.label,
                 style = MaterialTheme.typography.labelSmall,

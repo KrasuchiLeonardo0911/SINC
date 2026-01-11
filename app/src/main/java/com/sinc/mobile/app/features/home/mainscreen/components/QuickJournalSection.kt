@@ -53,19 +53,16 @@ fun QuickJournalSection() {
         ) {
             item {
                 QuickJournalCard(
-                    icon = Icons.Default.Home,
                     title = "En construcción",
                 )
             }
             item {
                 QuickJournalCard(
-                    icon = Icons.Default.Person,
                     title = "En construcción",
                 )
             }
             item {
                 QuickJournalCard(
-                    icon = Icons.Default.Notifications,
                     title = "En construcción",
                 )
             }
@@ -75,7 +72,6 @@ fun QuickJournalSection() {
 
 @Composable
 fun QuickJournalCard(
-    icon: ImageVector,
     title: String,
 ) {
     Card(
@@ -95,13 +91,6 @@ fun QuickJournalCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onSurface // Adjust icon color
-            )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),

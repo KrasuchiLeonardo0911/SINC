@@ -3,6 +3,11 @@ package com.sinc.mobile.app.features.createunidadproductiva
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,7 +63,7 @@ import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.domain.model.GenericError
 import androidx.compose.foundation.layout.navigationBarsPadding
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun CreateUnidadProductivaScreen(
     viewModel: CreateUnidadProductivaViewModel = hiltViewModel(),
@@ -226,8 +231,22 @@ fun CreateUnidadProductivaScreen(
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color.DarkGray)
                 )
 
-                Box(modifier = Modifier.weight(1f)) {
-                    when (currentStep) {
+                AnimatedContent(
+                    targetState = currentStep,
+                    modifier = Modifier.weight(1f),
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            // Going forwards
+                            slideInHorizontally { width -> width } togetherWith
+                                    slideOutHorizontally { width -> -width }
+                        } else {
+                            // Going backwards
+                            slideInHorizontally { width -> -width } togetherWith
+                                    slideOutHorizontally { width -> width }
+                        }
+                    }
+                ) { step ->
+                    when (step) {
                         1 -> Step1Ubicacion(
                             isMapVisible = uiState.isMapVisible,
                             mapMode = uiState.mapMode,
