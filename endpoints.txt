@@ -1,0 +1,34 @@
+GET /api/movil/logistica/proxima-visita`: Añadimos frecuencia_dias a la respuesta JSON para que la app móvil sepa
+      la frecuencia de las visitas.
+
+   1     {
+   2         "fecha": "...",
+   3         "dias_restantes": N,
+   4         "mensaje": "...",
+   5         "frecuencia_dias": M
+   6     }
+
+   2. `GET /api/user`: Ahora carga el perfil completo del Productor si el usuario tiene ese rol, simplificando el flujo
+      de datos post-login.
+
+   1     {
+   2         "id": 1,
+   3         "name": "...",
+   4         "email": "...",
+   5         "productor": { ... }
+   6     }
+
+   3. `GET /api/movil/unidades-productivas`: Se modificó para incluir campos de la tabla pivote, como
+      condicion_tenencia_id, en la respuesta.
+
+    1     {
+    2         "id": 10,
+    3         "nombre": "...",
+    4         "pivot": {
+    5             "productor_id": 5,
+    6             "unidad_productiva_id": 10,
+    7             "condicion_tenencia_id": 2,
+    8             "fecha_inicio": "...",
+    9             "fecha_fin": null
+   10         }
+   11     }

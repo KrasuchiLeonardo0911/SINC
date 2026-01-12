@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.LoadingOverlay
@@ -30,7 +29,6 @@ import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.SyncResultOverlay
 import com.sinc.mobile.ui.theme.SincMobileTheme
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -40,16 +38,20 @@ fun MovimientoStepperScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val pagerState = rememberPagerState(pageCount = { 2 })
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Listen for one-time events from the ViewModel
+    // Listen for one-time page navigation events from the ViewModel
     LaunchedEffect(Unit) {
-        // For page navigation
         viewModel.navigateToPage.collectLatest { page ->
-            scope.launch {
-                pagerState.animateScrollToPage(page)
-            }
+            pagerState.animateScrollToPage(page)
+        }
+    }
+
+    // Listen for stock validation errors
+    LaunchedEffect(uiState.stockValidationError) {
+        uiState.stockValidationError?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            viewModel.clearStockValidationError()
         }
     }
 

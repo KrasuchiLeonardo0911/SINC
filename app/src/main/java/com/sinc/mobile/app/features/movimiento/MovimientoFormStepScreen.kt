@@ -480,11 +480,11 @@ fun MovimientoFormStepContentPreview() {
 
             onMotivoSelected = {},
 
-            onCantidadChanged = {},
+                                    onCantidadChanged = {},
 
-            onDestinoChanged = {}
+                                    onDestinoChanged = {}
 
-        )
+                                )
 
     }
 

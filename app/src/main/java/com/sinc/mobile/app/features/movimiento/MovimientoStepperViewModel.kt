@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.MovimientoPendiente
+import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
+import com.sinc.mobile.domain.repository.StockRepository
 import com.sinc.mobile.domain.use_case.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -34,7 +36,9 @@ data class MovimientoStepperState(
     val formManager: MovimientoFormManager? = null,
     val syncState: MovimientoSyncState = MovimientoSyncState(),
     val catalogos: Catalogos? = null,
-    val unidades: List<UnidadProductiva> = emptyList() // Add this
+    val unidades: List<UnidadProductiva> = emptyList(), // Add this
+    val stock: Stock? = null,
+    val stockValidationError: String? = null
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -46,6 +50,7 @@ class MovimientoStepperViewModel @Inject constructor(
     getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
     private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
+    private val stockRepository: StockRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -82,19 +87,20 @@ class MovimientoStepperViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Explicitly define types to help Kapt
-            val flow: Flow<Pair<List<UnidadProductiva>, Catalogos>> = combine(
+            val flow: Flow<Triple<List<UnidadProductiva>, Catalogos, Stock>> = combine(
                 getUnidadesProductivasUseCase(),
-                getMovimientoCatalogosUseCase()
-            ) { unidades, catalogos ->
-                Pair(unidades, catalogos)
+                getMovimientoCatalogosUseCase(),
+                stockRepository.getStock()
+            ) { unidades, catalogos, stock ->
+                Triple(unidades, catalogos, stock)
             }
-            val initialData: Pair<List<UnidadProductiva>, Catalogos> = flow.first()
+            val initialData: Triple<List<UnidadProductiva>, Catalogos, Stock> = flow.first()
 
             // Artificial delay to ensure spinner is visible
             delay(400)
 
             // Update the state all at once
-            val (unidades, catalogosData) = initialData
+            val (unidades, catalogosData, stockData) = initialData
             val selectedUnidad = unidades.find { it.id.toString() == unidadId }
             catalogos = catalogosData
 
@@ -103,6 +109,7 @@ class MovimientoStepperViewModel @Inject constructor(
                 formManager = MovimientoFormManager(catalogosData),
                 catalogos = catalogosData,
                 unidades = unidades, // Populate units
+                stock = stockData,
                 isLoading = false
             )
         }
@@ -120,11 +127,70 @@ class MovimientoStepperViewModel @Inject constructor(
             return
         }
 
+        val motivo = currentFormState.selectedMotivo
+        val isBaja = motivo?.tipo?.equals("baja", ignoreCase = true) == true
+
+        if (!isBaja) {
+            proceedToAddToList()
+            return
+        }
+
+        // --- START VALIDATION LOGIC for "baja" ---
+        val stock = _uiState.value.stock ?: run {
+            _uiState.value = _uiState.value.copy(stockValidationError = "No se pudo verificar el stock. Intente de nuevo.")
+            return
+        }
+
         val especieId = currentFormState.selectedEspecie!!.id
         val categoriaId = currentFormState.selectedCategoria!!.id
         val razaId = currentFormState.selectedRaza!!.id
-        val motivoId = currentFormState.selectedMotivo!!.id
-        val cantidadNum = currentFormState.cantidad.toIntOrNull() ?: 0
+        val cantidadADescontar = currentFormState.cantidad.toIntOrNull() ?: 0
+
+        // 1. Find current stock for the item by traversing the nested structure
+        val especieName = currentFormState.selectedEspecie!!.nombre
+        val categoriaName = currentFormState.selectedCategoria!!.nombre
+        val razaName = currentFormState.selectedRaza!!.nombre
+
+        val stockActual = stock.unidadesProductivas
+            .find { it.id == unidad.id }
+            ?.especies?.find { it.nombre.equals(especieName, ignoreCase = true) }
+            ?.desglose?.find {
+                it.categoria.equals(categoriaName, ignoreCase = true) && it.raza.equals(razaName, ignoreCase = true)
+            }
+            ?.cantidad ?: 0
+
+        // 2. Find pending bajas for the same item
+        val bajasPendientes = _uiState.value.syncState.movimientosAgrupados
+            .filter {
+                it.especieId == especieId &&
+                        it.categoriaId == categoriaId &&
+                        it.razaId == razaId &&
+                        it.unidadProductivaId == unidad.id &&
+                        _uiState.value.catalogos?.motivosMovimiento?.find { m -> m.id == it.motivoMovimientoId }?.tipo?.equals("baja", ignoreCase = true) == true
+            }
+            .sumOf { it.cantidadTotal }
+
+        // 3. Apply validation rule
+        val stockDisponible = stockActual - bajasPendientes
+        if (cantidadADescontar > stockDisponible) {
+            val errorMessage = "Stock insuficiente. Disponible: $stockDisponible (Actual: $stockActual, Pendientes: $bajasPendientes)"
+            _uiState.value = _uiState.value.copy(stockValidationError = errorMessage)
+            return // Stop the process
+        }
+        // --- END VALIDATION LOGIC ---
+        proceedToAddToList()
+    }
+
+    private fun proceedToAddToList() {
+        val formManager = _uiState.value.formManager ?: return
+        val formState = formManager.formState.value
+        val unidad = _uiState.value.selectedUnidad ?: return
+        
+        val especieId = formState.selectedEspecie!!.id
+        val categoriaId = formState.selectedCategoria!!.id
+        val razaId = formState.selectedRaza!!.id
+        val motivoId = formState.selectedMotivo!!.id
+        val cantidadNum = formState.cantidad.toIntOrNull() ?: 0
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true)
@@ -137,7 +203,7 @@ class MovimientoStepperViewModel @Inject constructor(
                     razaId = razaId,
                     cantidad = cantidadNum,
                     motivoMovimientoId = motivoId,
-                    destinoTraslado = currentFormState.destino.takeIf { it.isNotBlank() },
+                    destinoTraslado = formState.destino.takeIf { it.isNotBlank() },
                     observaciones = null,
                     fechaRegistro = LocalDateTime.now(),
                     sincronizado = false
@@ -166,5 +232,9 @@ class MovimientoStepperViewModel @Inject constructor(
 
     fun onSyncOverlayDismiss() {
         syncManager.dismissSyncCompleted()
+    }
+
+    fun clearStockValidationError() {
+        _uiState.value = _uiState.value.copy(stockValidationError = null)
     }
 }
