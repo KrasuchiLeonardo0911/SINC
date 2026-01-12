@@ -29,14 +29,6 @@ fun SyncSection(state: MovimientoSyncState, onSync: () -> Unit) {
             }
         }
 
-        if (state.syncSuccess) {
-            Text(
-                "Sincronización completada con éxito.",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
         state.syncError?.let {
             Text(
                 text = "Error: $it",

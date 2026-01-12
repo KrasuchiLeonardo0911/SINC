@@ -1153,7 +1153,7 @@ Esta sesión se centró en mejoras significativas de la experiencia de usuario, 
 *   **Aislar el problema:** Crear un proyecto de Android mínimo que solo intente deserializar un `ValidationErrorResponse` o `ErrorResponse` con R8 activado para ver si el error se reproduce, lo que nos permitiría reportar el bug.
 ---
 
-## Resumen de Avances (Sesión con Asistente Gemini)
+## Resumen de Avances 10/01/2026
 
 Esta sesión se centró en resolver una serie de errores críticos que impedían el correcto funcionamiento de la aplicación, especialmente en builds de `release`.
 
@@ -1187,7 +1187,7 @@ Esta sesión se centró en resolver una serie de errores críticos que impedían
 *   Se generó exitosamente un APK de `release` para la prueba final por parte del usuario.
 *   El código base es ahora más robusto y resiliente a la ofuscación de R8 y a las discrepancias de datos de la API.
 
-# Avances de la Sesión Actual
+# Resumen 11/01/2026
 
 Esta sesión se centró en la corrección de errores de interfaz de usuario y lógica de negocio, así como en la mejora de la experiencia de usuario y la estabilidad general de la aplicación.
 
@@ -1240,3 +1240,56 @@ Esta sesión se centró en la corrección de errores de interfaz de usuario y l�
 
 ---
 **Estado Actual:** La aplicación tiene mejoras significativas en el manejo de errores, la gestión de la autenticación, la navegación y la visualización de datos, con todos los errores de compilación resueltos.
+
+# Avances 12/01/2026
+
+Esta sesión se centró en una serie de mejoras de la interfaz de usuario (UI), la experiencia de usuario (UX) y la corrección de errores de compilación, principalmente en la pantalla principal y en la nueva pantalla de información.
+
+### 1. Mejoras en la Pantalla Principal (`MainScreen` y `Header`)
+
+*   **Logo del Encabezado:** Se agrandó ligeramente el logo de "Ovinos" en el `Header` y se aplicó un recorte circular (`clip(CircleShape)`) para que el efecto de pulsación (ripple) sea redondo, eliminando la percepción de una "sombra cuadrada".
+*   **Ajustes de Espaciado:**
+    *   Se redujo a la mitad el espacio vertical entre el `Header` y el divisor horizontal, ajustando el `padding` inferior a `8.dp`.
+    *   Se ajustó el `padding` vertical del selector de días de la semana (`WeekdaySelector`) a `8.dp` para un layout más compacto.
+*   **Corrección de Navegación a Configuraciones:** Se solucionó un error que causaba un parpadeo y un retraso al navegar a la pantalla de "Configuraciones" desde la barra de navegación inferior. La lógica se simplificó para que la navegación sea directa, eliminando el cambio de estado intermedio que causaba el problema.
+
+### 2. Construcción y Refinamiento de la Pantalla "Más Info" (`CuencaInfoScreen`)
+
+*   **Generación de Contenido:** Se implementó la funcionalidad para leer el contenido de una URL externa (`https://sicsurmisiones.online/cuenca-misiones`), generar un resumen y presentarlo en la pantalla.
+*   **Nuevo Resumen y Enfoque:** El texto descriptivo se reescribió para ser más conciso y enfocado en los objetivos de la aplicación móvil como herramienta de la "Mesa de Gestión de la Cuenca".
+*   **Rediseño de Layout:** La pantalla se rediseñó completamente para seguir el estilo de la app, utilizando `Card`s de ancho completo con un fondo gris de separación.
+*   **Carrusel de Logos "Impulsado por":**
+    *   Se añadió una nueva sección con el título "Impulsado por".
+    *   Se creó un carrusel de logos (`LazyRow`) dentro de una `Card` con un borde fino de color primario ("bordó").
+    *   Se incluyó el logo de "Ovinos" en primera posición y el del "INTA" en segunda, seguido por los demás logos institucionales.
+*   **Pie de Página "Desarrollado por":** Se añadió una `Card` al final de la pantalla con la información de contacto del desarrollador, y se corrigieron múltiples problemas de alineación para asegurar que el bloque de texto se vea centrado y ordenado.
+*   **Reorganización de Contenido:**
+    *   El botón "Ver página completa" se movió a la tarjeta de información principal.
+    *   El título de la pantalla se cambió a "Más Info".
+
+### 3. Resolución de Errores de Compilación
+
+*   Se solucionaron numerosos y persistentes errores de compilación en `CuencaInfoScreen.kt` relacionados con:
+    *   **Referencias no resueltas (`Unresolved reference`):** Se corrigieron problemas con `IntrinsicSize` (reemplazando su uso) y con las referencias a recursos `R.drawable` (usando el nombre completamente calificado).
+    *   **Importaciones conflictivas y duplicadas:** Se realizó una limpieza y reorganización completa de los `import` para resolver ambigüedades y errores de sintaxis.
+    *   El proyecto ahora compila exitosamente en modo `debug`.
+
+---
+
+### Avances Adicionales
+
+#### 1. Snackbar de Validación para Selección de Especie
+*   **Funcionalidad:** Implementado un mensaje de snackbar ("Por favor, seleccione una especie primero.") que aparece cuando el usuario intenta seleccionar "Categoría" o "Raza" sin haber elegido previamente una "Especie".
+*   **Comportamiento:** El snackbar ahora tiene una duración corta (`SnackbarDuration.Short`) y se ha añadido lógica para asegurar que solo se muestre un mensaje a la vez, evitando la acumulación de notificaciones.
+*   **Archivos Afectados:** `MovimientoStepperScreen.kt`, `MovimientoFormStepScreen.kt`.
+
+#### 2. Mejora en la UI/UX del Proceso de Sincronización
+*   **Refactorización del Flujo:** Se modificó la lógica de sincronización para evitar que la pantalla de revisión se vacíe prematuramente mientras se muestra la animación de éxito. Ahora, la limpieza de los datos locales ocurre *después* de que la animación de éxito se ha completado, manteniendo una experiencia visual fluida.
+*   **Overlay de Éxito (`SyncResultOverlay.kt`):**
+    *   Se creó e integró un nuevo componente `SyncResultOverlay.kt` que muestra una animación de éxito (un ícono de check con el mensaje "Stock actualizado con éxito!") después de una sincronización exitosa.
+    *   **Comportamiento de Cierre:** El overlay ahora se puede cerrar haciendo clic en cualquier parte de la pantalla, en lugar de cerrarse automáticamente después de un retardo. Esto proporciona más control al usuario.
+    *   **Estilo Visual:** Se eliminó la sombra de fondo (scrim) del `SyncResultOverlay` para un aspecto más limpio y menos intrusivo.
+*   **Mantenimiento en Pantalla:** Después de una sincronización exitosa, la aplicación permanece en la pantalla de revisión (en un estado vacío), en lugar de navegar automáticamente a la pantalla principal.
+*   **Archivos Afectados:** `MovimientoSyncManager.kt`, `MovimientoStepperViewModel.kt`, `MovimientoRepository.kt`, `MovimientoRepositoryImpl.kt`, `SyncMovimientosPendientesUseCase.kt`, `MovimientoStepperScreen.kt`, `SyncResultOverlay.kt`.
+
+### Avances 13/01/2026

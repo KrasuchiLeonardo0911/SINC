@@ -185,8 +185,7 @@ fun AppNavigation(
             }
         ) {
             MovimientoStepperScreen(
-                onBackPress = { navController.popBackStack() },
-                navController = navController
+                onBackPress = { navController.popBackStack() }
             )
         }
     }

@@ -27,6 +27,7 @@ import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.app.ui.components.SyncResultOverlay
 import com.sinc.mobile.ui.theme.SincMobileTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -35,7 +36,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun MovimientoStepperScreen(
     onBackPress: () -> Unit,
-    navController: NavController, // Added NavController for navigation on success
     viewModel: MovimientoStepperViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -53,24 +53,14 @@ fun MovimientoStepperScreen(
         }
     }
 
-    // Listen for sync results to show Snackbars
-    LaunchedEffect(uiState.syncState) {
+    // Listen for sync results to show Snackbars for errors
+    LaunchedEffect(uiState.syncState.syncError) {
         val syncError = uiState.syncState.syncError
         if (syncError != null) {
             snackbarHostState.showSnackbar(
                 message = "Error de sincronización: $syncError",
                 duration = SnackbarDuration.Short
             )
-        }
-        if (uiState.syncState.syncSuccess) {
-            snackbarHostState.showSnackbar(
-                message = "Movimientos sincronizados con éxito!",
-                duration = SnackbarDuration.Short
-            )
-            // Navigate home after successful sync
-            navController.navigate(Routes.HOME) {
-                popUpTo(Routes.HOME) { inclusive = true }
-            }
         }
     }
 
@@ -91,8 +81,13 @@ fun MovimientoStepperScreen(
         )
     }
 
-    // Full screen loading for sync
+    // --- Overlays for Syncing and Success ---
     LoadingOverlay(isLoading = uiState.syncState.isSyncing)
+    SyncResultOverlay(
+        show = uiState.syncState.syncCompleted,
+        message = "Stock actualizado con éxito!",
+        onDismiss = { viewModel.onSyncOverlayDismiss() }
+    )
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
@@ -150,6 +145,7 @@ fun MovimientoStepperScreen(
                     0 -> {
                         if (uiState.formManager != null) {
                             MovimientoFormStepContent(
+                                snackbarHostState = snackbarHostState,
                                 formState = uiState.formManager!!.formState.value,
                                 onEspecieSelected = uiState.formManager!!::onEspecieSelected,
                                 onCategoriaSelected = uiState.formManager!!::onCategoriaSelected,

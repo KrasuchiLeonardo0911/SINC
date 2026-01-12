@@ -163,4 +163,8 @@ class MovimientoStepperViewModel @Inject constructor(
     fun deleteMovimientoGroup(grupo: MovimientoAgrupado) {
         syncManager.deleteMovimientoGroup(grupo)
     }
+
+    fun onSyncOverlayDismiss() {
+        syncManager.dismissSyncCompleted()
+    }
 }

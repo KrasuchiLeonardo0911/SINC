@@ -22,8 +22,8 @@ private data class MovimientoGroupKey(
 data class MovimientoSyncState(
     val movimientosAgrupados: List<MovimientoAgrupado> = emptyList(),
     val isSyncing: Boolean = false,
+    val syncCompleted: Boolean = false, // New state for success animation
     val syncError: String? = null,
-    val syncSuccess: Boolean = false,
 )
 
 class MovimientoSyncManager(
@@ -69,7 +69,6 @@ class MovimientoSyncManager(
         }
     }
 
-    // This function now contains the actual deletion logic
     fun deleteMovimientoGroup(grupo: MovimientoAgrupado) {
         scope.launch {
             grupo.originales.forEach { movimiento ->
@@ -80,17 +79,21 @@ class MovimientoSyncManager(
 
     fun syncMovements() {
         scope.launch {
-            _syncState.value = _syncState.value.copy(isSyncing = true, syncError = null, syncSuccess = false)
+            _syncState.value = _syncState.value.copy(isSyncing = true, syncError = null, syncCompleted = false)
             val startTime = System.currentTimeMillis()
 
-            syncMovimientosPendientesUseCase().onSuccess {
+            syncMovimientosPendientesUseCase().onSuccess { syncedMovements ->
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
                     delay(1000 - duration) // Ensure spinner is visible for at least 1s
                 }
-                _syncState.value = _syncState.value.copy(isSyncing = false, syncSuccess = true)
-                delay(2000L) // Keep success message visible
-                _syncState.value = _syncState.value.copy(syncSuccess = false)
+                // Show success animation
+                _syncState.value = _syncState.value.copy(isSyncing = false, syncCompleted = true)
+
+                // Delete the local items now, which will trigger the UI update
+                syncedMovements.forEach {
+                    deleteMovimientoLocalUseCase(it)
+                }
             }.onFailure { error ->
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
@@ -101,5 +104,9 @@ class MovimientoSyncManager(
                 _syncState.value = _syncState.value.copy(syncError = null)
             }
         }
+    }
+
+    fun dismissSyncCompleted() {
+        _syncState.value = _syncState.value.copy(syncCompleted = false)
     }
 }

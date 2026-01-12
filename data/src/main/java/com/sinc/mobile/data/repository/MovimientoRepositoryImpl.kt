@@ -35,13 +35,14 @@ class MovimientoRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncMovimientosPendientes(): Result<Unit> {
+    override suspend fun syncMovimientosPendientes(): Result<List<MovimientoPendiente>> {
         return try {
             val pendientes = getMovimientosPendientes().first()
             if (pendientes.isEmpty()) {
-                return Result.success(Unit)
+                return Result.success(emptyList())
             }
 
+            val successfullySynced = mutableListOf<MovimientoPendiente>()
             val groupedByUp = pendientes.groupBy { it.unidadProductivaId }
 
             for ((upId, movimientos) in groupedByUp) {
@@ -53,21 +54,16 @@ class MovimientoRepositoryImpl @Inject constructor(
                 val response = movimientoApiService.saveMovimientos(batchRequest)
 
                 if (response.isSuccessful) {
-                                        movimientos.forEach { movimiento ->
-                                            movimientoPendienteDao.delete(movimiento.toEntity()) // Changed to delete
-                                        }
-                                    } else {
-                                        // If one batch fails, we stop and return failure.
-                                        // A more robust implementation could collect failures and continue.
-                                        // Changed to a generic error message
-                                        return Result.failure(Exception("Ocurrió un error al sincronizar movimientos."))
-                                    }
-                                }
-                                Result.success(Unit)
-                            } catch (e: Exception) {
-                                Result.failure(e)
-                            }
-                        }
+                    successfullySynced.addAll(movimientos)
+                } else {
+                    return Result.failure(Exception("Ocurrió un error al sincronizar movimientos."))
+                }
+            }
+            Result.success(successfullySynced)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
                     
                         override suspend fun deleteMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit> {
                             return try {

@@ -29,6 +29,8 @@ import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.MotivoMovimiento
 import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.ui.theme.SincMobileTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 // --- Bottom Sheet Specific Data Class ---
@@ -41,6 +43,7 @@ sealed class SheetContent {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovimientoFormStepContent(
+    snackbarHostState: SnackbarHostState,
     formState: MovimientoFormState,
     onEspecieSelected: (Especie) -> Unit,
     onCategoriaSelected: (Categoria) -> Unit,
@@ -53,6 +56,7 @@ fun MovimientoFormStepContent(
     var sheetContent by remember { mutableStateOf<SheetContent?>(null) }
     var showDestinoSheet by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val scope = rememberCoroutineScope()
 
     // --- Bottom sheet for Categoría and Raza ---
     if (showSheet && sheetContent != null) {
@@ -162,30 +166,31 @@ fun MovimientoFormStepContent(
 
         // 4. Campos de Selección
         item {
-            DropdownField(
-                label = "Categoría",
-                selectedValue = formState.selectedCategoria?.nombre,
-                placeholder = "Seleccionar categoría",
-                enabled = formState.selectedEspecie != null,
-                onClick = {
-                    sheetContent = SheetContent.CategoriaSheet(formState.filteredCategorias)
-                    showSheet = true
-                }
-            )
-        }
-        item {
-            DropdownField(
-                label = "Raza",
-                selectedValue = formState.selectedRaza?.nombre,
-                placeholder = "Seleccionar raza",
-                enabled = formState.selectedEspecie != null,
-                onClick = {
-                    sheetContent = SheetContent.RazaSheet(formState.filteredRazas)
-                    showSheet = true
-                }
-            )
-        }
-
+                        DropdownField(
+                            label = "Categoría",
+                            selectedValue = formState.selectedCategoria?.nombre,
+                            placeholder = "Seleccionar categoría",
+                            enabled = formState.selectedEspecie != null,
+                            snackbarHostState = snackbarHostState,
+                            onClick = {
+                                sheetContent = SheetContent.CategoriaSheet(formState.filteredCategorias)
+                                showSheet = true
+                            }
+                        )
+                    }
+                    item {
+                        DropdownField(
+                            label = "Raza",
+                            selectedValue = formState.selectedRaza?.nombre,
+                            placeholder = "Seleccionar raza",
+                            enabled = formState.selectedEspecie != null,
+                            snackbarHostState = snackbarHostState,
+                            onClick = {
+                                sheetContent = SheetContent.RazaSheet(formState.filteredRazas)
+                                showSheet = true
+                            }
+                        )
+                    }
         // 5. Sección "Motivo"
         item {
             MotivoSelector(
@@ -291,7 +296,8 @@ fun DropdownField(
     selectedValue: String?,
     placeholder: String,
     enabled: Boolean,
-    onClick: () -> Unit
+    snackbarHostState: SnackbarHostState,
+    onClick: () -> Unit // This onClick is the action to open the sheet
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
@@ -317,11 +323,25 @@ fun DropdownField(
                     disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )
             )
-            // Transparent overlay to capture clicks
+            val scope = rememberCoroutineScope() // Local scope for snackbar
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable(onClick = onClick, enabled = enabled)
+                    .clickable(enabled = true) { // Always clickable
+                        if (enabled) { // Logic from parent
+                            onClick()
+                        }
+                        else {
+                            if (snackbarHostState.currentSnackbarData == null) {
+                                scope.launch { // Use local scope here
+                                    snackbarHostState.showSnackbar(
+                                        message = "Por favor, seleccione una especie primero.",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        }
+                    }
             )
         }
     }
@@ -446,9 +466,10 @@ fun StepperButton(icon: @Composable () -> Unit, isPrimary: Boolean = false, enab
 fun MovimientoFormStepContentPreview() {
 
     SincMobileTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
 
         MovimientoFormStepContent(
-
+            snackbarHostState = snackbarHostState,
             formState = MovimientoFormState(),
 
             onEspecieSelected = {},

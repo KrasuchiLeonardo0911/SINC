@@ -7,6 +7,6 @@ import kotlinx.coroutines.flow.Flow
 interface MovimientoRepository {
     suspend fun saveMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit>
     fun getMovimientosPendientes(): Flow<List<MovimientoPendiente>>
-    suspend fun syncMovimientosPendientes(): Result<Unit>
+    suspend fun syncMovimientosPendientes(): Result<List<MovimientoPendiente>>
     suspend fun deleteMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit>
 }
