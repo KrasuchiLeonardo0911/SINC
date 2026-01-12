@@ -15,6 +15,6 @@ data class ApiResponse<T>(
 data class IdentifierConfigDto(
     @SerialName("type") val type: String,
     @SerialName("label") val label: String,
-    @SerialName("hint") val hint: String?,
+    @SerialName("hint") val hint: String? = null,
     @SerialName("regex") val regex: String
 )

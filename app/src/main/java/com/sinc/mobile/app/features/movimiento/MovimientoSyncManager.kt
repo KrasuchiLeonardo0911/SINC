@@ -3,6 +3,7 @@ package com.sinc.mobile.app.features.movimiento
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
+import com.sinc.mobile.domain.use_case.SyncStockUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,8 @@ data class MovimientoSyncState(
 class MovimientoSyncManager(
     private val getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
     private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
-    private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase, // Accept the use case
+    private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
+    private val syncStockUseCase: SyncStockUseCase,
     private val scope: CoroutineScope
 ) {
     private val _syncState = MutableStateFlow(MovimientoSyncState())
@@ -94,6 +96,9 @@ class MovimientoSyncManager(
                 syncedMovements.forEach {
                     deleteMovimientoLocalUseCase(it)
                 }
+
+                // Now, trigger a refresh of the total stock
+                syncStockUseCase()
             }.onFailure { error ->
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {

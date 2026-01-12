@@ -14,6 +14,7 @@ import com.sinc.mobile.domain.use_case.CreateUnidadProductivaUseCase
 import com.sinc.mobile.domain.use_case.GetCurrentLocationUseCase
 import com.sinc.mobile.domain.use_case.GetIdentifierConfigsUseCase
 import com.sinc.mobile.domain.use_case.SyncIdentifierConfigsUseCase
+import com.sinc.mobile.domain.use_case.SyncUnidadesProductivasUseCase
 import com.sinc.mobile.domain.use_case.ticket.SubmitTicketUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,7 +83,8 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     private val getIdentifierConfigsUseCase: GetIdentifierConfigsUseCase,
     private val syncIdentifierConfigsUseCase: SyncIdentifierConfigsUseCase,
     private val createUnidadProductivaUseCase: CreateUnidadProductivaUseCase,
-    private val submitTicketUseCase: SubmitTicketUseCase
+    private val submitTicketUseCase: SubmitTicketUseCase,
+    private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUnidadProductivaState())
@@ -216,6 +218,12 @@ class CreateUnidadProductivaViewModel @Inject constructor(
 
         val result = createUnidadProductivaUseCase(data)
         _uiState.update { it.copy(isSubmitting = false, submissionResult = result) }
+
+        if (result is com.sinc.mobile.domain.util.Result.Success) {
+            viewModelScope.launch {
+                syncUnidadesProductivasUseCase()
+            }
+        }
     }
 
     fun onPreviousStep() {
