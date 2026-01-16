@@ -11,5 +11,6 @@ data class UnidadProductiva(
     val condicionTenenciaId: Int?,
     val fuenteAguaId: Int?,
     val tipoSueloId: Int?,
-    val tipoPastoId: Int?
+    val tipoPastoId: Int?,
+    val observaciones: String? = null
 )

@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.sinc.mobile.app.features.campos.CamposScreen
+import com.sinc.mobile.app.features.campos.EditUnidadProductivaScreen
 import com.sinc.mobile.app.features.changepassword.ChangePasswordScreen
 import com.sinc.mobile.app.features.createunidadproductiva.CreateUnidadProductivaScreen
 import com.sinc.mobile.app.features.forgotpassword.ForgotPasswordScreen
@@ -34,6 +35,8 @@ object Routes {
     const val FORGOT_PASSWORD = "forgot_password"
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
+    const val EDIT_UNIDAD_PRODUCTIVA = "edit_unidad_productiva/{unidadId}"
+    fun createEditUnidadProductivaRoute(unidadId: Int) = "edit_unidad_productiva/$unidadId"
     const val CAMPOS = "campos"
     const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
     fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
@@ -146,6 +149,7 @@ fun AppNavigation(
                 }
             )
         }
+
         composable(
             route = Routes.CREATE_UNIDAD_PRODUCTIVA,
             enterTransition = {
@@ -164,6 +168,23 @@ fun AppNavigation(
                         ?.set("should_refresh_ups", true)
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(
+            route = Routes.EDIT_UNIDAD_PRODUCTIVA,
+            arguments = listOf(navArgument("unidadId") { type = NavType.IntType }),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) { backStackEntry ->
+            val unidadId = backStackEntry.arguments?.getInt("unidadId") ?: 0
+            EditUnidadProductivaScreen(
+                onNavigateBack = { navController.popBackStack() },
+                unidadId = unidadId
             )
         }
 

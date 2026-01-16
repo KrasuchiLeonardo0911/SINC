@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 
 
     alias(libs.plugins.kotlin.ksp)
@@ -71,6 +72,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(project(":domain"))
     implementation(project(":data"))
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 

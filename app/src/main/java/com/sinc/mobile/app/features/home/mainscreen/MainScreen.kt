@@ -92,6 +92,9 @@ fun MainScreen(
                         onNavigateToCreateUnidadProductiva = {
                             navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
                         },
+                        onNavigateToEditUnidadProductiva = { unidadId ->
+                            navController.navigate(Routes.createEditUnidadProductivaRoute(unidadId))
+                        },
                         onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                         navController = navController
                     )

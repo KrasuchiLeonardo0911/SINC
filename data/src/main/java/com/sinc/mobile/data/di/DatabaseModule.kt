@@ -24,7 +24,9 @@ object DatabaseModule {
             context,
             SincMobileDatabase::class.java,
             "sinc_mobile_database"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Singleton

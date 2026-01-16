@@ -4,11 +4,13 @@ import com.sinc.mobile.data.local.dao.UnidadProductivaDao
 import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
 import com.sinc.mobile.data.network.api.UnidadProductivaApiService
 import com.sinc.mobile.data.network.dto.request.CreateUnidadProductivaRequest
+import com.sinc.mobile.data.network.dto.request.UpdateUnidadProductivaRequest
 import com.sinc.mobile.data.network.dto.response.UnidadProductivaDto
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.model.CreateUnidadProductivaData
 import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.model.UnidadProductiva
+import com.sinc.mobile.domain.model.UpdateUnidadProductivaData
 import com.sinc.mobile.domain.repository.UnidadProductivaRepository
 import com.sinc.mobile.domain.util.Error
 import com.sinc.mobile.domain.util.Result
@@ -83,6 +85,34 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             Result.Failure(GenericError("Error inesperado: ${e.message}"))
         }
     }
+
+    override suspend fun updateUnidadProductiva(id: Int, data: UpdateUnidadProductivaData): Result<UnidadProductiva, Error> {
+        val request = UpdateUnidadProductivaRequest(
+            superficie = data.superficie,
+            condicionTenenciaId = data.condicionTenenciaId,
+            aguaAnimalFuenteId = data.aguaAnimalFuenteId,
+            observaciones = data.observaciones
+        )
+
+        return try {
+            val response = unidadProductivaApiService.updateUnidadProductiva(id, request)
+            if (response.isSuccessful) {
+                val dto = response.body()
+                if (dto != null) {
+                    unidadProductivaDao.insertUnidadProductiva(dto.toEntity())
+                    Result.Success(dto.toDomain())
+                } else {
+                    Result.Failure(GenericError("El cuerpo de la respuesta de actualización de unidad productiva es nulo"))
+                }
+            } else {
+                Result.Failure(GenericError("Error de API al actualizar unidad productiva: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.Failure(GenericError("Error de red: ${e.message}"))
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error inesperado: ${e.message}"))
+        }
+    }
 }
 
 
@@ -99,6 +129,7 @@ private fun UnidadProductivaDto.toEntity(): UnidadProductivaEntity {
         fuenteAguaId = this.fuenteAguaId,
         tipoSueloId = this.tipoSueloId,
         tipoPastoId = this.tipoPastoId,
+        observaciones = this.observaciones,
         activo = this.activo == 1,
         completo = this.completo == 1
     )
@@ -116,7 +147,8 @@ private fun UnidadProductivaDto.toDomain(): UnidadProductiva {
         condicionTenenciaId = this.pivot?.condicionTenenciaId,
         fuenteAguaId = this.fuenteAguaId,
         tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId
+        tipoPastoId = this.tipoPastoId,
+        observaciones = this.observaciones
     )
 }
 
@@ -132,6 +164,7 @@ private fun UnidadProductivaEntity.toDomain(): UnidadProductiva {
         condicionTenenciaId = this.condicionTenenciaId,
         fuenteAguaId = this.fuenteAguaId,
         tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId
+        tipoPastoId = this.tipoPastoId,
+        observaciones = this.observaciones
     )
 }

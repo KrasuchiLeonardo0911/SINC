@@ -16,6 +16,7 @@ data class UnidadProductivaEntity(
     val fuenteAguaId: Int?,
     val tipoSueloId: Int?,
     val tipoPastoId: Int?,
+    val observaciones: String? = null,
     val activo: Boolean = false,
     val completo: Boolean = false
 )

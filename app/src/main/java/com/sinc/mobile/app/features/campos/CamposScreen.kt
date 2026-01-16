@@ -37,6 +37,7 @@ fun CamposScreen(
     viewModel: CamposViewModel = hiltViewModel(),
     mainScaffoldBottomPadding: Dp,
     onNavigateToCreateUnidadProductiva: () -> Unit,
+    onNavigateToEditUnidadProductiva: (Int) -> Unit,
     onBack: () -> Unit,
     navController: NavController,
     modifier: Modifier = Modifier
@@ -124,8 +125,8 @@ fun CamposScreen(
                             items(filteredUnidades, key = { it.id }) { unidad ->
                                 CampoListItem(
                                     unidad = unidad,
-                                    isEnabled = false, // Not clickable
-                                    onUnidadSelected = { /* No action */ }
+                                    isEnabled = true,
+                                    onUnidadSelected = { onNavigateToEditUnidadProductiva(it.id) }
                                 )
                             }
                         }
