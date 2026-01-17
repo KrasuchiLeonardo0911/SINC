@@ -12,6 +12,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -38,6 +39,7 @@ import com.sinc.mobile.domain.model.UnidadProductiva
 @Composable
 fun VentasScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToHistorial: () -> Unit,
     viewModel: VentasViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -64,7 +66,16 @@ fun VentasScreen(
             MinimalHeader(
                 title = "Declaración de Ventas",
                 onBackPress = onNavigateBack,
-                modifier = Modifier.statusBarsPadding()
+                modifier = Modifier.statusBarsPadding(),
+                actions = {
+                    IconButton(onClick = onNavigateToHistorial) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Historial",
+                            tint = Color.Black
+                        )
+                    }
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

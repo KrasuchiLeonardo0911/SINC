@@ -27,6 +27,7 @@ import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
 import com.sinc.mobile.app.features.ventas.VentasScreen
+import com.sinc.mobile.app.features.ventas.HistorialVentasScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -46,6 +47,7 @@ object Routes {
     const val LOGISTICS = "logistics"
     const val CUENCA_INFO = "cuenca_info"
     const val VENTAS = "ventas"
+    const val VENTAS_HISTORIAL = "ventas_historial"
 }
 
 @Composable
@@ -222,7 +224,22 @@ fun AppNavigation(
                 slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
         ) {
-            VentasScreen(onNavigateBack = { navController.popBackStack() })
+            VentasScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHistorial = { navController.navigate(Routes.VENTAS_HISTORIAL) }
+            )
+        }
+
+        composable(
+            route = Routes.VENTAS_HISTORIAL,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            HistorialVentasScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }
