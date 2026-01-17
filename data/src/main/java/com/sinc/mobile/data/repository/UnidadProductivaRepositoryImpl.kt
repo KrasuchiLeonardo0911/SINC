@@ -91,6 +91,14 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             superficie = data.superficie,
             condicionTenenciaId = data.condicionTenenciaId,
             aguaAnimalFuenteId = data.aguaAnimalFuenteId,
+            aguaHumanoFuenteId = data.aguaHumanoFuenteId,
+            aguaHumanoEnCasa = data.aguaHumanoEnCasa?.let { if (it) 1 else 0 },
+            aguaHumanoDistancia = data.aguaHumanoDistancia,
+            aguaAnimalDistancia = data.aguaAnimalDistancia,
+            tipoSueloId = data.tipoSueloId,
+            tipoPastoId = data.tipoPastoId,
+            forrajerasPredominante = data.forrajerasPredominante?.let { if (it) 1 else 0 },
+            habita = data.habita?.let { if (it) 1 else 0 },
             observaciones = data.observaciones
         )
 
@@ -126,9 +134,15 @@ private fun UnidadProductivaDto.toEntity(): UnidadProductivaEntity {
         longitud = this.longitud?.toDoubleOrNull(),
         municipioId = this.municipioId ?: 0,
         condicionTenenciaId = this.pivot?.condicionTenenciaId,
-        fuenteAguaId = this.fuenteAguaId,
+        aguaHumanoFuenteId = this.fuenteAguaId,
+        aguaHumanoEnCasa = this.aguaHumanoEnCasa == 1,
+        aguaHumanoDistancia = this.aguaHumanoDistancia,
+        aguaAnimalFuenteId = this.aguaAnimalFuenteId,
+        aguaAnimalDistancia = this.aguaAnimalDistancia,
         tipoSueloId = this.tipoSueloId,
         tipoPastoId = this.tipoPastoId,
+        forrajerasPredominante = this.forrajerasPredominante == 1,
+        habita = this.habita == 1,
         observaciones = this.observaciones,
         activo = this.activo == 1,
         completo = this.completo == 1
@@ -145,9 +159,15 @@ private fun UnidadProductivaDto.toDomain(): UnidadProductiva {
         longitud = this.longitud?.toDoubleOrNull(),
         municipioId = this.municipioId,
         condicionTenenciaId = this.pivot?.condicionTenenciaId,
-        fuenteAguaId = this.fuenteAguaId,
+        aguaHumanoFuenteId = this.fuenteAguaId,
+        aguaHumanoEnCasa = this.aguaHumanoEnCasa == 1,
+        aguaHumanoDistancia = this.aguaHumanoDistancia,
+        aguaAnimalFuenteId = this.aguaAnimalFuenteId,
+        aguaAnimalDistancia = this.aguaAnimalDistancia,
         tipoSueloId = this.tipoSueloId,
         tipoPastoId = this.tipoPastoId,
+        forrajerasPredominante = this.forrajerasPredominante == 1,
+        habita = this.habita == 1,
         observaciones = this.observaciones
     )
 }
@@ -162,9 +182,15 @@ private fun UnidadProductivaEntity.toDomain(): UnidadProductiva {
         longitud = this.longitud,
         municipioId = this.municipioId,
         condicionTenenciaId = this.condicionTenenciaId,
-        fuenteAguaId = this.fuenteAguaId,
+        aguaHumanoFuenteId = this.aguaHumanoFuenteId,
+        aguaHumanoEnCasa = this.aguaHumanoEnCasa,
+        aguaHumanoDistancia = this.aguaHumanoDistancia,
+        aguaAnimalFuenteId = this.aguaAnimalFuenteId,
+        aguaAnimalDistancia = this.aguaAnimalDistancia,
         tipoSueloId = this.tipoSueloId,
         tipoPastoId = this.tipoPastoId,
+        forrajerasPredominante = this.forrajerasPredominante,
+        habita = this.habita,
         observaciones = this.observaciones
     )
 }

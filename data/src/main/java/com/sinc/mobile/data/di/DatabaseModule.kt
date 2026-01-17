@@ -53,6 +53,12 @@ object DatabaseModule {
         return database.movimientoHistorialDao()
     }
 
+    @Singleton
+    @Provides
+    fun provideDeclaracionVentaDao(database: SincMobileDatabase): DeclaracionVentaDao {
+        return database.declaracionVentaDao()
+    }
+
     // --- Proveedores de DAOs de Catálogos ---
 
     @Singleton

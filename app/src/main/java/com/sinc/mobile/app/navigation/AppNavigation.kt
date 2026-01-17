@@ -26,6 +26,8 @@ import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
+import com.sinc.mobile.app.features.ventas.VentasScreen
+
 object Routes {
     const val LOGIN = "login"
     const val HOME = "home"
@@ -43,6 +45,7 @@ object Routes {
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
     const val LOGISTICS = "logistics"
     const val CUENCA_INFO = "cuenca_info"
+    const val VENTAS = "ventas"
 }
 
 @Composable
@@ -208,6 +211,18 @@ fun AppNavigation(
             MovimientoStepperScreen(
                 onBackPress = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route = Routes.VENTAS,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            VentasScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

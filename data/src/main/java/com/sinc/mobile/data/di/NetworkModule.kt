@@ -10,6 +10,7 @@ import com.sinc.mobile.data.network.api.UnidadProductivaApiService
 import com.sinc.mobile.data.network.IdentifierApiService
 import com.sinc.mobile.data.network.api.HistorialMovimientosApiService
 import com.sinc.mobile.data.network.api.StockApiService
+import com.sinc.mobile.data.network.api.VentasApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -100,6 +101,12 @@ object NetworkModule {
     @Singleton
     fun provideIdentifierApiService(retrofit: Retrofit): IdentifierApiService {
         return retrofit.create(IdentifierApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideVentasApiService(retrofit: Retrofit): VentasApiService {
+        return retrofit.create(VentasApiService::class.java)
     }
 }
 

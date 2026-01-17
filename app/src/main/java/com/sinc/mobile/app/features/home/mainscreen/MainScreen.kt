@@ -81,7 +81,8 @@ fun MainScreen(
                     )
                     CozyBottomNavRoutes.STOCK -> StockScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME } // Pass onBack lambda
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                        onNavigateToVentas = { navController.navigate(Routes.VENTAS) }
                     )
                     CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),

@@ -25,9 +25,10 @@ import java.time.format.DateTimeFormatter
         TipoPastoEntity::class,
         IdentifierConfigEntity::class,
         StockEntity::class,
-        MovimientoHistorialEntity::class
+        MovimientoHistorialEntity::class,
+        DeclaracionVentaEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)
@@ -36,6 +37,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun movimientoPendienteDao(): MovimientoPendienteDao
     abstract fun stockDao(): StockDao
     abstract fun movimientoHistorialDao(): MovimientoHistorialDao
+    abstract fun declaracionVentaDao(): DeclaracionVentaDao
 
     // DAOs de Catálogos
     abstract fun especieDao(): EspecieDao

@@ -1,82 +1,43 @@
-# Avances de la Sesión Actual
+# Avances de la Sesión Actual - 16 de Enero de 2026
 
-Esta sesión se centró en añadir una validación crítica de negocio, solucionar bugs de datos obsoletos y corregir el comportamiento de los formularios dinámicos.
+Esta sesión se centró en la implementación completa y el refinamiento del endpoint de actualización de Unidades Productivas (UP), incluyendo la integración del backend, la actualización de modelos de datos y la creación de una interfaz de usuario moderna y funcional.
 
-### 1. Implementación de Validación de Stock para Movimientos de Baja
+## 1. Integración del Endpoint PUT /api/movil/unidades-productivas/{id}
 
--   **Funcionalidad**: Se implementó una validación para prevenir que los usuarios registren movimientos de "baja" (ej. muerte, venta) por una cantidad mayor al stock disponible.
--   **Lógica de Negocio**: La validación se ejecuta en `MovimientoStepperViewModel` y es robusta, ya que considera dos factores para calcular el "stock disponible real":
-    1.  El último stock total conocido para esa categoría de animal.
-    2.  La suma de otros movimientos de baja para el mismo animal que ya están en la lista de pendientes de sincronización.
--   **Experiencia de Usuario (UX)**:
-    *   Si la validación falla, se impide que el movimiento se añada a la lista.
-    *   Se muestra un `Snackbar` con un mensaje de error claro para el usuario (ej. "Stock insuficiente. Disponible: X (Actual: Y, Pendientes: Z)").
--   **Implementación Técnica**:
-    *   Se inyectó `StockRepository` en `MovimientoStepperViewModel` para tener acceso a los datos de stock.
-    *   Se modificó la función `onAddToList` para incluir la lógica de cálculo y validación.
-    *   Se refactorizó el mecanismo de notificación de error para usar una propiedad en el `State` de la UI y un `LaunchedEffect` (siguiendo el patrón ya existente en la app para el manejo de errores de sincronización), asegurando que el `Snackbar` se muestre de forma fiable.
+-   **Verificación Backend**: Se confirmó el correcto funcionamiento del endpoint de actualización (`PUT /api/movil/unidades-productivas/{id}`) mediante `curl`, verificando la actualización de campos directos (`superficie`, `observaciones`) y de la tabla pivote (`condicion_tenencia_id`). Se identificó que la respuesta del `PUT` no incluye el objeto `pivot`, lo que se marcó como un `TODO` para el backend (para que devuelva el objeto completo, incluyendo el `pivot`).
+-   **Capa de Datos (`:data`)**:
+    -   Se creó `UpdateUnidadProductivaRequest.kt` con todos los campos actualizables (superficie, condición de tenencia, fuentes de agua, distancias, tipos de suelo/pasto, forrajeras, habita, observaciones).
+    -   Se añadió el método `updateUnidadProductiva` a `UnidadProductivaApiService`.
+    -   Se implementó la lógica de `updateUnidadProductiva` en `UnidadProductivaRepositoryImpl`, incluyendo el mapeo de campos booleanos a enteros (0/1) para la API.
+-   **Capa de Dominio (`:domain`)**:
+    -   Se amplió el modelo `UnidadProductiva.kt` para incluir todos los campos relevantes (habita, aguaHumanoFuenteId, aguaHumanoEnCasa, aguaHumanoDistancia, aguaAnimalFuenteId, aguaAnimalDistancia, tipoSueloId, tipoPastoId, forrajerasPredominante).
+    -   Se creó el modelo `UpdateUnidadProductivaData.kt` para encapsular los datos de actualización del dominio.
+    -   Se actualizó la interfaz `UnidadProductivaRepository` con el nuevo método `updateUnidadProductiva`.
+    -   Se creó `UpdateUnidadProductivaUseCase.kt` para exponer la funcionalidad a la capa de presentación.
 
-### 2. Sincronización Automática de Stock y Unidades Productivas
+## 2. Actualizaciones en la Base de Datos Local (Room)
 
-Se solucionaron dos bugs relacionados con datos obsoletos que ocurrían después de realizar acciones importantes en la app. El principio de "Fuente Única de Verdad" (la base de datos local) se reforzó asegurando que se actualiza después de cada mutación en el servidor.
+-   Se añadió el campo `observaciones` y otros campos extendidos a `UnidadProductivaEntity.kt`.
+-   Se incrementó la versión de la base de datos a `3` en `SincMobileDatabase.kt` para reflejar los cambios en el esquema.
+-   Se añadió `fallbackToDestructiveMigration()` en `DatabaseModule.kt` para manejar los cambios de esquema durante el desarrollo.
+-   Se actualizaron los mappers `toEntity()` y `toDomain()` en `UnidadProductivaRepositoryImpl.kt` para manejar los nuevos campos y la conversión de tipos.
 
--   **Refresco de Stock tras Sincronizar Movimientos**:
-    *   **Problema**: Después de sincronizar movimientos (altas o bajas), la pantalla de validación de stock seguía usando los valores antiguos.
-    *   **Solución**: Se inyectó `SyncStockUseCase` en `MovimientoSyncManager` y ahora se invoca automáticamente después de que una sincronización de movimientos es exitosa. Esto asegura que la app obtiene inmediatamente los nuevos totales de stock recalculados por el backend.
+## 3. Implementación y Rediseño de la UI de Edición de Campos
 
--   **Refresco de Unidades Productivas (Campos) tras Creación**:
-    *   **Problema**: Después de crear un nuevo "Campo" (Unidad Productiva), éste no aparecía en la lista de selección de campos en la pantalla de "Cargar Stock" sin reiniciar la app.
-    *   **Solución**: Se aplicó el mismo patrón. Se inyectó `SyncUnidadesProductivasUseCase` en `CreateUnidadProductivaViewModel` y se invoca automáticamente después de que un nuevo campo se guarda con éxito en el servidor.
+-   **Navegación**:
+    -   Se refactorizó `CamposScreen.kt` para restaurar la estética original de la lista (`CampoListItem`) y hacer que cada ítem sea clickable, navegando a la pantalla de edición.
+    -   Se configuró la navegación a `EditUnidadProductivaScreen` (pasando el `unidadId`) al hacer clic en un ítem de la lista.
+    -   Se añadió la ruta `EDIT_UNIDAD_PRODUCTIVA` en `AppNavigation.kt`.
+-   **`EditUnidadProductivaScreen.kt`**:
+    -   **Rediseño por Tarjetas**: La pantalla fue completamente reestructurada utilizando tarjetas (`InfoCard`) para organizar la información en secciones lógicas: "Información Básica", "Agua", "Datos del Terreno" y "Observaciones".
+    -   **Campos Actualizados**: Todos los campos extendidos (`habita`, fuentes/distancias de agua, tipos de suelo/pasto, forrajeras) se integraron en la UI, con campos de texto para valores numéricos/texto y un nuevo componente `ToggleRow` para campos booleanos.
+    -   **Selectores con `ModalBottomSheet`**: Se implementaron selectores para opciones de catálogo (`Condición de Tenencia`, `Fuentes de Agua`, `Tipos de Suelo`, `Tipos de Pasto`) utilizando un `ModalBottomSheet` para una experiencia de usuario consistente. Esto incluye un `enum EditSheetType` y un componente genérico `SelectionSheetContent`.
+    -   **Mejora Visual del Selector**: Se ajustó el estilo de las opciones seleccionadas en el `ModalBottomSheet` a un fondo gris claro y texto del color primario.
+    -   **Header**: Se corrigió el padding del `MinimalHeader` para respetar la barra de estado.
+    -   Se creó `EditUnidadProductivaViewModel.kt` para gestionar el estado de la UI, cargar datos, poblar catálogos (llamando a `syncCatalogosUseCase()`) y manejar la lógica de guardado.
 
-### 3. Corrección del Formulario Dinámico de Creación de Campo
+## 4. Errores Resueltos
 
--   **Problema**: El campo para el identificador (ej. RNSPA) en el formulario de creación de campos mostraba un texto genérico "Identificador" en lugar de usar la información dinámica (`tipo` y `label`) proporcionada por el backend.
--   **Investigación y Causa Raíz**:
-    *   Tras añadir logs, se descubrió que el proceso de sincronización de las configuraciones de identificadores estaba fallando silenciosamente.
-    *   La causa era una `kotlinx.serialization.MissingFieldException`, ya que el DTO (`IdentifierConfigDto`) esperaba un campo `hint` que la respuesta de la API no incluía.
--   **Solución**:
-    1.  **Robustez del DTO**: Se modificó `IdentifierConfigDto` para que el campo `hint` sea nulable con un valor por defecto (`val hint: String? = null`). Esto solucionó el error de deserialización y permitió que los datos se guardaran correctamente en la base de datos local.
-    2.  **Ajuste de UI**: Se modificó el Composable `Step2FormularioBasico` para que, por petición del usuario, utilice el campo `type` ("RNSPA") como etiqueta del campo, manteniendo la interfaz limpia y consistente.
-# Avances de la Sesión Actual (14 de Enero de 2026)
-
-## 1. Configuración Inicial de Firebase Cloud Messaging (FCM)
-
--   **Objetivo**: Habilitar la recepción de notificaciones push desde el backend.
--   **Detalles**:
-    -   **Configuración de Gradle**: Se añadió el plugin `com.google.gms.google-services` a los archivos `build.gradle.kts` de nivel de proyecto y de aplicación. Se incluyó la BOM de Firebase (`firebase-bom:34.7.0`) y la dependencia `firebase-messaging`.
-    -   **Obtención y Registro del Token**: Se implementó lógica en `MainActivity.kt` para obtener el token FCM del dispositivo y loguearlo en Logcat para verificación inicial.
-    -   **Configuración del Servicio de Mensajería**:
-        -   Se creó `MyFirebaseMessagingService.kt` (`app/src/main/java/com/sinc/mobile/app/firebase/`) para extender `FirebaseMessagingService`, con métodos para manejar la recepción de mensajes (`onMessageReceived`) y la actualización de tokens (`onNewToken`).
-        -   Se añadió un ID de canal de notificación por defecto (`fcm_default_channel`) en `strings.xml`.
-        -   Se incluyó la lógica para la creación de este canal de notificación en `SincMobileApp.kt` para compatibilidad con Android 8.0+.
-        -   Se declaró `MyFirebaseMessagingService` en `AndroidManifest.xml` con su `intent-filter` correspondiente.
-
-## 2. Depuración de la Conexión y Envío de Token FCM al Backend
-
--   **Problema Inicial**: La aplicación no lograba conectar con el backend local (Laravel).
--   **Resolución**:
-    -   Se verificó la configuración del servidor Laravel, recomendando `php artisan serve --host=0.0.0.0`.
-    -   Se clarificó el uso de la IP `10.0.2.2` para el emulador y `127.0.0.1` para peticiones desde el host.
-    -   Se confirmó la accesibilidad del backend y se corrigió el nombre del campo del token en el cuerpo de la petición (`fcm_token` a `token`) que esperaba el backend.
-    -   Se resolvió un problema de `401 No autorizado` obteniendo un nuevo token de autenticación para el usuario `productora@test.com`.
-    -   Se envió con éxito el token FCM al backend local, asociándolo al `userId` correcto.
-    -   **Configuración de URL Base**: Se alternó la `BASE_URL` en `NetworkModule.kt` entre la dirección local (`http://10.0.2.2:8000/`) para depuración y la de producción (`https://sicsurmisiones.online/`).
-
-## 3. Depuración de la Recepción de Notificaciones en Segundo Plano
-
--   **Problema**: Las notificaciones aparecían en Logcat con la app en primer plano, pero no en la barra de estado con la app en segundo plano.
--   **Resolución**:
-    -   **Requisitos del Canal de Notificación**: Se explicó la obligatoriedad de un canal de notificación para Android 8.0+ para mensajes en segundo plano.
-    -   **Configuración del Backend**: Se modificó el comando de Laravel (`php artisan app:send-fcm-test`) para incluir `android_channel_id: 'fcm_default_channel'` en el payload del mensaje, utilizando `AndroidConfig` de `kreait/firebase-php`.
-    -   **Icono de Notificación por Defecto**:
-        -   Se estableció `default_notification_icon` en `AndroidManifest.xml` inicialmente a `@drawable/ic_launcher_foreground` y `default_notification_color` a `@color/bordeaux`.
-        -   Se solucionó un error de compilación (`AAPT: error: resource mipmap/ic_launcher_foreground not found`) al usar la ruta correcta `@drawable/ic_launcher_foreground` en `AndroidManifest.xml`.
-        -   Se cambió el icono en `MyFirebaseMessagingService.kt` a `R.mipmap.ic_launcher` temporalmente para depuración.
-    -   **Problema de Integración de Comando Laravel**: Se corrigió un error de `PSR-4 autoloading standard` en el comando de Laravel (`TestFcmNotificationCommand`) para asegurar que el comando fuera reconocido y ejecutable.
-    -   **Causa Raíz de No Visualización**: Finalmente se identificó que la principal causa de que las notificaciones no aparecieran en segundo plano era que estaban **deshabilitadas para la aplicación en la configuración del dispositivo** del usuario. Una vez habilitadas, las notificaciones empezaron a llegar correctamente en segundo plano.
-
-## 4. Problema Pendiente: Icono de Notificación Incorrecto
-
--   **Problema Actual**: A pesar de las correcciones y la habilitación de notificaciones, el icono que aparece en la barra de estado es el predeterminado de Android, no `logoovinos`, incluso con `default_notification_icon` configurado en el `AndroidManifest.xml`.
--   **Análisis**: Esto se debe a las estrictas directrices de Android para los iconos pequeños de notificación (deben ser monocromáticos, blancos y transparentes). Si `logoovinos.png` no cumple con esto, el sistema lo sustituye por un icono genérico de Android (a menudo un cuadrado blanco o el icono de la aplicación por defecto).
--   **Acción Pendiente**: Se intentará configurar el `default_notification_icon` en `AndroidManifest.xml` para que apunte directamente a `R.drawable.logoovinos`. Se ha explicado que si `logoovinos.png` es un icono a color, su renderizado como icono pequeño de notificación será problemático y requerirá la creación de una versión monocromática de `logoovinos.png` diseñada específicamente para este propósito.
+-   Se corrigieron varios errores de compilación relacionados con la sintaxis de Kotlin, la colocación de imports y la estructura del código en `AppNavigation.kt` y `EditUnidadProductivaScreen.kt`.
+-   Se resolvió el problema de que los catálogos no se cargaban en los selectores del `ModalBottomSheet` asegurando la sincronización de catálogos en el `EditUnidadProductivaViewModel`.
+-   Se aplicó `RoundedCornerShape` al `clickable` de `EditableRow` para suavizar el efecto de presión.

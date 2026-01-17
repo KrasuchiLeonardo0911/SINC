@@ -43,11 +43,14 @@ import com.sinc.mobile.ui.theme.SincPrimary
 import com.sinc.mobile.ui.theme.SincPrimaryDark
 import com.sinc.mobile.ui.theme.SincPrimaryLight
 
+import androidx.compose.material.icons.filled.AttachMoney
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StockScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
+    onNavigateToVentas: () -> Unit,
     mainScaffoldBottomPadding: Dp,
     viewModel: StockViewModel = hiltViewModel()
 ) {
@@ -108,6 +111,20 @@ fun StockScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        item {
+                            Button(
+                                onClick = onNavigateToVentas,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF388E3C) // Green color for sales
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.AttachMoney, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Declarar Venta", fontWeight = FontWeight.Bold)
+                            }
+                        }
                         item {
                             TotalStockCard(processedStock)
                         }

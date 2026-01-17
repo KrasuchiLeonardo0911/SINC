@@ -8,14 +8,13 @@ import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.domain.model.UpdateUnidadProductivaData
 import com.sinc.mobile.domain.use_case.GetCatalogosUseCase
 import com.sinc.mobile.domain.use_case.GetUnidadesProductivasUseCase
+import com.sinc.mobile.domain.use_case.SyncCatalogosUseCase
 import com.sinc.mobile.domain.use_case.UpdateUnidadProductivaUseCase
 import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,11 +27,25 @@ data class EditUnidadProductivaState(
     val error: String? = null,
     val saveSuccess: Boolean = false,
     
-    // Form fields
+    // Basic Info
     val superficie: String = "",
-    val observaciones: String = "",
+    
+    // Land Data
     val condicionTenenciaId: Int? = null,
-    val fuenteAguaId: Int? = null
+    val tipoSueloId: Int? = null,
+    val tipoPastoId: Int? = null,
+    
+    // Water & Living
+    val aguaHumanoFuenteId: Int? = null,
+    val aguaHumanoEnCasa: Boolean = false,
+    val aguaHumanoDistancia: String = "",
+    val aguaAnimalFuenteId: Int? = null,
+    val aguaAnimalDistancia: String = "",
+    
+    val forrajerasPredominante: Boolean = false,
+    val habita: Boolean = false,
+    
+    val observaciones: String = ""
 )
 
 @HiltViewModel
@@ -40,7 +53,8 @@ class EditUnidadProductivaViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     getCatalogosUseCase: GetCatalogosUseCase,
-    private val updateUnidadProductivaUseCase: UpdateUnidadProductivaUseCase
+    private val updateUnidadProductivaUseCase: UpdateUnidadProductivaUseCase,
+    private val syncCatalogosUseCase: SyncCatalogosUseCase
 ) : ViewModel() {
 
     private val unidadId: Int = checkNotNull(savedStateHandle["unidadId"])
@@ -59,8 +73,6 @@ class EditUnidadProductivaViewModel @Inject constructor(
             }.collect { (unidad, catalogos) ->
                 if (unidad != null) {
                     _uiState.update { currentState ->
-                        // Only update form fields if it's the first load or if unit changed significantly
-                        // to avoid overwriting user input on background syncs
                         val isFirstLoad = currentState.unidad == null
                         
                         if (isFirstLoad) {
@@ -71,10 +83,17 @@ class EditUnidadProductivaViewModel @Inject constructor(
                                 superficie = unidad.superficie?.toString() ?: "",
                                 observaciones = unidad.observaciones ?: "",
                                 condicionTenenciaId = unidad.condicionTenenciaId,
-                                fuenteAguaId = unidad.fuenteAguaId // Use simple source ID if available directly or via pivot logic depending on backend structure. Assuming direct mapping for edit.
+                                tipoSueloId = unidad.tipoSueloId,
+                                tipoPastoId = unidad.tipoPastoId,
+                                aguaHumanoFuenteId = unidad.aguaHumanoFuenteId,
+                                aguaHumanoEnCasa = unidad.aguaHumanoEnCasa ?: false,
+                                aguaHumanoDistancia = unidad.aguaHumanoDistancia?.toString() ?: "",
+                                aguaAnimalFuenteId = unidad.aguaAnimalFuenteId,
+                                aguaAnimalDistancia = unidad.aguaAnimalDistancia?.toString() ?: "",
+                                forrajerasPredominante = unidad.forrajerasPredominante ?: false,
+                                habita = unidad.habita ?: false
                             )
                         } else {
-                            // Just update the reference data
                             currentState.copy(
                                 isLoading = false,
                                 unidad = unidad,
@@ -87,29 +106,38 @@ class EditUnidadProductivaViewModel @Inject constructor(
                 }
             }
         }
+        
+        // Ensure catalogs are up to date
+        viewModelScope.launch {
+            syncCatalogosUseCase()
+        }
     }
 
-    fun onSuperficieChange(newValue: String) {
-        _uiState.update { it.copy(superficie = newValue) }
-    }
-
-    fun onObservacionesChange(newValue: String) {
-        _uiState.update { it.copy(observaciones = newValue) }
-    }
-
-    fun onCondicionTenenciaChange(newId: Int) {
-        _uiState.update { it.copy(condicionTenenciaId = newId) }
-    }
+    // Setters
+    fun onSuperficieChange(v: String) = _uiState.update { it.copy(superficie = v) }
+    fun onObservacionesChange(v: String) = _uiState.update { it.copy(observaciones = v) }
     
-    fun onFuenteAguaChange(newId: Int) {
-        _uiState.update { it.copy(fuenteAguaId = newId) }
-    }
+    fun onCondicionTenenciaChange(v: Int) = _uiState.update { it.copy(condicionTenenciaId = v) }
+    fun onTipoSueloChange(v: Int) = _uiState.update { it.copy(tipoSueloId = v) }
+    fun onTipoPastoChange(v: Int) = _uiState.update { it.copy(tipoPastoId = v) }
+    
+    fun onAguaHumanoFuenteChange(v: Int) = _uiState.update { it.copy(aguaHumanoFuenteId = v) }
+    fun onAguaHumanoEnCasaChange(v: Boolean) = _uiState.update { it.copy(aguaHumanoEnCasa = v) }
+    fun onAguaHumanoDistanciaChange(v: String) = _uiState.update { it.copy(aguaHumanoDistancia = v) }
+    
+    fun onAguaAnimalFuenteChange(v: Int) = _uiState.update { it.copy(aguaAnimalFuenteId = v) }
+    fun onAguaAnimalDistanciaChange(v: String) = _uiState.update { it.copy(aguaAnimalDistancia = v) }
+    
+    fun onForrajerasChange(v: Boolean) = _uiState.update { it.copy(forrajerasPredominante = v) }
+    fun onHabitaChange(v: Boolean) = _uiState.update { it.copy(habita = v) }
 
     fun saveChanges() {
-        val currentState = _uiState.value
-        val superficieDouble = currentState.superficie.toDoubleOrNull()
+        val s = _uiState.value
+        val superficieD = s.superficie.toDoubleOrNull()
+        val aguaHDist = s.aguaHumanoDistancia.toIntOrNull()
+        val aguaADist = s.aguaAnimalDistancia.toIntOrNull()
         
-        if (superficieDouble == null && currentState.superficie.isNotEmpty()) {
+        if (superficieD == null && s.superficie.isNotEmpty()) {
              _uiState.update { it.copy(error = "La superficie debe ser un número válido") }
              return
         }
@@ -118,10 +146,18 @@ class EditUnidadProductivaViewModel @Inject constructor(
             _uiState.update { it.copy(isSaving = true, error = null) }
             
             val updateData = UpdateUnidadProductivaData(
-                superficie = superficieDouble,
-                observaciones = currentState.observaciones,
-                condicionTenenciaId = currentState.condicionTenenciaId,
-                aguaAnimalFuenteId = currentState.fuenteAguaId
+                superficie = superficieD,
+                condicionTenenciaId = s.condicionTenenciaId,
+                aguaAnimalFuenteId = s.aguaAnimalFuenteId,
+                aguaHumanoFuenteId = s.aguaHumanoFuenteId,
+                aguaHumanoEnCasa = s.aguaHumanoEnCasa,
+                aguaHumanoDistancia = aguaHDist,
+                aguaAnimalDistancia = aguaADist,
+                tipoSueloId = s.tipoSueloId,
+                tipoPastoId = s.tipoPastoId,
+                forrajerasPredominante = s.forrajerasPredominante,
+                habita = s.habita,
+                observaciones = s.observaciones
             )
 
             val result = updateUnidadProductivaUseCase(unidadId, updateData)

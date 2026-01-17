@@ -9,8 +9,15 @@ data class UnidadProductiva(
     val longitud: Double?,
     val municipioId: Int?,
     val condicionTenenciaId: Int?,
-    val fuenteAguaId: Int?,
+    // Land Data
+    val aguaHumanoFuenteId: Int?,
+    val aguaHumanoEnCasa: Boolean?,
+    val aguaHumanoDistancia: Int?,
+    val aguaAnimalFuenteId: Int?,
+    val aguaAnimalDistancia: Int?,
     val tipoSueloId: Int?,
     val tipoPastoId: Int?,
+    val forrajerasPredominante: Boolean?,
+    val habita: Boolean?,
     val observaciones: String? = null
 )
