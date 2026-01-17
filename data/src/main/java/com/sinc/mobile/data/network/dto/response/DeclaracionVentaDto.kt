@@ -14,5 +14,6 @@ data class DeclaracionVentaDto(
     @SerialName("cantidad") val cantidad: Int,
     @SerialName("estado") val estado: String,
     @SerialName("fecha_declaracion") val fechaDeclaracion: String,
-    @SerialName("observaciones") val observaciones: String? = null
+    @SerialName("observaciones") val observaciones: String? = null,
+    @SerialName("peso_aproximado_kg") val pesoAproximadoKg: Float? = null
 )

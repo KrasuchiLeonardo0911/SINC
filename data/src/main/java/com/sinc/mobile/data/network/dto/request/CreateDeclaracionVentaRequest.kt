@@ -10,5 +10,6 @@ data class CreateDeclaracionVentaRequest(
     @SerialName("raza_id") val razaId: Int,
     @SerialName("categoria_animal_id") val categoriaAnimalId: Int,
     @SerialName("cantidad") val cantidad: Int,
-    @SerialName("observaciones") val observaciones: String? = null
+    @SerialName("observaciones") val observaciones: String? = null,
+    @SerialName("peso_aproximado_kg") val pesoAproximadoKg: Float? = null
 )

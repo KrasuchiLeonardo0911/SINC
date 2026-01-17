@@ -14,7 +14,8 @@ class CreateDeclaracionVentaUseCase @Inject constructor(
         razaId: Int,
         categoriaAnimalId: Int,
         cantidad: Int,
-        observaciones: String?
+        observaciones: String?,
+        pesoAproximadoKg: Float?
     ): Result<Unit, Error> {
         return repository.createDeclaracion(
             unidadProductivaId,
@@ -22,7 +23,8 @@ class CreateDeclaracionVentaUseCase @Inject constructor(
             razaId,
             categoriaAnimalId,
             cantidad,
-            observaciones
+            observaciones,
+            pesoAproximadoKg
         )
     }
 }

@@ -15,7 +15,8 @@ fun DeclaracionVentaDto.toEntity(): DeclaracionVentaEntity {
         cantidad = cantidad,
         estado = estado,
         fechaDeclaracion = fechaDeclaracion,
-        observaciones = observaciones
+        observaciones = observaciones,
+        pesoAproximadoKg = pesoAproximadoKg
     )
 }
 
@@ -30,6 +31,7 @@ fun DeclaracionVentaEntity.toDomain(): DeclaracionVenta {
         cantidad = cantidad,
         estado = estado,
         fechaDeclaracion = fechaDeclaracion,
-        observaciones = observaciones
+        observaciones = observaciones,
+        pesoAproximadoKg = pesoAproximadoKg
     )
 }

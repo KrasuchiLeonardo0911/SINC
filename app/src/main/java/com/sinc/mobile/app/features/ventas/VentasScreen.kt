@@ -21,6 +21,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -78,10 +80,16 @@ fun VentasScreen(
                 contentColor = MaterialTheme.colorScheme.primary
             ) {
                 tabs.forEachIndexed { index, title ->
+                    val tabTitle = if (index == 1 && uiState.declaracionesPendientes.isNotEmpty()) {
+                        "$title (${uiState.declaracionesPendientes.size})"
+                    } else {
+                        title
+                    }
+
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
-                        text = { Text(title) }
+                        text = { Text(tabTitle) }
                     )
                 }
             }
@@ -186,7 +194,7 @@ fun VentasForm(
 
         item {
             ClickableDropdownField(
-                label = "Campo (UP)",
+                label = "Seleccionar un Campo",
                 value = uiState.unidadesProductivas.find { it.id == uiState.selectedUpId }?.nombre,
                 placeholder = "Seleccionar Campo",
                 onClick = {
@@ -240,6 +248,18 @@ fun VentasForm(
                         showSheet = true
                     }
                 }
+            )
+        }
+
+        item {
+            OutlinedTextField(
+                value = uiState.pesoAproximado,
+                onValueChange = { viewModel.onPesoAproximadoChanged(it) },
+                label = { Text("Peso Aproximado (Kg) (Opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
 
@@ -354,6 +374,13 @@ fun DeclaracionCard(declaracion: DeclaracionVenta) {
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
             Spacer(modifier = Modifier.height(8.dp))
             Text("Fecha: ${declaracion.fechaDeclaracion.take(10)}")
+            
+            declaracion.pesoAproximadoKg?.let { peso ->
+                if (peso > 0) {
+                    Text("Peso Aprox.: ${peso} Kg", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+                }
+            }
+            
             if (!declaracion.observaciones.isNullOrBlank()) {
                 Text("Obs: ${declaracion.observaciones}", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
             }

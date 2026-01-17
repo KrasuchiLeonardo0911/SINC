@@ -37,6 +37,7 @@ data class VentasState(
     val selectedCategoriaId: Int? = null,
     val cantidad: String = "",
     val observaciones: String = "",
+    val pesoAproximado: String = "",
     
     // Estado de Validación
     val stockValidationMessage: String? = null
@@ -70,6 +71,7 @@ class VentasViewModel @Inject constructor(
             syncUnidadesProductivasUseCase()
             syncCatalogosUseCase()
             syncStockUseCase()
+            syncDeclaracionesVentaUseCase()
         }
     }
 
@@ -114,9 +116,13 @@ class VentasViewModel @Inject constructor(
 
     private fun observeDeclaraciones() {
         viewModelScope.launch {
-            getDeclaracionesVentaUseCase().collect { declaraciones ->
-                _uiState.update { it.copy(declaracionesPendientes = declaraciones) }
-            }
+            getDeclaracionesVentaUseCase()
+                .map { declaraciones ->
+                    declaraciones.filter { it.estado == "pendiente" }
+                }
+                .collect { filteredDeclaraciones ->
+                    _uiState.update { it.copy(declaracionesPendientes = filteredDeclaraciones) }
+                }
         }
     }
 
@@ -158,10 +164,18 @@ class VentasViewModel @Inject constructor(
         _uiState.update { it.copy(observaciones = observaciones) }
     }
 
+    fun onPesoAproximadoChanged(peso: String) {
+        // Permitir solo números y un punto decimal
+        if (peso.isEmpty() || peso.matches(Regex("^\\d*\\.?\\d*$"))) {
+            _uiState.update { it.copy(pesoAproximado = peso) }
+        }
+    }
+
     fun onSubmit() {
         viewModelScope.launch {
             val state = _uiState.value
             val cantidadInt = state.cantidad.toIntOrNull()
+            val pesoFloat = state.pesoAproximado.toFloatOrNull()
 
             if (state.selectedUpId == null || state.selectedEspecieId == null || 
                 state.selectedRazaId == null || state.selectedCategoriaId == null || 
@@ -190,7 +204,8 @@ class VentasViewModel @Inject constructor(
                         razaId = state.selectedRazaId,
                         categoriaAnimalId = state.selectedCategoriaId,
                         cantidad = cantidadInt,
-                        observaciones = state.observaciones
+                        observaciones = state.observaciones,
+                        pesoAproximadoKg = pesoFloat
                     )
 
                     when (result) {
@@ -201,7 +216,8 @@ class VentasViewModel @Inject constructor(
                                     successMessage = "Venta registrada correctamente.",
                                     // Limpiar formulario parcial
                                     cantidad = "",
-                                    observaciones = ""
+                                    observaciones = "",
+                                    pesoAproximado = ""
                                 )
                             }
                         }

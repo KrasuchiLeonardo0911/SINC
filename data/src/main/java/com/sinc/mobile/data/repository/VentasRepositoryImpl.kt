@@ -50,7 +50,8 @@ class VentasRepositoryImpl @Inject constructor(
         razaId: Int,
         categoriaAnimalId: Int,
         cantidad: Int,
-        observaciones: String?
+        observaciones: String?,
+        pesoAproximadoKg: Float?
     ): Result<Unit, Error> {
         return try {
             val request = CreateDeclaracionVentaRequest(
@@ -59,7 +60,8 @@ class VentasRepositoryImpl @Inject constructor(
                 razaId = razaId,
                 categoriaAnimalId = categoriaAnimalId,
                 cantidad = cantidad,
-                observaciones = observaciones
+                observaciones = observaciones,
+                pesoAproximadoKg = pesoAproximadoKg
             )
             val response = api.createDeclaracionVenta(request)
             if (response.isSuccessful) {

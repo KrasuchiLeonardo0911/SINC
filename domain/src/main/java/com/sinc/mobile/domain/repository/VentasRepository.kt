@@ -14,7 +14,8 @@ interface VentasRepository {
         razaId: Int,
         categoriaAnimalId: Int,
         cantidad: Int,
-        observaciones: String?
+        observaciones: String?,
+        pesoAproximadoKg: Float?
     ): Result<Unit, Error>
     
     suspend fun getPendingQuantity(

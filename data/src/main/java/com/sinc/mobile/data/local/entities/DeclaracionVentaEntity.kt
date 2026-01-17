@@ -15,5 +15,6 @@ data class DeclaracionVentaEntity(
     val cantidad: Int,
     val estado: String,
     val fechaDeclaracion: String,
-    val observaciones: String?
+    val observaciones: String?,
+    val pesoAproximadoKg: Float?
 )
