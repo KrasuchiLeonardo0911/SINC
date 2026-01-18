@@ -142,7 +142,14 @@ fun MainScreen(
                     )
                 },
                 panelContent = {
-                    LogisticsScreen(onBackPress = { showLogisticsPanel = false }, today = today)
+                    LogisticsScreen(
+                        onBackPress = { showLogisticsPanel = false },
+                        today = today,
+                        onNavigateToVentas = {
+                            showLogisticsPanel = false
+                            navController.navigate(Routes.VENTAS)
+                        }
+                    )
                 }
             )
         }

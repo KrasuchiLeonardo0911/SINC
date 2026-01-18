@@ -108,5 +108,11 @@ object NetworkModule {
     fun provideVentasApiService(retrofit: Retrofit): VentasApiService {
         return retrofit.create(VentasApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideLogisticsApiService(retrofit: Retrofit): com.sinc.mobile.data.network.api.LogisticsApiService {
+        return retrofit.create(com.sinc.mobile.data.network.api.LogisticsApiService::class.java)
+    }
 }
 
