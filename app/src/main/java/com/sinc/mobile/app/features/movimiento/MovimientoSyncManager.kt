@@ -17,7 +17,8 @@ private data class MovimientoGroupKey(
     val especieId: Int,
     val categoriaId: Int,
     val razaId: Int,
-    val motivoMovimientoId: Int
+    val motivoMovimientoId: Int,
+    val destinoTraslado: String?
 )
 
 data class MovimientoSyncState(
@@ -51,7 +52,8 @@ class MovimientoSyncManager(
                             especieId = it.especieId,
                             categoriaId = it.categoriaId,
                             razaId = it.razaId,
-                            motivoMovimientoId = it.motivoMovimientoId
+                            motivoMovimientoId = it.motivoMovimientoId,
+                            destinoTraslado = it.destinoTraslado
                         )
                     }
                     .map { (_, group) ->
@@ -63,6 +65,7 @@ class MovimientoSyncManager(
                             razaId = first.razaId,
                             motivoMovimientoId = first.motivoMovimientoId,
                             cantidadTotal = group.sumOf { it.cantidad },
+                            destinoTraslado = first.destinoTraslado,
                             originales = group
                         )
                     }

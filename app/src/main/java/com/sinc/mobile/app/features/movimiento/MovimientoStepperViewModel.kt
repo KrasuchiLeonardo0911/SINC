@@ -25,6 +25,7 @@ data class MovimientoAgrupado(
     val razaId: Int,
     val motivoMovimientoId: Int,
     val cantidadTotal: Int,
+    val destinoTraslado: String?,
     val originales: List<MovimientoPendiente>
 )
 

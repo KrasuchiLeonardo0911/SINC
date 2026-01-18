@@ -204,8 +204,13 @@ class StockViewModel @Inject constructor(
             .map { (nombreEspecie, especiesList) ->
                 val desgloses = especiesList.flatMap { it.desglose }
                     .groupBy { Pair(it.categoria, it.raza) }
-                    .map { (key, group) ->
-                        DesgloseItem.Full(key.first, key.second, group.sumOf { it.cantidad })
+                    .mapNotNull { (key, group) ->
+                        val sumQuantity = group.sumOf { it.cantidad }
+                        if (sumQuantity > 0) {
+                            DesgloseItem.Full(key.first, key.second, sumQuantity)
+                        } else {
+                            null
+                        }
                     }
 
                 // Get the color for this species based on global consistent colors

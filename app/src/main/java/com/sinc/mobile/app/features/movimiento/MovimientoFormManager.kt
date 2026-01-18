@@ -91,7 +91,9 @@ class MovimientoFormManager(
 
     private fun validateForm() {
         val s = _formState.value
-        val isDestinoRequired = s.selectedMotivo?.nombre == "Traslado (salida)"
+        val motivoNombre = s.selectedMotivo?.nombre.orEmpty()
+        val isDestinoRequired = motivoNombre.equals("Traslado (salida)", ignoreCase = true) ||
+                motivoNombre.equals("Traslado (entrada)", ignoreCase = true)
 
         val isValid = s.selectedEspecie != null &&
                 s.selectedCategoria != null &&

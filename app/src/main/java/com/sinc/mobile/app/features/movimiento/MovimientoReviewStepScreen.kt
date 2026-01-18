@@ -137,6 +137,13 @@ fun PendingMovementItemRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (!grupo.destinoTraslado.isNullOrBlank()) {
+                    Text(
+                        text = "Destino: ${grupo.destinoTraslado}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             // Actions
@@ -198,7 +205,7 @@ fun EmptyStateReview() {
 @Composable
 fun MovimientoReviewStepContentPreview() {
     val sampleMovements = listOf(
-        MovimientoAgrupado(1, 1, 1, 1, 1, 10, emptyList()),
+        MovimientoAgrupado(1, 1, 1, 1, 1, 10, null, emptyList()),
     )
     SincMobileTheme {
         MovimientoReviewStepContent(

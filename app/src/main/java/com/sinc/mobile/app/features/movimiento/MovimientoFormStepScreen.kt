@@ -129,7 +129,9 @@ fun MovimientoFormStepContent(
 
     // --- Trigger for Destino Sheet ---
     LaunchedEffect(formState.selectedMotivo) {
-        if (formState.selectedMotivo?.nombre == "Traslado (Salida)") {
+        val motivoNombre = formState.selectedMotivo?.nombre.orEmpty()
+        if (motivoNombre.equals("Traslado (Salida)", ignoreCase = true) ||
+            motivoNombre.equals("Traslado (Entrada)", ignoreCase = true)) {
             showDestinoSheet = true
         }
     }
