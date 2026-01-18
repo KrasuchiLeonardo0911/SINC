@@ -48,6 +48,8 @@ object Routes {
     const val CUENCA_INFO = "cuenca_info"
     const val VENTAS = "ventas"
     const val VENTAS_HISTORIAL = "ventas_historial"
+    const val RESUMEN_MOVIMIENTOS = "resumen_movimientos/{month}/{year}"
+    fun createResumenMovimientosRoute(month: Int, year: Int) = "resumen_movimientos/$month/$year"
 }
 
 @Composable
@@ -240,6 +242,25 @@ fun AppNavigation(
             }
         ) {
             HistorialVentasScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.RESUMEN_MOVIMIENTOS,
+            arguments = listOf(
+                navArgument("month") { type = NavType.IntType },
+                navArgument("year") { type = NavType.IntType }
+            ),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            // Need to create this screen first, but I'll add the import later or rely on auto-import when I create the file
+            com.sinc.mobile.app.features.historial_movimientos.resumen.ResumenMovimientosScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

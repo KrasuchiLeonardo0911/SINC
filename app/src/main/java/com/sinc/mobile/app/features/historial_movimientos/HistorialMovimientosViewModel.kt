@@ -14,11 +14,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 
 data class HistorialMovimientosState(
     val isInitialLoad: Boolean = true,
-    val movimientos: List<MovimientoHistorial> = emptyList(),
+    val allMovimientos: List<MovimientoHistorial> = emptyList(),
+    val filteredMovimientos: List<MovimientoHistorial> = emptyList(),
+    val selectedDate: LocalDate = LocalDate.now(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -41,9 +45,33 @@ class HistorialMovimientosViewModel @Inject constructor(
     private fun loadMovimientos() {
         getMovimientosHistorialUseCase()
             .onEach { movimientos ->
-                _state.update { it.copy(movimientos = movimientos) }
+                _state.update { 
+                    it.copy(allMovimientos = movimientos) 
+                }
+                filterMovimientos()
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun filterMovimientos() {
+        val currentState = _state.value
+        val selectedMonth = YearMonth.from(currentState.selectedDate)
+        
+        val filtered = currentState.allMovimientos.filter {
+            YearMonth.from(it.fechaRegistro) == selectedMonth
+        }
+        
+        _state.update { it.copy(filteredMovimientos = filtered) }
+    }
+
+    fun previousMonth() {
+        _state.update { it.copy(selectedDate = it.selectedDate.minusMonths(1)) }
+        filterMovimientos()
+    }
+
+    fun nextMonth() {
+        _state.update { it.copy(selectedDate = it.selectedDate.plusMonths(1)) }
+        filterMovimientos()
     }
 
     fun syncMovimientos() {

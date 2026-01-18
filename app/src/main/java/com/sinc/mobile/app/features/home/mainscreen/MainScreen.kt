@@ -86,7 +86,10 @@ fun MainScreen(
                     )
                     CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                        onNavigateToResumen = { month, year ->
+                            navController.navigate(Routes.createResumenMovimientosRoute(month, year))
+                        }
                     )
                     CozyBottomNavRoutes.CAMPOS -> CamposScreen(
                         mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
