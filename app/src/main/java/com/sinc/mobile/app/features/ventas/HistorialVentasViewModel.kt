@@ -2,7 +2,9 @@ package com.sinc.mobile.app.features.ventas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.DeclaracionVenta
+import com.sinc.mobile.domain.repository.CatalogosRepository
 import com.sinc.mobile.domain.use_case.ventas.GetDeclaracionesVentaUseCase
 import com.sinc.mobile.domain.use_case.ventas.SyncDeclaracionesVentaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,13 +19,15 @@ data class HistorialVentasState(
     val todasLasDeclaraciones: List<DeclaracionVenta> = emptyList(),
     val declaracionesFiltradas: List<DeclaracionVenta> = emptyList(),
     val filtroMes: LocalDate = LocalDate.now(), // Filtro por defecto: Mes actual
-    val declaracionSeleccionada: DeclaracionVenta? = null
+    val declaracionSeleccionada: DeclaracionVenta? = null,
+    val catalogos: Catalogos? = null
 )
 
 @HiltViewModel
 class HistorialVentasViewModel @Inject constructor(
     private val getDeclaracionesVentaUseCase: GetDeclaracionesVentaUseCase,
-    private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase
+    private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase,
+    private val catalogosRepository: CatalogosRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistorialVentasState())
@@ -31,6 +35,15 @@ class HistorialVentasViewModel @Inject constructor(
 
     init {
         loadDeclaraciones()
+        loadCatalogos()
+    }
+
+    private fun loadCatalogos() {
+        viewModelScope.launch {
+            catalogosRepository.getCatalogos().collect { catalogos ->
+                _uiState.update { it.copy(catalogos = catalogos) }
+            }
+        }
     }
 
     private fun loadDeclaraciones() {

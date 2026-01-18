@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.HorizontalDivider
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.DeclaracionVenta
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -107,6 +108,7 @@ fun HistorialVentasScreen(
         ) {
             DetalleVentaSheet(
                 declaracion = uiState.declaracionSeleccionada!!,
+                catalogos = uiState.catalogos,
                 onClose = { viewModel.seleccionarDeclaracion(null) }
             )
         }
@@ -206,7 +208,15 @@ fun HistorialVentaItem(
 }
 
 @Composable
-fun DetalleVentaSheet(declaracion: DeclaracionVenta, onClose: () -> Unit) {
+fun DetalleVentaSheet(
+    declaracion: DeclaracionVenta,
+    catalogos: Catalogos?,
+    onClose: () -> Unit
+) {
+    val especieNombre = catalogos?.especies?.find { it.id == declaracion.especieId }?.nombre ?: "ID: ${declaracion.especieId}"
+    val razaNombre = catalogos?.razas?.find { it.id == declaracion.razaId }?.nombre ?: "ID: ${declaracion.razaId}"
+    val categoriaNombre = catalogos?.categorias?.find { it.id == declaracion.categoriaAnimalId }?.nombre ?: "ID: ${declaracion.categoriaAnimalId}"
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,6 +234,12 @@ fun DetalleVentaSheet(declaracion: DeclaracionVenta, onClose: () -> Unit) {
         DetalleRow("ID Venta", "#${declaracion.id}")
         DetalleRow("Fecha Declarada", declaracion.fechaDeclaracion.take(10))
         DetalleRow("Estado Actual", declaracion.estado.uppercase())
+        
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        
+        DetalleRow("Especie", especieNombre)
+        DetalleRow("Raza", razaNombre)
+        DetalleRow("Categoría", categoriaNombre)
         DetalleRow("Cantidad", "${declaracion.cantidad} Animales")
         
         declaracion.pesoAproximadoKg?.let { 

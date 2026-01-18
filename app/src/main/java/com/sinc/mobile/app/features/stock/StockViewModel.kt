@@ -66,7 +66,8 @@ data class StockUiState(
     val unidadesProductivas: List<UnidadProductiva> = emptyList(),
     val error: String? = null,
     val stock: Stock? = null,
-    val processedStock: ProcessedStock? = null
+    val processedStock: ProcessedStock? = null,
+    val selectedUnidadId: Int? = null
 )
 // endregion
 
@@ -83,9 +84,14 @@ class StockViewModel @Inject constructor(
     val uiState: StateFlow<StockUiState> = _uiState.asStateFlow()
 
     private val pieChartColors = listOf(
-        Color(0xFF6C5B7B), Color(0xFFC06C84), Color(0xFFF67280), Color(0xFFF8B195),
-        Color(0xFFB39DDB), Color(0xFF81C784), Color(0xFFFFD54F), Color(0xFF4FC3F7),
-        Color(0xFFE57373), Color(0xFF9575CD), Color(0xFF4DB6AC), Color(0xFFFFF176)
+        Color(0xFF2E7D32), // Verde Fuerte
+        Color(0xFF66BB6A), // Verde Claro
+        Color(0xFF9CCC65), // Verde Lima Suave
+        Color(0xFF26A69A), // Verde Azulado
+        Color(0xFFFFA726), // Naranja (Contraste)
+        Color(0xFF29B6F6), // Azul Claro (Contraste)
+        Color(0xFF78909C), // Gris Azulado
+        Color(0xFF8D6E63)  // Marrón Suave
     )
 
     init {
@@ -95,7 +101,8 @@ class StockViewModel @Inject constructor(
                 getUnidadesProductivasUseCase(),
                 getStockUseCase()
             ) { unidades, stock ->
-                val processed = stock?.let { processStock(it) }
+                val currentSelectedId = _uiState.value.selectedUnidadId
+                val processed = stock?.let { processStock(it, currentSelectedId) }
                 _uiState.update {
                     it.copy(
                         unidadesProductivas = unidades,
@@ -147,8 +154,25 @@ class StockViewModel @Inject constructor(
         }
     }
 
-    internal fun processStock(stock: Stock): ProcessedStock {
-        val speciesTotals = stock.unidadesProductivas
+    fun selectUnidad(unidadId: Int?) {
+        _uiState.update { currentState ->
+            val processed = currentState.stock?.let { processStock(it, unidadId) }
+            currentState.copy(
+                selectedUnidadId = unidadId,
+                processedStock = processed
+            )
+        }
+    }
+
+    internal fun processStock(stock: Stock, selectedUnidadId: Int?): ProcessedStock {
+        // Filter units based on selection
+        val filteredUnits = if (selectedUnidadId == null) {
+            stock.unidadesProductivas
+        } else {
+            stock.unidadesProductivas.filter { it.id == selectedUnidadId }
+        }
+
+        val speciesTotals = filteredUnits
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .mapValues { entry -> entry.value.sumOf { it.stockTotal } }
@@ -174,7 +198,7 @@ class StockViewModel @Inject constructor(
             }
         }
 
-        val allSpeciesProcessed = stock.unidadesProductivas
+        val allSpeciesProcessed = filteredUnits
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .map { (nombreEspecie, especiesList) ->
@@ -184,16 +208,18 @@ class StockViewModel @Inject constructor(
                         DesgloseItem.Full(key.first, key.second, group.sumOf { it.cantidad })
                     }
 
-                // Get the color for this species
-                val speciesColor = speciesTotals.entries.firstOrNull { it.key == nombreEspecie }?.let { entry ->
-                    pieChartColors[speciesTotals.keys.indexOf(entry.key) % pieChartColors.size]
-                } ?: Color.Gray // Fallback color
+                // Get the color for this species based on global consistent colors
+                // We find the index of this species in the global list of species names to ensure consistent coloring
+                // regardless of filtering.
+                val globalSpeciesList = stock.unidadesProductivas.flatMap { it.especies }.map { it.nombre }.distinct().sorted()
+                val colorIndex = globalSpeciesList.indexOf(nombreEspecie).takeIf { it >= 0 } ?: 0
+                val speciesColor = pieChartColors[colorIndex % pieChartColors.size]
 
                 ProcessedEspecieStock(
                     nombre = nombreEspecie,
                     stockTotal = especiesList.sumOf { it.stockTotal },
                     desglose = desgloses,
-                    color = speciesColor // Assign the color
+                    color = speciesColor
                 )
             }
 
@@ -202,7 +228,7 @@ class StockViewModel @Inject constructor(
         }
 
         return ProcessedStock(
-            stockTotalGeneral = stock.stockTotalGeneral,
+            stockTotalGeneral = totalGeneralStock.toInt(),
             unidadesProductivas = unidadesProcessed,
             allSpecies = allSpeciesProcessed,
             speciesDistribution = speciesDistributionData,

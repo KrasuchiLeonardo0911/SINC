@@ -1421,3 +1421,61 @@ Esta sesión se centró en la implementación completa y el refinamiento del end
 -   Se corrigieron varios errores de compilación relacionados con la sintaxis de Kotlin, la colocación de imports y la estructura del código en `AppNavigation.kt` y `EditUnidadProductivaScreen.kt`.
 -   Se resolvió el problema de que los catálogos no se cargaban en los selectores del `ModalBottomSheet` asegurando la sincronización de catálogos en el `EditUnidadProductivaViewModel`.
 -   Se aplicó `RoundedCornerShape` al `clickable` de `EditableRow` para suavizar el efecto de presión.
+
+### Avances de la Sesión Actual (17 de enero de 2026)
+
+Esta sesión se centró en la implementación de la interfaz de usuario para la funcionalidad de **Declaraciones de Venta** y su integración completa en la arquitectura de la aplicación, así como una refactorización significativa de un campo clave.
+
+#### 1. Implementación de la Interfaz de Usuario de Declaraciones de Venta (`VentasScreen`)
+*   **ViewModel (`VentasViewModel.kt`)**: Se creó el ViewModel encargado de gestionar el estado del formulario y la lista de declaraciones. Incluye la lógica para cargar unidades productivas y catálogos, manejar la selección de opciones, validar el stock localmente antes del envío y procesar el registro de ventas.
+    *   Se optimizó la carga inicial de datos utilizando `Flow.combine` para evitar bloqueos y asegurar que la interfaz se cargue rápidamente, incluso con datos inicialmente vacíos.
+    *   Se implementó la sincronización proactiva de UPs, Catálogos y Stock al iniciar el ViewModel para garantizar que la validación y los selectores usen datos frescos.
+*   **Pantalla (`VentasScreen.kt`)**: Se diseñó la pantalla principal de Ventas con una estructura de pestañas:
+    *   **"Nueva Venta" (Formulario)**:
+        *   Se implementó un formulario de registro de ventas, alineado con el estilo de los formularios de "Registrar Movimiento" y "Actualizar UP".
+        *   Los selectores de "Campo", "Categoría" y "Raza" utilizan `ModalBottomSheet` para una selección de opciones mejorada.
+        *   El selector de "Especie" utiliza **Chips horizontales** para una selección rápida.
+        *   El campo de "Cantidad" utiliza un **Stepper (botón +/-)** para facilitar la entrada de datos.
+        *   Se añadió un botón "Declarar Venta" para enviar el formulario.
+    *   **"Pendientes" (Lista)**:
+        *   Se implementó una lista (`LazyColumn`) para mostrar las declaraciones de venta pendientes.
+        *   Se integró la funcionalidad **"Pull-to-Refresh" (Deslizar para actualizar)** en la lista para permitir la sincronización manual.
+        *   Las declaraciones se muestran en tarjetas (`DeclaracionCard`) con un diseño claro y conciso.
+*   **Integración de Navegación**:
+    *   Se añadió una nueva ruta `Routes.VENTAS` en `AppNavigation.kt`.
+    *   Se incluyó un botón "Declarar Venta" en `StockScreen.kt` que navega a `VentasScreen`.
+    *   Se actualizó `MainScreen.kt` para manejar la navegación a la nueva pantalla de Ventas.
+
+#### 2. Refactorización del Campo "Observaciones" a "Peso Aproximado en Kg"
+*   Se realizó una refactorización completa para reemplazar el campo `observaciones: String?` por `pesoAproximadoKg: Float?` en todas las capas de la aplicación:
+    *   **Capa de Datos:** `CreateDeclaracionVentaRequest.kt`, `DeclaracionVentaDto.kt`, `DeclaracionVentaEntity.kt`, `DeclaracionVentaMapper.kt`.
+    *   **Capa de Dominio:** `DeclaracionVenta.kt` (modelo), `VentasRepository.kt`, `CreateDeclaracionVentaUseCase.kt`.
+    *   **Capa de Presentación:** `VentasViewModel.kt` (estado y lógica), `VentasScreen.kt` (campo de entrada y visualización en tarjetas).
+*   El campo de entrada en la UI ahora acepta números flotantes y la tarjeta muestra el peso en Kg.
+
+---
+
+### Avances Adicionales de la Sesión (17 de enero de 2026 - Continuación)
+
+Esta parte de la sesión se centró en mejorar la usabilidad del formulario y la visualización de datos, así como en añadir una nueva funcionalidad para el historial de ventas.
+
+#### 3. Mejoras en la Interfaz de Usuario del Formulario de Declaración de Ventas (`VentasScreen`)
+*   **Campo "Seleccionar un Campo":** Se modificó el título del campo `ClickableDropdownField` de "Campo (UP)" a "Seleccionar un Campo" para mayor claridad.
+*   **Reordenamiento de Campos:** El campo "Peso Aproximado (Kg)" fue reubicado antes del selector de "Cantidad" en el formulario de ventas, siguiendo la secuencia lógica de entrada de datos.
+*   **Contador de Pendientes en Pestaña:** Se implementó un contador numérico en el título de la pestaña "Pendientes" (`TabRow`) que muestra la cantidad de declaraciones de venta pendientes, si es que existen, proporcionando feedback visual instantáneo al usuario.
+
+#### 4. Filtrado y Sincronización de Declaraciones Pendientes
+*   **Filtro por Estado:** Se ajustó la lógica en `VentasViewModel.kt` para que la lista de declaraciones en la pestaña "Pendientes" solo muestre aquellos ítems con `estado == "pendiente"`, garantizando la relevancia de la información mostrada.
+*   **Sincronización Inicial Proactiva:** Se corrigió la función `syncData()` en `VentasViewModel.kt` para incluir la llamada a `syncDeclaracionesVentaUseCase()`, asegurando que las declaraciones de venta se sincronicen con el backend al inicio de la pantalla y no solo mediante "Pull-to-Refresh".
+
+#### 5. Implementación del Historial de Ventas (`HistorialVentasScreen`)
+*   **Nueva Funcionalidad de Historial:** Se creó la pantalla `HistorialVentasScreen` y su correspondiente `HistorialVentasViewModel` para visualizar un registro completo de todas las declaraciones de venta.
+*   **Filtro por Mes y Año:** Se integró un selector de mes y año en `HistorialVentasScreen` (`MonthSelector`) que permite al usuario filtrar las declaraciones mostradas por el período de tiempo deseado.
+*   **Detalle de Declaración:** Al hacer clic en un ítem de la lista de historial, se muestra un `ModalBottomSheet` (`DetalleVentaSheet`) con información detallada de la declaración.
+*   **Detalles Enriquecidos del Animal:** En el modal de detalle, ahora se muestran los nombres completos de la Especie, Raza y Categoría (Ej: "Ovino", "Merino", "Cordero") en lugar de sus IDs, buscando la información en los catálogos cargados.
+*   **Integración de Navegación:**
+    *   Se añadió la ruta `Routes.VENTAS_HISTORIAL` en `AppNavigation.kt`.
+    *   Se incluyó un `IconButton` (icono de menú) en la `MinimalHeader` de `VentasScreen.kt` que permite navegar a esta nueva pantalla de historial.
+
+#### 6. Corrección de Errores de Compilación
+*   Se resolvieron varios errores de compilación (`Unresolved reference` y `Smart cast`) en `HistorialVentasScreen.kt` y `AppNavigation.kt` relacionados con imports faltantes (`HorizontalDivider`, `HistorialVentasScreen`) y problemas de inferencia de tipo en Kotlin. El proyecto compila ahora exitosamente en modo `debug`.
