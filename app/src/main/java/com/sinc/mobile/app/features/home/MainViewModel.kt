@@ -16,7 +16,7 @@ class MainViewModel @Inject constructor(
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        // The responsibility for collecting and refreshing stock data is now in StockViewModel.
+        // Init logic removed for revert
     }
 
     fun resetNavigationToCreateUnidadProductiva() {

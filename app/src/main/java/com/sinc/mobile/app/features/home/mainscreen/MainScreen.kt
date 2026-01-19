@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.home.mainscreen
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,20 +8,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.sinc.mobile.app.features.campos.CamposScreen
 import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosScreen
 import com.sinc.mobile.app.features.home.MainViewModel
@@ -29,26 +35,27 @@ import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
 import com.sinc.mobile.app.features.home.mainscreen.components.QuickJournalSection
 import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
 import com.sinc.mobile.app.features.logistics.LogisticsScreen
-import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.logistics.components.LogisticsDraggableHandle
+import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
-import com.sinc.mobile.app.ui.theme.*
 import com.sinc.mobile.app.ui.components.SlidingPanel
+import com.sinc.mobile.app.ui.theme.CozyMediumGray
 import java.time.LocalDate
 
 @Composable
 fun MainScreen(
     navController: NavHostController,
     startRoute: String = CozyBottomNavRoutes.HOME,
-    viewModel: MainViewModel = hiltViewModel() // Inject MainViewModel
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     var currentRoute by rememberSaveable { mutableStateOf(startRoute) }
     var showLogisticsPanel by rememberSaveable { mutableStateOf(false) }
 
-    val today = remember { LocalDate.now() } // Get current date once
+    val today = remember { LocalDate.now() }
+    val uiState by viewModel.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -141,7 +148,7 @@ fun MainScreen(
                     LogisticsDraggableHandle(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(top = 73.dp) // Adjusted to align with WeekdaySelector
+                            .padding(top = 73.dp)
                     )
                 },
                 panelContent = {
@@ -170,7 +177,6 @@ fun MainContent(
     onHistoryClick: () -> Unit,
     onCamposClick: () -> Unit
 ) {
-    // Main Screen Content is now just the UI
     Column(
         modifier = Modifier
             .padding(paddingValues)
