@@ -79,7 +79,10 @@ fun AppNavigation(
             arguments = listOf(navArgument("startRoute") {
                 type = NavType.StringType
                 nullable = true
-            })
+            }),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            }
         ) { backStackEntry ->
             val startRoute = backStackEntry.arguments?.getString("startRoute")
             MainScreen(

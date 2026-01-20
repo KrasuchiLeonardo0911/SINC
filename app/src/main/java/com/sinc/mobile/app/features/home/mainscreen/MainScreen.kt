@@ -1,6 +1,13 @@
 package com.sinc.mobile.app.features.home.mainscreen
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,88 +72,119 @@ fun MainScreen(
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            modifier = Modifier.navigationBarsPadding(),
-            containerColor = CozyMediumGray,
-            bottomBar = {
-                CozyBottomNavBar(
-                    selectedRoute = currentRoute,
-                    onItemSelected = { newRoute ->
-                        if (newRoute == CozyBottomNavRoutes.PROFILE) {
-                            navController.navigate(Routes.SETTINGS)
-                        } else {
-                            currentRoute = newRoute
-                        }
-                    }
-                )
+        AnimatedContent(
+            targetState = uiState.isInitialized,
+            label = "loading_transition",
+            transitionSpec = {
+                if (targetState) {
+                    // Initialized (Show Dashboard): Slide in from right
+                    (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(500)))
+                        .togetherWith(slideOutHorizontally { width -> -width } + fadeOut(animationSpec = tween(500)))
+                } else {
+                    // Loading (Show Spinner): Default
+                    (slideInHorizontally { width -> -width } + fadeIn(animationSpec = tween(500)))
+                        .togetherWith(slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(500)))
+                }
             }
-        ) { paddingValues ->
-            Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
-                when (route) {
-                    CozyBottomNavRoutes.HOME -> MainContent(
-                        paddingValues = paddingValues,
-                        onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
-                        onDateClick = { showLogisticsPanel = true },
-                        today = today,
-                        onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
-                        onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
-                        onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
-                        onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
+        ) { isInitialized ->
+            if (!isInitialized) {
+                // Loading State: White Screen with Spinner
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    CozyBottomNavRoutes.STOCK -> StockScreen(
-                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
-                        onNavigateToVentas = { navController.navigate(Routes.VENTAS) }
-                    )
-                    CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
-                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
-                        onNavigateToResumen = { month, year ->
-                            navController.navigate(Routes.createResumenMovimientosRoute(month, year))
-                        }
-                    )
-                    CozyBottomNavRoutes.CAMPOS -> CamposScreen(
-                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        onNavigateToCreateUnidadProductiva = {
-                            navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
-                        },
-                        onNavigateToEditUnidadProductiva = { unidadId ->
-                            navController.navigate(Routes.createEditUnidadProductivaRoute(unidadId))
-                        },
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME },
-                        navController = navController
-                    )
-                    CozyBottomNavRoutes.SELECCION_CAMPO -> SeleccionCampoScreen(
-                        mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                        navController = navController,
-                        onBack = { currentRoute = CozyBottomNavRoutes.HOME }
-                    )
-                    CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues)
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = "Pantalla de '$route' en construcción")
-                        }
+                }
+            } else {
+                // Initialized State: Show Dashboard
+                Scaffold(
+                    modifier = Modifier.navigationBarsPadding(),
+                    containerColor = CozyMediumGray,
+                    bottomBar = {
+                        CozyBottomNavBar(
+                            selectedRoute = currentRoute,
+                            onItemSelected = { newRoute ->
+                                if (newRoute == CozyBottomNavRoutes.PROFILE) {
+                                    navController.navigate(Routes.SETTINGS)
+                                } else {
+                                    currentRoute = newRoute
+                                }
+                            }
+                        )
                     }
-                    else -> {
-                        Column(
-                            modifier = Modifier
-                                .padding(paddingValues)
-                                .padding(16.dp)
-                        ) {
-                            Text(text = "Screen for $route")
+                ) { paddingValues ->
+                    Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
+                        when (route) {
+                            CozyBottomNavRoutes.HOME -> MainContent(
+                                paddingValues = paddingValues,
+                                onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
+                                onDateClick = { showLogisticsPanel = true },
+                                today = today,
+                                onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
+                                onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
+                                onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
+                                onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
+                            )
+                            CozyBottomNavRoutes.STOCK -> StockScreen(
+                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                                onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                                onNavigateToVentas = { navController.navigate(Routes.VENTAS) }
+                            )
+                            CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
+                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                                onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                                onNavigateToResumen = { month, year ->
+                                    navController.navigate(Routes.createResumenMovimientosRoute(month, year))
+                                }
+                            )
+                            CozyBottomNavRoutes.CAMPOS -> CamposScreen(
+                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                                onNavigateToCreateUnidadProductiva = {
+                                    navController.navigate(Routes.CREATE_UNIDAD_PRODUCTIVA)
+                                },
+                                onNavigateToEditUnidadProductiva = { unidadId ->
+                                    navController.navigate(Routes.createEditUnidadProductivaRoute(unidadId))
+                                },
+                                onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                                navController = navController
+                            )
+                            CozyBottomNavRoutes.SELECCION_CAMPO -> SeleccionCampoScreen(
+                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                                navController = navController,
+                                onBack = { currentRoute = CozyBottomNavRoutes.HOME }
+                            )
+                            CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(paddingValues)
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(text = "Pantalla de '$route' en construcción")
+                                }
+                            }
+                            else -> {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(paddingValues)
+                                        .padding(16.dp)
+                                ) {
+                                    Text(text = "Screen for $route")
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        if (showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME)) {
+        if (showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME) && uiState.isInitialized) {
             SlidingPanel(
                 showPanel = showLogisticsPanel && (currentRoute == CozyBottomNavRoutes.HOME),
                 onDismiss = { showLogisticsPanel = false },
@@ -170,9 +209,7 @@ fun MainScreen(
             )
         }
 
-        if (uiState.isLoading) {
-            LoadingOverlay(isLoading = true, message = "Iniciando...")
-        }
+        // Removed LoadingOverlay("Iniciando...") as it is replaced by the initial white screen state
 
         if (uiState.appControl?.updateRequired == true) {
             AlertDialog(

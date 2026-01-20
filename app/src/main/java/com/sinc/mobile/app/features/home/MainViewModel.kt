@@ -7,6 +7,8 @@ import com.sinc.mobile.domain.model.Features
 import com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
 import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,8 +31,16 @@ class MainViewModel @Inject constructor(
     private fun initializeApp() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+
+            // Force minimum splash duration of 1 second for better UX
+            val minDelay = async { delay(1000) }
             
-            when (val result = initializeAppUseCase()) {
+            val result = initializeAppUseCase()
+
+            // Wait for the minimum delay to finish
+            minDelay.await()
+            
+            when (result) {
                 is Result.Success -> {
                     _uiState.update { 
                         it.copy(
