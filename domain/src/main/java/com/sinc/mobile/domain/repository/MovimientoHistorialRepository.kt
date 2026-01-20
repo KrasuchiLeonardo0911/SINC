@@ -7,5 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface MovimientoHistorialRepository {
     fun getMovimientos(): Flow<List<MovimientoHistorial>>
-    suspend fun syncMovimientos(): Result<Unit, GenericError>
+    suspend fun syncMovimientos(lastSyncTimestamp: String?): Result<Unit, GenericError>
+    
+    suspend fun getLastSyncTimestamp(): String?
+    suspend fun saveLastSyncTimestamp(timestamp: String)
 }

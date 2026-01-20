@@ -1,5 +1,6 @@
 package com.sinc.mobile.data.repository
 
+import android.content.SharedPreferences
 import android.util.Log
 import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.local.entities.*
@@ -27,7 +28,8 @@ class CatalogosRepositoryImpl @Inject constructor(
     private val fuenteAguaDao: FuenteAguaDao,
     private val tipoSueloDao: TipoSueloDao,
     private val tipoPastoDao: TipoPastoDao,
-    private val json: Json // Inject Kotlinx.serialization Json
+    private val json: Json, // Inject Kotlinx.serialization Json
+    private val prefs: SharedPreferences
 ) : CatalogosRepository {
 
     // Mappers from Entity to Domain
@@ -157,8 +159,15 @@ class CatalogosRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncCatalogos(): com.sinc.mobile.domain.util.Result<Unit, com.sinc.mobile.domain.util.Error> {
-        Log.d("CatalogosRepo", "Iniciando syncCatalogos")
+    override suspend fun syncCatalogos(remoteVersion: String?): com.sinc.mobile.domain.util.Result<Unit, com.sinc.mobile.domain.util.Error> {
+        Log.d("CatalogosRepo", "Iniciando syncCatalogos. Remote version: $remoteVersion")
+
+        val localVersion = prefs.getString("catalogs_version", null)
+        if (remoteVersion != null && localVersion == remoteVersion) {
+            Log.d("CatalogosRepo", "Versión local ($localVersion) coincide con remota ($remoteVersion). Saltando sync.")
+            return com.sinc.mobile.domain.util.Result.Success(Unit)
+        }
+
         val authToken = sessionManager.getAuthToken()
             ?: return com.sinc.mobile.domain.util.Result.Failure(GenericError("No hay token de autenticación disponible para sincronizar catálogos."))
 
@@ -179,6 +188,11 @@ class CatalogosRepositoryImpl @Inject constructor(
                     catalogosDto.fuentesAgua?.let { fuenteAguaDao.insertAllFuentesAgua(it.map { it.toEntity() }) }
                     catalogosDto.tiposSuelo?.let { tipoSueloDao.insertAllTiposSuelo(it.map { it.toEntity() }) }
                     catalogosDto.tiposPasto?.let { tipoPastoDao.insertAllTiposPasto(it.map { it.toEntity() }) }
+
+                    if (remoteVersion != null) {
+                        prefs.edit().putString("catalogs_version", remoteVersion).apply()
+                        Log.d("CatalogosRepo", "Versión de catálogos actualizada a: $remoteVersion")
+                    }
 
                     Log.d("CatalogosRepo", "Sincronización exitosa")
                     com.sinc.mobile.domain.util.Result.Success(Unit)

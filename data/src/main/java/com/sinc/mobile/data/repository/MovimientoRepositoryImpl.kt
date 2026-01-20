@@ -6,12 +6,14 @@ import com.sinc.mobile.data.network.api.MovimientoApiService
 import com.sinc.mobile.data.network.dto.MovimientoRequest
 import com.sinc.mobile.data.network.dto.MovimientosBatchRequest
 import com.sinc.mobile.data.session.SessionManager
+import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.model.MovimientoPendiente
 import com.sinc.mobile.domain.repository.MovimientoRepository
+import com.sinc.mobile.domain.util.Result
+import com.sinc.mobile.domain.util.Error
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 class MovimientoRepositoryImpl @Inject constructor(
@@ -20,12 +22,12 @@ class MovimientoRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager
 ) : MovimientoRepository {
 
-    override suspend fun saveMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit> {
+    override suspend fun saveMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit, Error> {
         return try {
             movimientoPendienteDao.insert(movimiento.toEntity())
-            Result.success(Unit)
+            Result.Success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Failure(GenericError(e.message ?: "Error al guardar localmente"))
         }
     }
 
@@ -35,11 +37,11 @@ class MovimientoRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncMovimientosPendientes(): Result<List<MovimientoPendiente>> {
+    override suspend fun syncMovimientosPendientesToServer(): Result<List<MovimientoPendiente>, Error> {
         return try {
             val pendientes = getMovimientosPendientes().first()
             if (pendientes.isEmpty()) {
-                return Result.success(emptyList())
+                return Result.Success(emptyList())
             }
 
             val successfullySynced = mutableListOf<MovimientoPendiente>()
@@ -56,65 +58,65 @@ class MovimientoRepositoryImpl @Inject constructor(
                 if (response.isSuccessful) {
                     successfullySynced.addAll(movimientos)
                 } else {
-                    return Result.failure(Exception("Ocurrió un error al sincronizar movimientos."))
+                    return Result.Failure(GenericError("Error al sincronizar UP $upId: ${response.message()}"))
                 }
             }
-            Result.success(successfullySynced)
+            Result.Success(successfullySynced)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.Failure(GenericError(e.message ?: "Error desconocido"))
         }
     }
-                    
-                        override suspend fun deleteMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit> {
-                            return try {
-                                movimientoPendienteDao.delete(movimiento.toEntity())
-                                Result.success(Unit)
-                            } catch (e: Exception) {
-                                Result.failure(e)
-                            }
-                        }
-                    }
-                    
-                    // Mappers
-                    fun MovimientoPendiente.toEntity(): MovimientoPendienteEntity {
-                        return MovimientoPendienteEntity(
-                            id = this.id,
-                            unidad_productiva_id = this.unidadProductivaId,
-                            especie_id = this.especieId,
-                            categoria_id = this.categoriaId,
-                            raza_id = this.razaId,
-                            cantidad = this.cantidad,
-                            motivo_movimiento_id = this.motivoMovimientoId,
-                            destino_traslado = this.destinoTraslado,
-                            observaciones = this.observaciones,
-                            fecha_registro = this.fechaRegistro,
-                            sincronizado = this.sincronizado
-                        )
-                    }
-                    
-                    fun MovimientoPendienteEntity.toDomain(): MovimientoPendiente {
-                        return MovimientoPendiente(
-                            id = this.id,
-                            unidadProductivaId = this.unidad_productiva_id,
-                            especieId = this.especie_id,
-                            categoriaId = this.categoria_id,
-                            razaId = this.raza_id,
-                            cantidad = this.cantidad,
-                            motivoMovimientoId = this.motivo_movimiento_id,
-                            destinoTraslado = this.destino_traslado,
-                            observaciones = this.observaciones,
-                            fechaRegistro = this.fecha_registro,
-                            sincronizado = this.sincronizado
-                        )
-                    }
-                    
-                    fun MovimientoPendiente.toApiRequest(): MovimientoRequest {
-                        return MovimientoRequest(
-                            especie_id = this.especieId,
-                            categoria_id = this.categoriaId,
-                            raza_id = this.razaId,
-                            cantidad = this.cantidad,
-                            motivo_movimiento_id = this.motivoMovimientoId,
-                            destino_traslado = this.destinoTraslado
-                        )
-                    }
+
+    override suspend fun deleteMovimientoLocal(movimiento: MovimientoPendiente): Result<Unit, Error> {
+        return try {
+            movimientoPendienteDao.delete(movimiento.toEntity())
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(GenericError(e.message ?: "Error al eliminar localmente"))
+        }
+    }
+}
+
+// Mappers
+fun MovimientoPendiente.toEntity(): MovimientoPendienteEntity {
+    return MovimientoPendienteEntity(
+        id = this.id,
+        unidad_productiva_id = this.unidadProductivaId,
+        especie_id = this.especieId,
+        categoria_id = this.categoriaId,
+        raza_id = this.razaId,
+        cantidad = this.cantidad,
+        motivo_movimiento_id = this.motivoMovimientoId,
+        destino_traslado = this.destinoTraslado,
+        observaciones = this.observaciones,
+        fecha_registro = this.fechaRegistro,
+        sincronizado = this.sincronizado
+    )
+}
+
+fun MovimientoPendienteEntity.toDomain(): MovimientoPendiente {
+    return MovimientoPendiente(
+        id = this.id,
+        unidadProductivaId = this.unidad_productiva_id,
+        especieId = this.especie_id,
+        categoriaId = this.categoria_id,
+        razaId = this.raza_id,
+        cantidad = this.cantidad,
+        motivoMovimientoId = this.motivo_movimiento_id,
+        destinoTraslado = this.destino_traslado,
+        observaciones = this.observaciones,
+        fechaRegistro = this.fecha_registro,
+        sincronizado = this.sincronizado
+    )
+}
+
+fun MovimientoPendiente.toApiRequest(): MovimientoRequest {
+    return MovimientoRequest(
+        especie_id = this.especieId,
+        categoria_id = this.categoriaId,
+        raza_id = this.razaId,
+        cantidad = this.cantidad,
+        motivo_movimiento_id = this.motivoMovimientoId,
+        destino_traslado = this.destinoTraslado
+    )
+}

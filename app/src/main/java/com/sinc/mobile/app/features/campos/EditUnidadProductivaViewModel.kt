@@ -107,10 +107,7 @@ class EditUnidadProductivaViewModel @Inject constructor(
             }
         }
         
-        // Ensure catalogs are up to date
-        viewModelScope.launch {
-            syncCatalogosUseCase()
-        }
+        // Catalogs are synced smartly on app init
     }
 
     // Setters

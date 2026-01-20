@@ -69,7 +69,7 @@ class VentasViewModel @Inject constructor(
         viewModelScope.launch {
             // Trigger sync in background to ensure data availability
             syncUnidadesProductivasUseCase()
-            syncCatalogosUseCase()
+            // Catalogos are synced smartly on app init
             syncStockUseCase()
             syncDeclaracionesVentaUseCase()
         }

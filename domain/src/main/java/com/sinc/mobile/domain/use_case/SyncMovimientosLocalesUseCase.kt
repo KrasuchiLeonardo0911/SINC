@@ -6,10 +6,10 @@ import com.sinc.mobile.domain.util.Result
 import com.sinc.mobile.domain.util.Error
 import javax.inject.Inject
 
-class SaveMovimientoLocalUseCase @Inject constructor(
+class SyncMovimientosLocalesUseCase @Inject constructor(
     private val repository: MovimientoRepository
 ) {
-    suspend operator fun invoke(movimiento: MovimientoPendiente): Result<Unit, Error> {
-        return repository.saveMovimientoLocal(movimiento)
+    suspend operator fun invoke(): Result<List<MovimientoPendiente>, Error> {
+        return repository.syncMovimientosPendientesToServer()
     }
 }

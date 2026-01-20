@@ -49,7 +49,7 @@ class MovimientoStepperViewModel @Inject constructor(
     private val getMovimientoCatalogosUseCase: GetMovimientoCatalogosUseCase,
     private val saveMovimientoLocalUseCase: SaveMovimientoLocalUseCase,
     getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
-    private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
+    private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase, // Updated UseCase
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
     private val stockRepository: StockRepository, // Keep for getStock()
     private val syncStockUseCase: SyncStockUseCase, // Add this
@@ -70,7 +70,7 @@ class MovimientoStepperViewModel @Inject constructor(
     init {
         syncManager = MovimientoSyncManager(
             getMovimientosPendientesUseCase,
-            syncMovimientosPendientesUseCase,
+            syncMovimientosLocalesUseCase, // Updated parameter
             deleteMovimientoLocalUseCase,
             syncStockUseCase,
             viewModelScope
@@ -211,11 +211,14 @@ class MovimientoStepperViewModel @Inject constructor(
                     fechaRegistro = LocalDateTime.now(),
                     sincronizado = false
                 )
-                saveMovimientoLocalUseCase(movimiento).onSuccess {
-                    _uiState.value = _uiState.value.copy(formManager = MovimientoFormManager(catalogos))
+                
+                // saveMovimientoLocalUseCase uses result.onSuccess {}
+                val result = saveMovimientoLocalUseCase(movimiento)
+                if (result is com.sinc.mobile.domain.util.Result.Success) {
+                     _uiState.value = _uiState.value.copy(formManager = MovimientoFormManager(catalogos))
                     _navigateToPage.emit(1)
-                }.onFailure {
-                    // TODO: Show error in UI
+                } else if (result is com.sinc.mobile.domain.util.Result.Failure) {
+                    // Handle failure
                 }
             } catch (e: Exception) {
                 // Should not happen with the new logic, but kept for safety

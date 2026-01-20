@@ -1,5 +1,7 @@
 package com.sinc.mobile.data.repository
 
+import android.content.SharedPreferences
+import com.sinc.mobile.data.mapper.toDomain
 import com.sinc.mobile.data.network.api.AuthApiService
 import com.sinc.mobile.data.network.dto.ErrorResponse
 import com.sinc.mobile.data.network.dto.LoginRequest
@@ -7,18 +9,22 @@ import com.sinc.mobile.data.network.dto.ValidationErrorResponse
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.model.AuthResult
 import com.sinc.mobile.domain.model.ChangePasswordData
+import com.sinc.mobile.domain.model.GenericError
+import com.sinc.mobile.domain.model.InitData
 import com.sinc.mobile.domain.model.RequestPasswordResetData
 import com.sinc.mobile.domain.model.ResetPasswordWithCodeData
 import com.sinc.mobile.domain.repository.AuthRepository
+import com.sinc.mobile.domain.util.Result as DomainResult
+import com.sinc.mobile.domain.util.Error as DomainError
 import kotlinx.serialization.json.Json
 import java.io.IOException
 import javax.inject.Inject
-import kotlinx.serialization.serializer
 
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val json: Json,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val prefs: SharedPreferences
 ) : AuthRepository {
 
     @Suppress("ConstantConditionIf")
@@ -63,20 +69,16 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
-        // Intento 1: Parsear como el error más complejo (ValidationErrorResponse)
         try {
             val validationError = json.decodeFromString(ValidationErrorResponse.serializer(), errorBodyString)
             val firstErrorMessage = validationError.errors.values.firstOrNull()?.firstOrNull()
             return AuthResult.UnknownError(firstErrorMessage ?: validationError.message)
         } catch (e: Exception) {
-            // Si falla, no hacemos nada y pasamos al siguiente intento
             android.util.Log.w("AuthErrorParser", "No se pudo parsear como ValidationErrorResponse: ${e.message}")
         }
 
-        // Intento 2: Parsear como el error simple (ErrorResponse)
         try {
             val errorResponse = json.decodeFromString(ErrorResponse.serializer(), errorBodyString)
-            // Si el mensaje es "Credenciales inválidas", devolvemos el tipo específico
             if (errorResponse.message.contains("Credenciales inv", ignoreCase = true)) {
                 return AuthResult.InvalidCredentials
             }
@@ -85,7 +87,6 @@ class AuthRepositoryImpl @Inject constructor(
             android.util.Log.e("AuthErrorParser", "No se pudo parsear como ErrorResponse: ${e.message}")
         }
 
-        // Fallback final
         return if (response.code() == 401) {
             AuthResult.InvalidCredentials
         } else {
@@ -174,6 +175,26 @@ class AuthRepositoryImpl @Inject constructor(
             return Result.failure(Exception("Error de red. Por favor, comprueba tu conexión."))
         } catch (e: Exception) {
             return Result.failure(e)
+        }
+    }
+
+    override suspend fun getInitData(): DomainResult<InitData, DomainError> {
+        return try {
+            val response = apiService.getInitData()
+            if (response.isSuccessful && response.body() != null) {
+                val dto = response.body()!!
+                
+                dto.userContext?.productorId?.let { id ->
+                    prefs.edit().putInt("productor_id", id).apply()
+                }
+                
+                DomainResult.Success(dto.toDomain())
+            } else {
+                DomainResult.Failure(GenericError("Error en la respuesta del servidor"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            DomainResult.Failure(GenericError("Error de red: ${e.message}"))
         }
     }
 }

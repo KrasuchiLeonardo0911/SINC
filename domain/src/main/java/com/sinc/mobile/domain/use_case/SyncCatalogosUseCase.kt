@@ -8,7 +8,7 @@ import javax.inject.Inject
 class SyncCatalogosUseCase @Inject constructor(
     private val repository: CatalogosRepository
 ) {
-    suspend operator fun invoke(): Result<Unit, Error> {
-        return repository.syncCatalogos()
+    suspend operator fun invoke(remoteVersion: String? = null): Result<Unit, Error> {
+        return repository.syncCatalogos(remoteVersion)
     }
 }

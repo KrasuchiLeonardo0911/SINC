@@ -2,8 +2,9 @@ package com.sinc.mobile.app.features.movimiento
 
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
-import com.sinc.mobile.domain.use_case.SyncMovimientosPendientesUseCase
+import com.sinc.mobile.domain.use_case.SyncMovimientosLocalesUseCase
 import com.sinc.mobile.domain.use_case.SyncStockUseCase
+import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,7 @@ data class MovimientoSyncState(
 
 class MovimientoSyncManager(
     private val getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
-    private val syncMovimientosPendientesUseCase: SyncMovimientosPendientesUseCase,
+    private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase,
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
     private val syncStockUseCase: SyncStockUseCase,
     private val scope: CoroutineScope
@@ -87,7 +88,9 @@ class MovimientoSyncManager(
             _syncState.value = _syncState.value.copy(isSyncing = true, syncError = null, syncCompleted = false)
             val startTime = System.currentTimeMillis()
 
-            syncMovimientosPendientesUseCase().onSuccess { syncedMovements ->
+            val result = syncMovimientosLocalesUseCase()
+            if (result is Result.Success) {
+                val syncedMovements = result.data
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
                     delay(1000 - duration) // Ensure spinner is visible for at least 1s
@@ -102,12 +105,13 @@ class MovimientoSyncManager(
 
                 // Now, trigger a refresh of the total stock
                 syncStockUseCase()
-            }.onFailure { error ->
+            } else if (result is Result.Failure) {
+                val error = result.error
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
                     delay(1000 - duration) // Ensure spinner is visible for at least 1s
                 }
-                _syncState.value = _syncState.value.copy(isSyncing = false, syncError = error.message ?: "Error desconocido al sincronizar")
+                _syncState.value = _syncState.value.copy(isSyncing = false, syncError = error.message)
                 delay(3000L) // Keep error message visible
                 _syncState.value = _syncState.value.copy(syncError = null)
             }

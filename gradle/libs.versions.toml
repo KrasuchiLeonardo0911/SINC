@@ -30,6 +30,7 @@ coreTesting = "2.2.0"
 mockwebserver = "4.12.0" # Added for testing API calls
 mockito = "5.10.0"
 mockitoKotlin = "5.2.1"
+mockk = "1.13.10"
 
 osmdroid = "6.1.18"
 androidx-preference = "1.2.1"
@@ -82,6 +83,7 @@ android-desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_li
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "coreTesting" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

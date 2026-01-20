@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,9 +43,12 @@ import com.sinc.mobile.app.features.stock.StockScreen
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
+import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.app.ui.components.SlidingPanel
 import com.sinc.mobile.app.ui.theme.CozyMediumGray
 import java.time.LocalDate
+import android.content.Intent
+import android.net.Uri
 
 @Composable
 fun MainScreen(
@@ -56,6 +61,7 @@ fun MainScreen(
 
     val today = remember { LocalDate.now() }
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -161,6 +167,39 @@ fun MainScreen(
                         }
                     )
                 }
+            )
+        }
+
+        if (uiState.isLoading) {
+            LoadingOverlay(isLoading = true, message = "Iniciando...")
+        }
+
+        if (uiState.appControl?.updateRequired == true) {
+            AlertDialog(
+                onDismissRequest = { /* No cancelable */ },
+                title = { Text("Actualización Requerida") },
+                text = { Text(uiState.appControl?.message ?: "Existe una nueva versión de la aplicación que es obligatoria para continuar.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            uiState.appControl?.storeUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
+                            }
+                        }
+                    ) {
+                        Text("Actualizar")
+                    }
+                }
+            )
+        }
+
+        if (uiState.appControl?.maintenanceMode == true) {
+            AlertDialog(
+                onDismissRequest = { /* No cancelable */ },
+                title = { Text("Mantenimiento") },
+                text = { Text(uiState.appControl?.message ?: "El sistema se encuentra en mantenimiento. Por favor intente más tarde.") },
+                confirmButton = {}
             )
         }
     }

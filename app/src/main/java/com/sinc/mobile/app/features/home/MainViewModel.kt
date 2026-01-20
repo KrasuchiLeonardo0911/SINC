@@ -1,22 +1,57 @@
 package com.sinc.mobile.app.features.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.sinc.mobile.domain.model.AppControl
+import com.sinc.mobile.domain.model.Features
+import com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
+import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    private val initializeAppUseCase: InitializeAppUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        // Init logic removed for revert
+        initializeApp()
+    }
+
+    private fun initializeApp() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            when (val result = initializeAppUseCase()) {
+                is Result.Success -> {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            appControl = result.data.appControl,
+                            features = result.data.features,
+                            isInitialized = true
+                        ) 
+                    }
+                }
+                is Result.Failure -> {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            error = "Error al conectar con el servidor",
+                            isInitialized = true 
+                        ) 
+                    }
+                }
+            }
+        }
     }
 
     fun resetNavigationToCreateUnidadProductiva() {
@@ -25,5 +60,10 @@ class MainViewModel @Inject constructor(
 }
 
 data class MainUiState(
-    val shouldNavigateToCreateUnidadProductiva: Boolean = false
+    val isLoading: Boolean = true,
+    val isInitialized: Boolean = false,
+    val error: String? = null,
+    val shouldNavigateToCreateUnidadProductiva: Boolean = false,
+    val appControl: AppControl? = null,
+    val features: Features? = null
 )

@@ -1,5 +1,6 @@
 package com.sinc.mobile.data.network.api
 
+import com.sinc.mobile.data.network.dto.InitResponseDto
 import com.sinc.mobile.data.network.dto.LoginRequest
 import com.sinc.mobile.data.network.dto.LoginResponse
 import okhttp3.ResponseBody
@@ -17,6 +18,10 @@ interface AuthApiService {
     @Headers("Accept: application/json")
     @POST("api/movil/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
+
+    @Headers("Accept: application/json")
+    @GET("api/movil/init")
+    suspend fun getInitData(): Response<InitResponseDto>
 
     @Headers("Accept: application/json")
     @GET("api/movil/catalogos")

@@ -1,46 +1,38 @@
-# Avances de la Sesión Actual (18 de Enero de 2026)
+# Avances de la Sesión Actual - 20 de Enero de 2026
 
-Esta sesión se centró en la corrección de errores críticos en el formulario de movimientos, la mejora de la visualización de datos en la pantalla de stock y una refactorización completa del historial de movimientos, incluyendo nuevas funcionalidades de resumen. Además, se abordó la gestión de la base de datos para futuras actualizaciones.
+Esta sesión se centró en la verificación y validación de la estrategia de Sincronización Incremental (Delta Sync) y la implementación de una Sincronización Inteligente ("Smart Sync") para los catálogos.
 
-### 1. Corrección: Bug en el Formulario de Movimientos para Traslados
+## 1. Validación de Sincronización Delta (Módulo Movimientos)
 
--   **Problema Detectado:** El formulario de registro de movimientos fallaba al intentar registrar un "Traslado (entrada)". La lógica existente solo solicitaba el campo "Destino" para "Traslado (salida)", lo que generaba un error de validación o un fallo en el backend al enviar datos incompletos para "Traslado (entrada)".
--   **Solución Implementada:**
-    *   **`MovimientoFormManager.kt`:** Se actualizó la lógica de validación para requerir el campo `destino` tanto para "Traslado (salida)" como para "Traslado (entrada)", utilizando una comparación insensible a mayúsculas/minúsculas.
-    *   **`MovimientoFormStepScreen.kt`:** Se modificó el `LaunchedEffect` que controla la visibilidad del `ModalBottomSheet` de "Destino" para que aparezca en ambos casos ("Traslado (salida)" y "Traslado (entrada)"), permitiendo al usuario ingresar la información necesaria.
-    *   **`MovimientoStepperViewModel.kt`:** Se añadió el campo `destinoTraslado` a la `data class MovimientoAgrupado` para asegurar que esta información esté disponible en las capas superiores.
-    *   **`MovimientoSyncManager.kt`:** Se incluyó `destinoTraslado` en la clave de agrupación de movimientos. Esto garantiza que movimientos con el mismo tipo pero destinos diferentes no se fusionen erróneamente en la pantalla de revisión.
-    *   **`MovimientoReviewStepScreen.kt`:** Se actualizó la interfaz de las filas de revisión para mostrar el campo "Destino" si está presente, proporcionando una vista más completa al usuario.
+*   **Objetivo:** Confirmar que la aplicación solo descarga los movimientos nuevos o modificados desde la última conexión, en lugar de todo el historial.
+*   **Investigación y Hallazgos:**
+    *   Se analizó `MovimientoHistorialRepositoryImpl` y se confirmó que gestiona un timestamp de `last_sync` almacenado en `SharedPreferences`.
+    *   Se verificó que las peticiones a la API incluyen correctamente el parámetro `updated_after` con este timestamp.
+    *   Se contrastó con el test de backend (`DeltaSyncTest.php`) que confirma que el servidor filtra los registros basándose en este parámetro.
+    *   **Conclusión:** La lógica para solicitar solo datos faltantes está correctamente implementada. La ausencia de lógica de borrado ("soft deletes") se validó como correcta según las reglas de negocio (los movimientos no se borran, se compensan).
 
-### 2. Mejora: Filtrado de Stock en Cero en la Pantalla "Mi Stock"
+## 2. Validación de Sincronización de Stock
 
--   **Problema Detectado:** En la pantalla "Mi Stock", al usar el filtro "Todos", la tabla mostraba categorías de animales y razas incluso si su cantidad era 0, generando ruido visual.
--   **Solución Implementada:**
-    *   **`StockViewModel.kt`:** Se modificó la función `processStock`. Ahora, al generar la lista de `desgloses` para la vista de tabla, se utiliza `mapNotNull` para excluir cualquier `DesgloseItem.Full` cuya `quantity` sea 0. Esto asegura que solo se muestren los ítems con stock positivo.
+*   **Objetivo:** Determinar si el módulo de stock utilizaba o necesitaba delta sync.
+*   **Investigación:**
+    *   Se analizó `StockRepositoryImpl` y se confirmó que realiza un "Full Sync" (reemplazo total).
+    *   Se inspeccionó la respuesta real del endpoint `/api/movil/stock` (usando el token de producción).
+    *   **Conclusión:** El servidor devuelve un snapshot calculado con el estado actual y un desglose detallado. Por lo tanto, la estrategia de descarga completa es la adecuada para este módulo, ya que los totales cambian constantemente y no son una lista incremental de eventos.
 
-### 3. Refactorización y Nueva Funcionalidad: Pantalla "Historial de Movimientos"
+## 3. Fortalecimiento del Testing (Capa de Datos)
 
--   **Problema Detectado:** La pantalla de "Historial de Movimientos" carecía de un filtro por mes y año, y su diseño actual con tarjetas era visualmente denso, ocupando mucho espacio.
--   **Solución Implementada:**
-    *   **`HistorialMovimientosViewModel.kt`:**
-        *   Se añadió `selectedDate` (LocalDate) al estado para gestionar el mes y año actuales.
-        *   Se implementó la lógica para almacenar la lista completa de movimientos (`allMovimientos`) y una lista filtrada (`filteredMovimientos`) basada en el mes y año seleccionados.
-        *   Se crearon funciones `previousMonth()` y `nextMonth()` para cambiar el periodo de visualización.
-    *   **`HistorialMovimientosScreen.kt`:**
-        *   Se integró un `MonthSelector` (similar al de Historial de Ventas) en la parte superior para la navegación mensual.
-        *   Se rediseñó la lista de movimientos para usar un formato de fila compacta (`CompactMovimientoRow`) a lo largo de todo el ancho de la pantalla, reemplazando las tarjetas individuales.
-        *   Se añadieron `HorizontalDivider`s entre las filas para una mejor separación visual.
-        *   Se incorporó un icono (DateRange) en la `MinimalHeader` para acceder a la nueva pantalla de resumen.
-    *   **Nueva Funcionalidad: Pantalla de Resumen Mensual:**
-        *   Se creó `ResumenMovimientosViewModel.kt` para calcular estadísticas del mes seleccionado (total de altas, total de bajas, balance neto, y desglose por especie).
-        *   Se creó `ResumenMovimientosScreen.kt` con un diseño limpio que muestra estas estadísticas en tarjetas claras y una lista detallada por especie.
-        *   **`AppNavigation.kt`:** Se añadió la nueva ruta `Routes.RESUMEN_MOVIMIENTOS`, que acepta `month` y `year` como argumentos de navegación.
-        *   **Integración:** El botón en el encabezado de `HistorialMovimientosScreen` ahora navega a esta nueva pantalla de resumen, pasando el mes y el año actuales.
+*   **Creación de Test Unitario:** Ante la falta de tests específicos para el repositorio de movimientos, se creó `MovimientoHistorialRepositoryImplTest.kt` en el módulo `:data`.
+*   **Cobertura del Test:**
+    *   Verifica que `syncMovimientos` envíe el parámetro `updated_after` correcto a la API.
+    *   Confirma que los nuevos registros recibidos se insertan en la base de datos local.
+    *   Asegura que la base de datos se limpie correctamente durante una sincronización inicial (timestamp nulo).
+*   **Configuración de Entorno:** Se añadieron las dependencias necesarias (`junit`, `mockk`, `kotlinx-coroutines-test`) al `build.gradle.kts` del módulo `:data` para habilitar pruebas unitarias robustas fuera del entorno de instrumentación.
 
-### 4. Mantenimiento: Control de Versiones de la Base de Datos
+## 4. Implementación de "Smart Sync" para Catálogos
 
--   **Problema Detectado:** Posibilidad de errores de incompatibilidad de esquema de la base de datos al actualizar la aplicación, si no se gestionan las versiones.
--   **Solución Implementada:**
-    *   **`SincMobileDatabase.kt`:** Se incrementó la `version` de la base de datos de `4` a `5`. Dado que ya se utiliza `fallbackToDestructiveMigration()` en el `DatabaseModule`, este cambio asegura que cualquier usuario que actualice la app tendrá su base de datos local borrada y recreada con el esquema más reciente, evitando crasheos por incompatibilidad de datos.
-
----
+*   **Objetivo:** Utilizar la información del endpoint `/init` para evitar la descarga redundante de catálogos estáticos en cada inicio de la app.
+*   **Implementación:**
+    *   Se identificó el campo `catalogs_version` en `InitResponseDto` como el mecanismo ideal de control.
+    *   **Refactorización de `CatalogosRepository`:** Se modificó para guardar localmente la versión de los catálogos y aceptar una `remoteVersion` en el método `syncCatalogos`. Si las versiones coinciden, la sincronización se omite.
+    *   **Actualización de `InitializeAppUseCase`:** Ahora extrae la versión del catálogo de la respuesta de `/init` y la pasa al caso de uso de sincronización, delegando la decisión de descargar o no al repositorio.
+    *   **Limpieza de Código:** Se eliminaron llamadas redundantes a `syncCatalogos` en `VentasViewModel` y `EditUnidadProductivaViewModel`, confiando en la sincronización inteligente inicial. Se eliminaron métodos obsoletos de `AuthRepository` relacionados con versiones de catálogos, mejorando la cohesión del código.
