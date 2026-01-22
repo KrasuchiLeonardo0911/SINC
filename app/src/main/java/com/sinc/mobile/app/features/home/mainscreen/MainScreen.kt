@@ -139,7 +139,9 @@ fun MainScreen(
                                 onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
                                 onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
                                 onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
-                                onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS }
+                                onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS },
+                                onPendingMovementsClick = { navController.navigate(Routes.createMovimientoFormRoute(unidadId = null, initialPage = 1)) },
+                                onSalesHistoryClick = { navController.navigate(Routes.VENTAS_HISTORIAL) }
                             )
                             CozyBottomNavRoutes.STOCK -> StockScreen(
                                 mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
@@ -263,7 +265,9 @@ fun MainContent(
     onStockClick: () -> Unit,
     onAddClick: () -> Unit,
     onHistoryClick: () -> Unit,
-    onCamposClick: () -> Unit
+    onCamposClick: () -> Unit,
+    onPendingMovementsClick: () -> Unit,
+    onSalesHistoryClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -306,6 +310,11 @@ fun MainContent(
                 .fillMaxWidth()
                 .background(Color.White)
                 .padding(16.dp)
-        ) { SyncStatusDashboard() }
+        ) {
+            SyncStatusDashboard(
+                onPendingMovementsClick = onPendingMovementsClick,
+                onSalesHistoryClick = onSalesHistoryClick
+            )
+        }
     }
 }

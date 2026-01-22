@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -39,13 +39,40 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.size
 import com.sinc.mobile.R
 
-private val pages = listOf("pending", "sales")
+private data class DashboardPage(
+    val id: String,
+    val title: String,
+    val description: String,
+    @DrawableRes val imageResId: Int,
+    val imageAlignment: Alignment = Alignment.Center,
+)
+
+private val pages = listOf(
+    DashboardPage(
+        id = "pending",
+        title = "Movimientos Pendientes",
+        description = "Toca para ver los registros de stock que aún no se han guardado.",
+        imageResId = R.drawable.ilustracion_movimientos,
+        imageAlignment = Alignment.Center
+    ),
+    DashboardPage(
+        id = "sales",
+        title = "Historial de\nVentas",
+        description = "Toca para consultar el resumen de ventas de este mes.",
+        imageResId = R.drawable.ilustracion_ventas,
+        imageAlignment = Alignment.BottomCenter
+    )
+)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SyncStatusDashboard() {
+fun SyncStatusDashboard(
+    onPendingMovementsClick: () -> Unit,
+    onSalesHistoryClick: () -> Unit
+) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
     Column(
@@ -63,40 +90,46 @@ fun SyncStatusDashboard() {
             state = pagerState,
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 0.dp),
-        ) { page ->
+        ) { pageIndex ->
+            val page = pages[pageIndex]
             Box(modifier = Modifier.padding(horizontal = 4.dp)) {
-                when (pages[page]) {
-                    "pending" -> PendingItemsCard(
-                        title = "Movimientos Pendientes",
-                        description = "Toca para ver los registros de stock que aún no se han guardado.",
-                        imageResId = R.drawable.ilustracion_movimientos,
-                        onCardClick = { /* Nav to movement review */ }
-                    )
-                    "sales" -> PendingItemsCard(
-                        title = "Historial\nde\nVentas",
-                        description = "Consulta el resumen de ventas de este mes.",
-                        imageResId = R.drawable.ilustracion_ventas,
-                        onCardClick = { /* Nav to sales */ }
-                    )
-                }
+                PendingItemsCard(
+                    title = page.title,
+                    description = page.description,
+                    imageResId = page.imageResId,
+                    imageAlignment = page.imageAlignment,
+                    imageModifier = Modifier
+                        .size(170.dp)
+                        .offset(
+                            y = if (page.id == "sales") (7).dp else 0.dp //Altura de la ilustracion
+                        )
+                        .clip(MaterialTheme.shapes.medium),
+                    onCardClick = {
+                        if (page.id == "pending") {
+                            onPendingMovementsClick()
+                        } else {
+                            onSalesHistoryClick()
+                        }
+                    }
+                )
             }
         }
     }
 }
-
-
+ 
 @Composable
 private fun PendingItemsCard(
     title: String,
     description: String,
     @DrawableRes imageResId: Int,
+    imageAlignment: Alignment,
+    imageModifier: Modifier = Modifier,
     onCardClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
-            .clickable { onCardClick() },
+            .height(150.dp),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
@@ -105,6 +138,8 @@ private fun PendingItemsCard(
         Row(
             modifier = Modifier
                 .fillMaxSize()
+                .clip(MaterialTheme.shapes.large)
+                .clickable { onCardClick() }
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -133,20 +168,19 @@ private fun PendingItemsCard(
                 modifier = Modifier
                     .weight(0.4f)
                     .fillMaxHeight(),
-                contentAlignment = Alignment.Center
+                contentAlignment = imageAlignment
             ) {
                 Image(
                     painter = painterResource(id = imageResId),
                     contentDescription = title,
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(170.dp)
-                        .clip(MaterialTheme.shapes.medium)
+                    modifier = imageModifier
                 )
             }
         }
     }
 }
+
 
 
 @OptIn(ExperimentalFoundationApi::class)

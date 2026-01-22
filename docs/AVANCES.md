@@ -1526,3 +1526,70 @@ Esta sesión se centró en la corrección de errores críticos en el formulario 
     *   **`SincMobileDatabase.kt`:** Se incrementó la `version` de la base de datos de `4` a `5`. Dado que ya se utiliza `fallbackToDestructiveMigration()` en el `DatabaseModule`, este cambio asegura que cualquier usuario que actualice la app tendrá su base de datos local borrada y recreada con el esquema más reciente, evitando crasheos por incompatibilidad de datos.
 
 ---
+# Avances de la Sesión Actual - 20 de Enero de 2026
+
+Esta sesión se centró en la verificación y validación de la estrategia de Sincronización Incremental (Delta Sync) y la implementación de una Sincronización Inteligente ("Smart Sync") para los catálogos.
+
+## 1. Validación de Sincronización Delta (Módulo Movimientos)
+
+*   **Objetivo:** Confirmar que la aplicación solo descarga los movimientos nuevos o modificados desde la última conexión, en lugar de todo el historial.
+*   **Investigación y Hallazgos:**
+    *   Se analizó `MovimientoHistorialRepositoryImpl` y se confirmó que gestiona un timestamp de `last_sync` almacenado en `SharedPreferences`.
+    *   Se verificó que las peticiones a la API incluyen correctamente el parámetro `updated_after` con este timestamp.
+    *   Se contrastó con el test de backend (`DeltaSyncTest.php`) que confirma que el servidor filtra los registros basándose en este parámetro.
+    *   **Conclusión:** La lógica para solicitar solo datos faltantes está correctamente implementada. La ausencia de lógica de borrado ("soft deletes") se validó como correcta según las reglas de negocio (los movimientos no se borran, se compensan).
+
+## 2. Validación de Sincronización de Stock
+
+*   **Objetivo:** Determinar si el módulo de stock utilizaba o necesitaba delta sync.
+*   **Investigación:**
+    *   Se analizó `StockRepositoryImpl` y se confirmó que realiza un "Full Sync" (reemplazo total).
+    *   Se inspeccionó la respuesta real del endpoint `/api/movil/stock` (usando el token de producción).
+    *   **Conclusión:** El servidor devuelve un snapshot calculado con el estado actual y un desglose detallado. Por lo tanto, la estrategia de descarga completa es la adecuada para este módulo, ya que los totales cambian constantemente y no son una lista incremental de eventos.
+
+## 3. Fortalecimiento del Testing (Capa de Datos)
+
+*   **Creación de Test Unitario:** Ante la falta de tests específicos para el repositorio de movimientos, se creó `MovimientoHistorialRepositoryImplTest.kt` en el módulo `:data`.
+*   **Cobertura del Test:**
+    *   Verifica que `syncMovimientos` envíe el parámetro `updated_after` correcto a la API.
+    *   Confirma que los nuevos registros recibidos se insertan en la base de datos local.
+    *   Asegura que la base de datos se limpie correctamente durante una sincronización inicial (timestamp nulo).
+*   **Configuración de Entorno:** Se añadieron las dependencias necesarias (`junit`, `mockk`, `kotlinx-coroutines-test`) al `build.gradle.kts` del módulo `:data` para habilitar pruebas unitarias robustas fuera del entorno de instrumentación.
+
+## 4. Implementación de "Smart Sync" para Catálogos
+
+*   **Objetivo:** Utilizar la información del endpoint `/init` para evitar la descarga redundante de catálogos estáticos en cada inicio de la app.
+*   **Implementación:**
+    *   Se identificó el campo `catalogs_version` en `InitResponseDto` como el mecanismo ideal de control.
+    *   **Refactorización de `CatalogosRepository`:** Se modificó para guardar localmente la versión de los catálogos y aceptar una `remoteVersion` en el método `syncCatalogos`. Si las versiones coinciden, la sincronización se omite.
+    *   **Actualización de `InitializeAppUseCase`:** Ahora extrae la versión del catálogo de la respuesta de `/init` y la pasa al caso de uso de sincronización, delegando la decisión de descargar o no al repositorio.
+    *   **Limpieza de Código:** Se eliminaron llamadas redundantes a `syncCatalogos` en `VentasViewModel` y `EditUnidadProductivaViewModel`, confiando en la sincronización inteligente inicial. Se eliminaron métodos obsoletos de `AuthRepository` relacionados con versiones de catálogos, mejorando la cohesión del código.
+
+# Avances de la Sesión - 21 de Enero de 2026
+
+Esta sesión se centró en la refactorización y el rediseño completo de la sección de resumen de la pantalla principal (`MainContent`).
+
+### 1. Ideación y Prototipado Rápido del Dashboard
+
+*   **Análisis del Requisito:** Se buscó reemplazar la sección estática de la pantalla de inicio por un componente más dinámico y útil para el productor, con la restricción clave de no requerir cambios en el backend.
+*   **Proceso Iterativo de Diseño:** Se exploraron varias maquetas en un proceso rápido de prototipado y feedback, descartando conceptos que no se alineaban con los objetivos:
+    1.  **Panel de Alertas y Tareas:** Se propuso un panel proactivo, pero se pospuso por la necesidad de nuevos endpoints en el backend.
+    2.  **Panel de Accesos Rápidos:** Se exploró una cuadrícula de acciones, pero se concluyó que no aportaba suficiente valor sobre la navegación ya existente.
+    3.  **Concepto Final - Panel de Estado de Sincronización:** Se consolidó la idea de un panel centrado exclusivamente en mostrar el estado de los datos pendientes de sincronizar. Este enfoque aporta un valor único y claro en una app con arquitectura offline-first, respondiendo a la pregunta del usuario: "¿Qué datos me faltan guardar en el sistema?".
+
+### 2. Implementación de la Maqueta Final ("Panel de Sincronización")
+
+*   **Componente `SyncStatusDashboard`:** Se implementó desde cero un nuevo componente que consiste en un carrusel horizontal (`HorizontalPager`) con un indicador de puntos en la parte superior.
+*   **Diseño de Tarjetas:**
+    *   **Contenido:** El carrusel presenta dos tarjetas: "Movimientos Pendientes" y "Stock para Venta" (título actualizado a "Historial de Ventas" en la última iteración). Cada una es clickable para una futura navegación.
+    *   **Layout:** Se implementó un diseño de dos columnas (50/50), con texto descriptivo a la izquierda y una ilustración a la derecha, para un mayor impacto visual. Se incorporaron las ilustraciones `ilustracion_movimientos.webp` y `ilustracion_ventas.webp`.
+    *   **Estilo:** Tras múltiples iteraciones de refinamiento (ajuste de tamaño, colores, degradados, y tipografía), se definió un estilo final con tarjetas blancas de `150.dp` de altura, elevación para dar profundidad, y un layout interno compacto.
+*   **Integración:** El nuevo `SyncStatusDashboard` fue integrado en `MainContent`, reemplazando la sección anterior.
+
+### 3. Resolución de Incidencias Técnicas
+
+*   **Error de Compilador de Compose:** Se diagnosticó y resolvió un error de compilación persistente (`@Composable invocations can only happen from the context of a @Composable function`). Se identificó que la causa raíz era un acceso incorrecto a `MaterialTheme` desde un scope no composable (`Canvas`), lo cual fue corregido para estabilizar el entorno.
+*   **Gestión de Recursos:** Se movieron y renombraron correctamente los nuevos archivos de imagen (`.webp`) para cumplir con las convenciones de nombres de recursos de Android y solucionar un error de `mergeDebugResources`.
+
+---
+**Estado Actual:** La nueva maqueta del dashboard está completamente implementada, es visualmente coherente con el resto de la aplicación y compila con éxito. Queda lista para la futura implementación de la lógica de datos para mostrar los pendientes reales.

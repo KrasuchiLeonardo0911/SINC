@@ -41,8 +41,18 @@ object Routes {
     const val EDIT_UNIDAD_PRODUCTIVA = "edit_unidad_productiva/{unidadId}"
     fun createEditUnidadProductivaRoute(unidadId: Int) = "edit_unidad_productiva/$unidadId"
     const val CAMPOS = "campos"
-    const val MOVIMIENTO_FORM = "movimiento_form/{unidadId}"
-    fun createMovimientoFormRoute(unidadId: String) = "movimiento_form/$unidadId"
+    const val MOVIMIENTO_FORM = "movimiento_form?unidadId={unidadId}&initialPage={initialPage}"
+    fun createMovimientoFormRoute(unidadId: String?, initialPage: Int = 0): String {
+        val route = "movimiento_form?"
+        val id_param = unidadId?.let { "unidadId=$it" } ?: ""
+        val page_param = "initialPage=$initialPage"
+
+        return if (id_param.isNotEmpty()) {
+            "$route$id_param&$page_param"
+        } else {
+            "$route$page_param"
+        }
+    }
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
     const val LOGISTICS = "logistics"
     const val CUENCA_INFO = "cuenca_info"
@@ -201,7 +211,16 @@ fun AppNavigation(
 
         composable(
             route = Routes.MOVIMIENTO_FORM,
-            arguments = listOf(navArgument("unidadId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("unidadId") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("initialPage") {
+                    type = NavType.IntType
+                    defaultValue = 0
+                }
+            ),
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { 1000 },
@@ -214,9 +233,11 @@ fun AppNavigation(
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             }
-        ) {
+        ) { backStackEntry ->
+            val initialPage = backStackEntry.arguments?.getInt("initialPage") ?: 0
             MovimientoStepperScreen(
-                onBackPress = { navController.popBackStack() }
+                onBackPress = { navController.popBackStack() },
+                initialPage = initialPage
             )
         }
 

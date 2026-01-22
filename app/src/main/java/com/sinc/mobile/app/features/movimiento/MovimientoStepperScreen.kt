@@ -34,10 +34,11 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun MovimientoStepperScreen(
     onBackPress: () -> Unit,
-    viewModel: MovimientoStepperViewModel = hiltViewModel()
+    viewModel: MovimientoStepperViewModel = hiltViewModel(),
+    initialPage: Int = 0
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 2 })
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Listen for one-time page navigation events from the ViewModel
