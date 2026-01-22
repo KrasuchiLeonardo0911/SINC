@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+
     implementation("androidx.compose.material3:material3:1.2.0-beta02")
     implementation(libs.androidx.navigation.compose)
     implementation(project(":domain"))

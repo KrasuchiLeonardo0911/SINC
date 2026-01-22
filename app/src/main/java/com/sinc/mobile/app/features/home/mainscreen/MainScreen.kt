@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -50,8 +52,8 @@ import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosSc
 import com.sinc.mobile.app.features.home.MainViewModel
 import com.sinc.mobile.app.features.home.mainscreen.components.Header
 import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
-import com.sinc.mobile.app.features.home.mainscreen.components.QuickJournalSection
-import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
+import com.sinc.mobile.app.features.home.mainscreen.components.SyncStatusDashboard;
+import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector;
 import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.logistics.components.LogisticsDraggableHandle
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
@@ -266,7 +268,8 @@ fun MainContent(
     Column(
         modifier = Modifier
             .padding(paddingValues)
-            .fillMaxSize(),
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Column(
@@ -303,6 +306,6 @@ fun MainContent(
                 .fillMaxWidth()
                 .background(Color.White)
                 .padding(16.dp)
-        ) { QuickJournalSection() }
+        ) { SyncStatusDashboard() }
     }
 }
