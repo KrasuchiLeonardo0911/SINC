@@ -6,3 +6,5 @@ sealed class AuthResult {
     object NetworkError : AuthResult()
     data class UnknownError(val message: String) : AuthResult()
 }
+
+

@@ -120,4 +120,10 @@ object DatabaseModule {
     fun provideIdentifierConfigDao(database: SincMobileDatabase): IdentifierConfigDao {
         return database.identifierConfigDao()
     }
+
+    @Singleton
+    @Provides
+    fun provideTicketDao(database: SincMobileDatabase): TicketDao {
+        return database.ticketDao()
+    }
 }

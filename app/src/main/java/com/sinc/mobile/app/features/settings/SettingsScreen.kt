@@ -36,6 +36,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
+    onNavigateToHelp: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -116,7 +117,7 @@ fun SettingsScreen(
                     title = "Ayuda",
                     icon = Icons.AutoMirrored.Outlined.HelpOutline,
                     iconBackgroundColor = CozyPink,
-                    onClick = { /* TODO */ }
+                    onClick = onNavigateToHelp
                 )
                 SettingsItem(
                     title = "Cerrar Sesión",

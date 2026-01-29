@@ -98,7 +98,9 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Accompanist
+    implementation(libs.accompanist.swiperefresh)
     implementation("com.google.accompanist:accompanist-placeholder-material3:0.32.0")
+
 
     // Material (for pull-to-refresh)
     implementation("androidx.compose.material:material")

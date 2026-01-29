@@ -1,4 +1,4 @@
-package com.sinc.mobile.data.local.entity
+package com.sinc.mobile.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

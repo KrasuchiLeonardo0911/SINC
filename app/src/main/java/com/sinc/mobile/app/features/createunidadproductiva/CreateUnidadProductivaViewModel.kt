@@ -15,7 +15,9 @@ import com.sinc.mobile.domain.use_case.GetCurrentLocationUseCase
 import com.sinc.mobile.domain.use_case.GetIdentifierConfigsUseCase
 import com.sinc.mobile.domain.use_case.SyncIdentifierConfigsUseCase
 import com.sinc.mobile.domain.use_case.SyncUnidadesProductivasUseCase
-import com.sinc.mobile.domain.use_case.ticket.SubmitTicketUseCase
+import com.sinc.mobile.domain.use_case.ticket.CreateTicketUseCase
+import com.sinc.mobile.domain.model.ticket.CreateTicketData
+
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,7 +85,7 @@ class CreateUnidadProductivaViewModel @Inject constructor(
     private val getIdentifierConfigsUseCase: GetIdentifierConfigsUseCase,
     private val syncIdentifierConfigsUseCase: SyncIdentifierConfigsUseCase,
     private val createUnidadProductivaUseCase: CreateUnidadProductivaUseCase,
-    private val submitTicketUseCase: SubmitTicketUseCase,
+    private val createTicketUseCase: CreateTicketUseCase,
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase
 ) : ViewModel() {
 
@@ -408,11 +410,19 @@ class CreateUnidadProductivaViewModel @Inject constructor(
                 Información adicional:
                 ${state.rnspaRequestInfoAdicional}
             """.trimIndent()
-            val result = submitTicketUseCase(
-                mensaje = mensaje,
-                tipo = "solicitud_rnspa"
+            val result = createTicketUseCase(
+                CreateTicketData(
+                    mensaje = mensaje,
+                    tipo = "solicitud_rnspa"
+                )
             )
-            _uiState.update { it.copy(rnspaRequestLoading = false, rnspaRequestResult = result) }
+            _uiState.update {
+                val unitResult: com.sinc.mobile.domain.util.Result<Unit, com.sinc.mobile.domain.util.Error> = when (result) {
+                    is com.sinc.mobile.domain.util.Result.Success -> com.sinc.mobile.domain.util.Result.Success(Unit)
+                    is com.sinc.mobile.domain.util.Result.Failure -> com.sinc.mobile.domain.util.Result.Failure(result.error)
+                }
+                it.copy(rnspaRequestLoading = false, rnspaRequestResult = unitResult)
+            }
         }
     }
 

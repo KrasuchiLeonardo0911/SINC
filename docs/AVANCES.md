@@ -1593,3 +1593,45 @@ Esta sesión se centró en la refactorización y el rediseño completo de la sec
 
 ---
 **Estado Actual:** La nueva maqueta del dashboard está completamente implementada, es visualmente coherente con el resto de la aplicación y compila con éxito. Queda lista para la futura implementación de la lógica de datos para mostrar los pendientes reales.
+
+## Avances de la Sesión Actual (22 de enero de 2026)
+
+Como parte del equipo de desarrollo, hoy hemos implementado y mejorado varias funcionalidades clave en la aplicación móvil. A continuación, se detallan los avances:
+
+### 1. Refactorización y Mejoras en el Dashboard (SyncStatusDashboard)
+
+-   **Flexibilidad en Tarjetas**: Hemos refactorizado el componente `SyncStatusDashboard` para permitir una personalización más granular de la posición y el contenido de cada tarjeta. Esto se logró mediante la introducción de una `data class DashboardPage` que encapsula todas las propiedades visuales necesarias (título, descripción, recurso de imagen, alineación y desplazamiento vertical).
+-   **Ajuste Visual de Ilustraciones**: La ilustración de la tarjeta de "Historial de Ventas" (`"sales"`) ahora se ha ajustado, bajando unos píxeles para mejorar la estética, sin afectar la presentación de la primera tarjeta.
+-   **Corrección del Efecto "Ripple"**: Se reubicaron los modificadores `clip` y `clickable` a la `Row` interna de `PendingItemsCard`. Esto asegura que el efecto "ripple" (la sombra al presionar) se recorte correctamente según la forma redondeada de la tarjeta, manteniendo tanto el borde como la elevación deseada de las tarjetas.
+
+### 2. Navegación de Tarjetas desde el Dashboard
+
+-   **"Movimientos Pendientes"**: La tarjeta de "Movimientos Pendientes" ahora navega directamente a la segunda página (índice 1) del `MovimientoStepperScreen`. Esto permite al usuario revisar los movimientos sin necesidad de una `unidadId` previa. Para ello, se modificó `MovimientoStepperScreen` para aceptar un parámetro `initialPage` y la ruta `MOVIMIENTO_FORM` en `AppNavigation.kt` se hizo flexible para aceptar `unidadId` opcionales y `initialPage`.
+-   **"Historial de Ventas"**: La navegación de esta tarjeta fue corregida para dirigir a `Routes.VENTAS_HISTORIAL` (correspondiente a `HistorialVentasScreen`), que proporciona un resumen de ventas. Se rectificó una implementación inicial errónea que la dirigía a `RESUMEN_MOVIMIENTOS`.
+
+### 3. Implementación de la Sección de Ayuda (FAQ y Soporte Técnico)
+
+-   **FAQ (Preguntas Frecuentes)**:
+    -   Se realizó una investigación exhaustiva de las funcionalidades de la aplicación para compilar un manual de ayuda en formato de preguntas y respuestas.
+    -   Se creó el archivo `HelpCenter.kt`, que define la estructura de datos (`FaqItem`, `FaqCategory`, `faqData`) y la interfaz de usuario para la `HelpScreen`, con elementos FAQ expandibles para una mejor experiencia de usuario.
+-   **Chat de Soporte Técnico**:
+    -   Se desarrolló `SupportChatScreen.kt`, una interfaz de usuario de chat básica para la comunicación con soporte.
+    -   Se configuró la persistencia local de los mensajes de chat utilizando Room, incluyendo la creación de `SupportMessageEntity`, `SupportMessageDao` y la actualización de `SincMobileDatabase` (incrementando la versión a 6).
+    -   Se integró el `TicketApiService` y el `TicketRepository` existentes para la comunicación con el endpoint `/tickets` del backend.
+    -   Se creó `SupportChatState.kt` y `SupportChatViewModel.kt` para gestionar el estado del chat, el envío de mensajes y la carga del historial desde la base de datos local.
+    -   Se creó `SupportMessageMapper.kt` para facilitar la conversión entre los modelos de entidad y de dominio de los mensajes de soporte.
+-   **Integración y Navegación**:
+    -   Ambas pantallas (`HelpScreen` y `SupportChatScreen`) se integraron en `AppNavigation.kt` con nuevas rutas (`HELP`, `SUPPORT_CHAT`) y transiciones adecuadas.
+    -   Se añadió un enlace de navegación a `HelpScreen` desde la `SettingsScreen`.
+    -   Se ajustó el `onItemSelected` de la `CozyBottomNavBar` en `MainScreen.kt` para que el ítem "Ayuda" navegue directamente a `HelpScreen` utilizando `navController.navigate(Routes.HELP)`.
+-   **Manejo de Insets**:
+    -   Se aplicaron los modificadores `Modifier.navigationBarsPadding()` al `Scaffold` y `Modifier.statusBarsPadding()` al `MinimalHeader` tanto en `HelpScreen` como en `SupportChatScreen` para asegurar un manejo correcto de los insets del sistema y evitar superposiciones con las barras del sistema.
+
+### 4. Corrección de Errores de Compilación Recurrentes
+
+-   **Clase `Result`**: Se corrigieron errores de compilación relacionados con la clase `Result` personalizada del proyecto, que requería dos argumentos de tipo (`Result<T, Error>`).
+-   **Referencias No Resueltas**: Se solucionaron múltiples errores de "Unresolved reference" (`SupportMessage`, `toDomain`, `toEntity`) recreando los archivos `SupportMessage.kt` y `SupportMessageMapper.kt`, que fueron eliminados por error durante refactorizaciones previas.
+-   **Errores de Sintaxis**: Se corrigió un error de sintaxis en `SupportChatScreen.kt` donde se utilizaba incorrectamente el operador ternario (`if (condition) true_value : false_value`), reemplazándolo por la sintaxis correcta de `if-else` de Kotlin.
+-   **Importaciones Redundantes**: Se eliminaron importaciones redundantes en `SupportChatState.kt` que causaban conflictos.
+
+Todos estos cambios aseguran una experiencia de usuario más fluida y una funcionalidad de ayuda robusta dentro de la aplicación.

@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CreateTicketRequest(
     @SerialName("mensaje") val mensaje: String,
-    @SerialName("tipo") val tipo: String
+    @SerialName("tipo_solicitud") val tipoSolicitud: String
 )

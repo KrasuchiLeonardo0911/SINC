@@ -6,6 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,6 +32,7 @@ import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
 import com.sinc.mobile.app.features.ventas.VentasScreen
 import com.sinc.mobile.app.features.ventas.HistorialVentasScreen
+import com.sinc.mobile.app.features.tickets.TicketsListScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -60,6 +65,15 @@ object Routes {
     const val VENTAS_HISTORIAL = "ventas_historial"
     const val RESUMEN_MOVIMIENTOS = "resumen_movimientos/{month}/{year}"
     fun createResumenMovimientosRoute(month: Int, year: Int) = "resumen_movimientos/$month/$year"
+    const val HELP = "help"
+
+    // Ticket Routes
+    const val TICKETS_LIST = "tickets_list"
+    const val CREATE_TICKET_TYPE = "create_ticket_type"
+    const val CREATE_TICKET_MESSAGE = "create_ticket_message/{ticketType}"
+    fun createTicketMessageRoute(ticketType: String) = "create_ticket_message/$ticketType"
+    const val TICKET_CONVERSATION = "ticket_conversation/{ticketId}"
+    fun createTicketConversationRoute(ticketId: Long) = "ticket_conversation/$ticketId"
 }
 
 @Composable
@@ -116,7 +130,8 @@ fun AppNavigation(
                         popUpTo(Routes.HOME) { inclusive = true } // Pop up to home to clear backstack
                     }
                 },
-                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) }
+                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
+                onNavigateToHelp = { navController.navigate(Routes.HELP) }
             )
         }
         composable(
@@ -284,6 +299,78 @@ fun AppNavigation(
             // Need to create this screen first, but I'll add the import later or rely on auto-import when I create the file
             com.sinc.mobile.app.features.historial_movimientos.resumen.ResumenMovimientosScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.HELP,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            com.sinc.mobile.app.features.help.HelpScreen(
+                onBackPress = { navController.popBackStack() },
+                onNavigateToTickets = { navController.navigate(Routes.TICKETS_LIST) }
+            )
+        }
+
+        // --- Ticket Routes ---
+        composable(
+            route = Routes.TICKETS_LIST,
+            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300)) }
+        ) {
+            TicketsListScreen(
+                navController = navController,
+                onTicketClick = { ticketId -> navController.navigate(Routes.createTicketConversationRoute(ticketId)) },
+                onNewTicketClick = { navController.navigate(Routes.CREATE_TICKET_TYPE) },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.CREATE_TICKET_TYPE,
+            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300)) }
+        ) {
+            com.sinc.mobile.app.features.tickets.CreateTicketTypeScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onTypeSelected = { ticketType -> navController.navigate(Routes.createTicketMessageRoute(ticketType)) }
+            )
+        }
+
+        composable(
+            route = Routes.CREATE_TICKET_MESSAGE,
+            arguments = listOf(navArgument("ticketType") { type = NavType.StringType }),
+            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300)) }
+        ) { backStackEntry ->
+            val ticketType = backStackEntry.arguments?.getString("ticketType") ?: "general"
+
+            com.sinc.mobile.app.features.tickets.CreateTicketMessageScreen(
+                ticketType = ticketType,
+                onNavigateBack = { navController.popBackStack() },
+                onTicketCreated = {
+                    // Set a result on the previous screen's SavedStateHandle
+                    navController.getBackStackEntry(Routes.TICKETS_LIST)
+                        .savedStateHandle
+                        .set("snackbar_message", "Consulta enviada con éxito")
+                    navController.popBackStack(Routes.TICKETS_LIST, false)
+                }
+            )
+        }
+
+        composable(
+            route = Routes.TICKET_CONVERSATION,
+            arguments = listOf(navArgument("ticketId") { type = NavType.LongType }),
+            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300)) }
+        ) {
+            com.sinc.mobile.app.features.tickets.TicketConversationScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

@@ -122,6 +122,8 @@ fun MainScreen(
                             onItemSelected = { newRoute ->
                                 if (newRoute == CozyBottomNavRoutes.PROFILE) {
                                     navController.navigate(Routes.SETTINGS)
+                                } else if (newRoute == CozyBottomNavRoutes.HELP) {
+                                    navController.navigate(Routes.HELP)
                                 } else {
                                     currentRoute = newRoute
                                 }
@@ -171,7 +173,7 @@ fun MainScreen(
                                 navController = navController,
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
-                            CozyBottomNavRoutes.HELP, CozyBottomNavRoutes.NOTIFICATIONS -> {
+                            CozyBottomNavRoutes.NOTIFICATIONS -> {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()

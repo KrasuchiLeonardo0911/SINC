@@ -2,10 +2,8 @@ package com.sinc.mobile.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.sinc.mobile.data.local.dao.*
-import com.sinc.mobile.data.local.entity.IdentifierConfigEntity
 import com.sinc.mobile.data.local.entities.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -26,9 +24,11 @@ import java.time.format.DateTimeFormatter
         IdentifierConfigEntity::class,
         StockEntity::class,
         MovimientoHistorialEntity::class,
-        DeclaracionVentaEntity::class
+        DeclaracionVentaEntity::class,
+        TicketEntity::class,
+        MessageEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)
@@ -38,6 +38,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun stockDao(): StockDao
     abstract fun movimientoHistorialDao(): MovimientoHistorialDao
     abstract fun declaracionVentaDao(): DeclaracionVentaDao
+    abstract fun ticketDao(): TicketDao
 
     // DAOs de Catálogos
     abstract fun especieDao(): EspecieDao
@@ -53,12 +54,12 @@ abstract class SincMobileDatabase : RoomDatabase() {
 }
 
 class Converters {
-    @TypeConverter
+    @androidx.room.TypeConverter
     fun fromTimestamp(value: String?): LocalDateTime? {
         return value?.let { LocalDateTime.parse(it, DateTimeFormatter.ISO_LOCAL_DATE_TIME) }
     }
 
-    @TypeConverter
+    @androidx.room.TypeConverter
     fun dateToTimestamp(date: LocalDateTime?): String? {
         return date?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     }

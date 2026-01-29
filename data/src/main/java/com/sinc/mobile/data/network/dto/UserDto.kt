@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateTicketResponse(
-    @SerialName("message") val message: String,
-    @SerialName("ticket") val ticket: TicketDto
+data class UserDto(
+    @SerialName("id") val id: Long,
+    @SerialName("name") val name: String
 )

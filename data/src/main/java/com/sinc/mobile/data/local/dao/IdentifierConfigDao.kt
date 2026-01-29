@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.sinc.mobile.data.local.entity.IdentifierConfigEntity
+import com.sinc.mobile.data.local.entities.IdentifierConfigEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

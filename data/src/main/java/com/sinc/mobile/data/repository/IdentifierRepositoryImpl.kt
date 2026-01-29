@@ -1,7 +1,7 @@
 package com.sinc.mobile.data.repository
 
 import com.sinc.mobile.data.local.dao.IdentifierConfigDao
-import com.sinc.mobile.data.local.entity.IdentifierConfigEntity
+import com.sinc.mobile.data.local.entities.IdentifierConfigEntity
 import com.sinc.mobile.data.network.IdentifierApiService
 import com.sinc.mobile.data.network.dto.IdentifierConfigDto
 import com.sinc.mobile.domain.model.IdentifierConfig

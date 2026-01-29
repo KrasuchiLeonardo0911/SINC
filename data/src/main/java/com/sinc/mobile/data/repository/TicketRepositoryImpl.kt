@@ -1,51 +1,93 @@
 package com.sinc.mobile.data.repository
 
-import android.util.Log
+import com.sinc.mobile.data.local.dao.TicketDao
+import com.sinc.mobile.data.mapper.toDomain
+import com.sinc.mobile.data.mapper.toTicketWithMessages
 import com.sinc.mobile.data.network.api.TicketApiService
+import com.sinc.mobile.data.network.dto.AddMessageRequest
 import com.sinc.mobile.data.network.dto.CreateTicketRequest
-import com.sinc.mobile.data.network.dto.ErrorResponse
-import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.model.ticket.CreateTicketData
+import com.sinc.mobile.domain.model.ticket.Ticket
 import com.sinc.mobile.domain.repository.TicketRepository
 import com.sinc.mobile.domain.util.Result
 import com.sinc.mobile.domain.util.Error
-import kotlinx.serialization.json.Json
-import retrofit2.HttpException
+import com.sinc.mobile.domain.util.Result.Success
+import com.sinc.mobile.domain.util.Result.Failure
+import com.sinc.mobile.domain.model.GenericError
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
 
 class TicketRepositoryImpl @Inject constructor(
     private val apiService: TicketApiService,
-    private val json: Json
+    private val ticketDao: TicketDao
 ) : TicketRepository {
 
-    override suspend fun createTicket(ticketData: CreateTicketData): Result<Unit, Error> {
+    // TODO: Inject a session manager to get the real user ID
+    private val currentUserId: Long = 4 // Hardcoded for now
+
+    override fun getTickets(): Flow<List<Ticket>> {
+        return ticketDao.getAllTicketsWithMessages().map { list ->
+            list.map { it.toDomain() }
+        }
+        
+    }
+
+    override suspend fun syncTickets(): Result<Unit, Error> {
+        return try {
+            val remoteTickets = apiService.getTickets()
+            val ticketWithMessagesList = remoteTickets.map { it.toTicketWithMessages(currentUserId) }
+            ticketDao.clearAndInsert(ticketWithMessagesList)
+            Success(Unit)
+        } catch (e: IOException) {
+            Failure(GenericError("Error de red: ${e.message}"))
+        } catch (e: Exception) {
+            Failure(GenericError("Error inesperado al sincronizar tickets: ${e.message}"))
+        }
+    }
+
+    override suspend fun createTicket(data: CreateTicketData): Result<Ticket, Error> {
         return try {
             val request = CreateTicketRequest(
-                mensaje = ticketData.mensaje,
-                tipo = ticketData.tipo
+                mensaje = data.mensaje,
+                tipoSolicitud = data.tipo
             )
-            Log.d("TicketRepo", "Request: $request")
             val response = apiService.createTicket(request)
-
-            if (response.isSuccessful) {
-                Log.d("TicketRepo", "Response Success: ${response.code()}")
-                Result.Success(Unit)
-            } else {
-                val errorBody = response.errorBody()?.string()
-                Log.e("TicketRepo", "Response Error: ${response.code()} - $errorBody")
-                val errorResponse = json.decodeFromString<ErrorResponse>(errorBody ?: "")
-                Result.Failure(GenericError(errorResponse.message ?: "Error desconocido"))
-            }
-        } catch (e: HttpException) {
-            Log.e("TicketRepo", "HttpException: ${e.message()}", e)
-            Result.Failure(GenericError("Error de red: ${e.message()}"))
+            val ticketWithMessages = response.ticket.toTicketWithMessages(currentUserId)
+            ticketDao.upsertTicket(ticketWithMessages)
+            Success(ticketWithMessages.toDomain())
         } catch (e: IOException) {
-            Log.e("TicketRepo", "IOException: Verifique la URL de la API y la conexión de red.", e)
-            Result.Failure(GenericError("Error de conexión. Por favor, revisa tu conexión a internet."))
+            Failure(GenericError("Error de red al crear el ticket: ${e.message}"))
         } catch (e: Exception) {
-            Log.e("TicketRepo", "Exception: ${e.message}", e)
-            Result.Failure(GenericError("Ocurrió un error inesperado: ${e.message}"))
+            Failure(GenericError("Error inesperado al crear el ticket: ${e.message}"))
+        }
+    }
+
+    override suspend fun addMessage(ticketId: Long, message: String): Result<Ticket, Error> {
+        return try {
+            val request = AddMessageRequest(message = message)
+            val updatedTicketDto = apiService.addMessage(ticketId, request)
+            val ticketWithMessages = updatedTicketDto.toTicketWithMessages(currentUserId)
+            ticketDao.upsertTicket(ticketWithMessages)
+            Success(ticketWithMessages.toDomain())
+        } catch (e: IOException) {
+            Failure(GenericError("Error de red al enviar el mensaje: ${e.message}"))
+        } catch (e: Exception) {
+            Failure(GenericError("Error inesperado al enviar el mensaje: ${e.message}"))
+        }
+    }
+
+    override suspend fun syncTicket(ticketId: Long): Result<Unit, Error> {
+        return try {
+            val remoteTicket = apiService.getTicket(ticketId)
+            val ticketWithMessages = remoteTicket.toTicketWithMessages(currentUserId)
+            ticketDao.upsertTicket(ticketWithMessages)
+            Success(Unit)
+        } catch (e: IOException) {
+            Failure(GenericError("Error de red al sincronizar el ticket: ${e.message}"))
+        } catch (e: Exception) {
+            Failure(GenericError("Error inesperado al sincronizar el ticket: ${e.message}"))
         }
     }
 }
