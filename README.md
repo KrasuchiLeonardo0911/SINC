@@ -74,4 +74,4 @@ Sigue estos pasos para configurar y ejecutar el proyecto en tu entorno local.
 
 ## Contribuir
 
-*(Sección para futuras guías de contribución, estilo de código, etc.)*
+
