@@ -3,6 +3,7 @@ package com.sinc.mobile.app.features.tickets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.ticket.Ticket
+import com.sinc.mobile.domain.use_case.ticket.GetTicketsOnceUseCase
 import com.sinc.mobile.domain.use_case.ticket.GetTicketsUseCase
 import com.sinc.mobile.domain.use_case.ticket.SyncTicketsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +24,8 @@ data class TicketsListState(
 @HiltViewModel
 class TicketsListViewModel @Inject constructor(
     private val getTicketsUseCase: GetTicketsUseCase,
-    private val syncTicketsUseCase: SyncTicketsUseCase
+    private val syncTicketsUseCase: SyncTicketsUseCase,
+    private val getTicketsOnceUseCase: GetTicketsOnceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketsListState())
@@ -37,7 +39,7 @@ class TicketsListViewModel @Inject constructor(
     private fun loadTickets() {
         getTicketsUseCase()
             .onEach { tickets ->
-                _uiState.update { it.copy(tickets = tickets) }
+                _uiState.update { it.copy(tickets = tickets, isLoading = false) }
             }
             .launchIn(viewModelScope)
     }
@@ -46,7 +48,9 @@ class TicketsListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             syncTicketsUseCase()
-            _uiState.update { it.copy(isLoading = false) }
+            // After sync, imperatively fetch the list and update the state
+            val tickets = getTicketsOnceUseCase()
+            _uiState.update { it.copy(tickets = tickets, isLoading = false) }
         }
     }
 }

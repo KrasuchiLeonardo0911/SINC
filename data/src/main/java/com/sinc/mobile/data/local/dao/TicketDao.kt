@@ -19,7 +19,11 @@ interface TicketDao {
 
     @Transaction
     @Query("SELECT * FROM tickets WHERE id = :ticketId")
-    fun getTicketWithMessages(ticketId: Long): Flow<TicketWithMessages>
+    fun getTicketWithMessagesFlow(ticketId: Long): Flow<TicketWithMessages?>
+
+    @Transaction
+    @Query("SELECT * FROM tickets WHERE id = :ticketId")
+    suspend fun getTicketWithMessagesById(ticketId: Long): TicketWithMessages?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTickets(tickets: List<TicketEntity>)

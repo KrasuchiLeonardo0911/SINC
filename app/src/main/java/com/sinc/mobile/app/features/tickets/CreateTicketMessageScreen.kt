@@ -20,23 +20,20 @@ fun CreateTicketMessageScreen(
     var message by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.eventFlow.collect { event ->
-            when (event) {
-                is CreateTicketEvent.TicketCreated -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Consulta enviada con éxito.")
-                        onTicketCreated()
-                    }
-                }
-                is CreateTicketEvent.ShowError -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(event.message)
-                    }
-                }
+    LaunchedEffect(uiState.submissionStatus) {
+        when (uiState.submissionStatus) {
+            SubmissionStatus.SUCCESS -> {
+                onTicketCreated()
+                viewModel.resetSubmissionStatus()
             }
+            SubmissionStatus.ERROR -> {
+                uiState.error?.let {
+                    snackbarHostState.showSnackbar(it)
+                }
+                viewModel.resetSubmissionStatus()
+            }
+            else -> { /* No-op for IDLE or IN_PROGRESS */ }
         }
     }
 
@@ -53,13 +50,13 @@ fun CreateTicketMessageScreen(
         bottomBar = {
             Button(
                 onClick = { viewModel.createTicket(ticketType, message) },
-                enabled = message.isNotBlank() && !uiState.isLoading,
+                enabled = message.isNotBlank() && uiState.submissionStatus != SubmissionStatus.IN_PROGRESS,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
                     .navigationBarsPadding()
             ) {
-                if (uiState.isLoading) {
+                if (uiState.submissionStatus == SubmissionStatus.IN_PROGRESS) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary

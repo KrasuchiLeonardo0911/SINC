@@ -1635,3 +1635,117 @@ Como parte del equipo de desarrollo, hoy hemos implementado y mejorado varias fu
 -   **Importaciones Redundantes**: Se eliminaron importaciones redundantes en `SupportChatState.kt` que causaban conflictos.
 
 Todos estos cambios aseguran una experiencia de usuario más fluida y una funcionalidad de ayuda robusta dentro de la aplicación.
+
+# Avances de la Sesión Actual - 29 de Enero de 2026
+
+## Tarea Principal: Implementación y Refactorización del Sistema de Tickets
+
+La sesión de hoy se centró en la implementación de un sistema de tickets de soporte conversacional, reemplazando la funcionalidad anterior, y en la corrección de errores de compilación y ajustes de UI/UX.
+
+### 1. Implementación Inicial del Nuevo Sistema de Tickets (Conversacional)
+
+-   **Contexto:** El objetivo era reemplazar el sistema de chat de soporte básico por uno conversacional, permitiendo a los usuarios crear tickets y mantener un historial de mensajes. La arquitectura debía ser "offline-first" y usar Room para persistencia local.
+-   **Capa de Datos (`:data`):**
+    *   Se crearon las entidades `TicketEntity.kt` y `MessageEntity.kt` para representar los tickets y sus mensajes en la base de datos Room.
+    *   Se definió la relación `TicketWithMessages.kt` para facilitar la consulta de tickets con todos sus mensajes.
+    *   Se creó `TicketDao.kt` para gestionar las operaciones CRUD de estas entidades.
+    *   Se actualizó `SincMobileDatabase.kt` (versión 7) y `DatabaseModule.kt` para incluir el nuevo DAO y las entidades.
+    *   Se definieron DTOs (`UserDto`, `MessageDto`, `TicketDto`, `CreateTicketRequest`, `CreateTicketResponse`, `AddMessageRequest`) para la comunicación con la API.
+    *   Se actualizó `TicketApiService.kt` para incluir los endpoints de listado, creación, obtención individual, adición de mensajes y resolución de tickets.
+    *   Se implementó `TicketMapper.kt` para la conversión entre DTOs, entidades y modelos de dominio.
+    *   Se refactorizó `TicketRepositoryImpl.kt` para manejar la nueva lógica conversacional, incluyendo sincronización de tickets, creación y adición de mensajes, utilizando el nuevo DAO y API Service.
+-   **Capa de Dominio (`:domain`):**
+    *   Se crearon los modelos de dominio `Ticket.kt` y `Message.kt`.
+    *   Se actualizó la interfaz `TicketRepository.kt` con los nuevos métodos (`getTickets`, `syncTickets`, `createTicket`, `addMessage`, `syncTicket`).
+    *   Se crearon los casos de uso específicos: `GetTicketsUseCase`, `SyncTicketsUseCase`, `CreateTicketUseCase`, `AddMessageToTicketUseCase`, `SyncCurrentTicketUseCase`.
+-   **Capa de Presentación (`:app`):**
+    *   **Limpieza:** Se eliminaron todos los archivos del antiguo sistema de chat (`SupportChatScreen.kt`, `SupportChatViewModel.kt`, `SupportMessageEntity.kt`, etc.).
+    *   **Nuevas Pantallas:** Se creó un nuevo paquete `app/features/tickets` y se implementaron las pantallas:
+        *   `CreateTicketTypeScreen.kt`: Para que el usuario seleccione el tipo de consulta.
+        *   `CreateTicketMessageScreen.kt`: Para que el usuario escriba el mensaje inicial.
+        *   `TicketsListScreen.kt`: Para listar los tickets del usuario.
+        *   `TicketConversationScreen.kt`: Para la conversación de un ticket específico.
+    *   **ViewModels:** Se crearon `CreateTicketViewModel`, `TicketsListViewModel`, `TicketConversationViewModel` para gestionar el estado y la lógica de negocio de las nuevas pantallas.
+    *   **Navegación:** Se actualizó `AppNavigation.kt` para incluir las nuevas rutas y manejar el flujo de navegación entre ellas.
+    *   **Integración:** Se modificó `HelpScreen.kt` para redirigir al nuevo flujo de tickets.
+
+### 2. Corrección de Errores de Compilación y Configuración
+
+Durante el proceso de implementación, surgieron numerosos errores de compilación, principalmente relacionados con inconsistencias en la configuración de Gradle, KSP/Room y la refactorización de paquetes.
+
+-   **Errores en `domain` module (`AddMessageToTicketUseCase.kt`):**
+    *   **Problema:** `Object is not abstract and does not implement abstract member public abstract val message: String defined in com.sinc.mobile.domain.util.Error`.
+    *   **Causa:** Un objeto anónimo implementando `Error` no proporcionaba la propiedad `message`.
+    *   **Solución:** Se añadió `override val message: String = "..."` al objeto anónimo.
+-   **Conflicto de Nombres (`SubmitTicketUseCase.kt`):**
+    *   **Problema:** Conflicto con `CreateTicketUseCase` y un error de tipos.
+    *   **Causa:** `SubmitTicketUseCase.kt` era un remanente obsoleto.
+    *   **Solución:** Se eliminó `SubmitTicketUseCase.kt` y su directorio.
+-   **Inconsistencia de Paquetes (`entity` vs `entities`):**
+    *   **Problema:** `MissingType` errors reportados por KSP en el módulo `:data`, indicando que `SincMobileDatabase` no podía resolver tipos.
+    *   **Causa:** Existían dos paquetes de entidades (`com.sinc.mobile.data.local.entity` y `com.sinc.mobile.data.local.entities`). Las nuevas entidades se habían creado en el paquete singular, mientras que la mayoría estaban en el plural, y `SincMobileDatabase` solo importaba de uno. Los DAOs y las clases de relación también tenían imports incorrectos.
+    *   **Solución:** Se movieron `TicketEntity.kt`, `MessageEntity.kt`, `IdentifierConfigEntity.kt` al paquete `com.sinc.mobile.data.local.entities` (plural). Se eliminó el directorio `com.sinc.mobile.data.local.entity` y se actualizaron todos los imports en `SincMobileDatabase.kt`, `TicketDao.kt`, `TicketWithMessages.kt`, y `IdentifierConfigDao.kt`.
+-   **`TypeConverter` Faltante (`LocalDateTime`):**
+    *   **Problema:** `Cannot figure out how to save this field into database` para campos `LocalDateTime`.
+    *   **Causa:** La clase `Converters` que manejaba `LocalDateTime` había sido eliminada accidentalmente durante una refactorización previa.
+    *   **Solución:** Se reintrodujo la clase `Converters` con sus `@TypeConverter`s dentro de `SincMobileDatabase.kt`, junto con los imports necesarios para `LocalDateTime` y `DateTimeFormatter`.
+-   **`error.NonExistentClass` en `CreateUnidadProductivaViewModel`:**
+    *   **Problema:** KSP no podía resolver una dependencia en el constructor, reportando `error.NonExistentClass`.
+    *   **Causa:** El `package` declarado en los casos de uso de tickets (`domain/src/main/java/com/sinc/mobile/domain/use_case/ticket/`) estaba incorrectamente definido como `usecase` (singular) en lugar de `use_case` (con guion bajo).
+    *   **Solución:** Se corrigieron todas las declaraciones de paquete de `usecase.ticket` a `use_case.ticket` en `CreateTicketUseCase.kt`, `GetTicketsUseCase.kt`, `SyncTicketsUseCase.kt`, y `AddMessageToTicketUseCase.kt`. Posteriormente, se corrigió el import en `CreateUnidadProductivaViewModel.kt` para reflejar el paquete correcto y se eliminó el nombre completamente calificado del constructor.
+-   **`Unresolved reference` en ViewModels de Tickets:**
+    *   **Problema:** Tras la corrección anterior, `CreateTicketViewModel`, `TicketConversationViewModel` y `TicketsListViewModel` reportaban `Unresolved reference` para sus respectivos casos de uso.
+    *   **Causa:** Los imports de los casos de uso dentro de estos ViewModels seguían apuntando al paquete `usecase` en lugar de `use_case`.
+    *   **Solución:** Se actualizaron todos los imports de los casos de uso en estos tres ViewModels.
+-   **`MinimalHeader` Parámetros Incorrectos:**
+    *   **Problema:** Las nuevas pantallas de tickets pasaban `onNavigateBack` a `MinimalHeader`, que espera `onBackPress`.
+    *   **Solución:** Se cambió `onNavigateBack` a `onBackPress` en las llamadas a `MinimalHeader` en `TicketsListScreen.kt`, `CreateTicketTypeScreen.kt`, `CreateTicketMessageScreen.kt`, y `TicketConversationScreen.kt`.
+-   **`EmptyState` Parámetro `icon` Faltante:**
+    *   **Problema:** `TicketsListScreen` no pasaba el parámetro `icon` obligatorio a `EmptyState`.
+    *   **Solución:** Se añadió `icon = Icons.Outlined.Info` a la llamada de `EmptyState` en `TicketsListScreen.kt`.
+-   **Importación de `accompanist-placeholder-material3`:**
+    *   **Problema:** `Unresolved reference: placeholder` en `MainContentSkeleton.kt` y `FormSkeleton.kt`.
+    *   **Causa:** La dependencia había sido eliminada por error.
+    *   **Solución:** Se añadió de nuevo `implementation("com.google.accompanist:accompanist-placeholder-material3:0.32.0")` en `app/build.gradle.kts`.
+-   **Refactorización de `TicketsListScreen` Composable:**
+    *   **Problema:** `Unresolved reference: TicketsListViewModel` en `TicketsListScreen` y errores de inferencia de tipo en `AppNavigation.kt`.
+    *   **Causa:** El `viewModel` se declaraba como parámetro de la función Composable, lo que a veces confunde al compilador con `hiltViewModel()`.
+    *   **Solución:** Se movió la declaración `val viewModel: TicketsListViewModel = hiltViewModel()` al cuerpo de la función Composable `TicketsListScreen`, y se añadió el import faltante para `TicketsListViewModel`.
+-   **`LaunchedEffect` en `TicketsListScreen`:**
+    *   **Problema:** `Unresolved reference: LaunchedEffect` después de refactorizar `TicketsListScreen`.
+    *   **Causa:** Falta de importación para `LaunchedEffect`.
+    *   **Solución:** Se añadió `import androidx.compose.runtime.LaunchedEffect`.
+
+
+### 3. Ajustes de UI/UX (Con Problemas Persistentes)
+
+-   **Insets de Barra de Estado Superior (`MinimalHeader`):** Se agregó `modifier = Modifier.statusBarsPadding()` a todos los `MinimalHeader` en las pantallas de tickets.
+-   **Color del Botón `FloatingActionButton`:** Se cambió el `containerColor` del FAB en `TicketsListScreen` a `MaterialTheme.colorScheme.primary`.
+-   **Colores de Burbujas de Chat:** Se modificó `MessageItem.kt` para que:
+    *   Los mensajes del usuario (`isFromUser = true`) usen `MaterialTheme.colorScheme.primary` como fondo y `Color.White` como texto.
+    *   Los mensajes del soporte (`isFromUser = false`) usen `Color(0xFFE0E0E0)` (gris claro) como fondo y `Color.Black` como texto.
+
+---
+
+### Desafíos Persistentes y Necesidad de Diagnóstico Adicional
+
+A pesar de las múltiples correcciones y la compilación exitosa del proyecto, el usuario reporta que los siguientes problemas *no se han solucionado*:
+
+1.  **Mensaje no Aparece Inmediatamente en la Conversación:**
+    *   **Problema:** Después de enviar un mensaje en `TicketConversationScreen`, no aparece en la lista hasta realizar un pull-to-refresh manual.
+    *   **Diagnóstico:** Mi intento de corregir esto fue:
+        1.  Revertir la carga optimista en `sendMessage`.
+        2.  Forzar la sincronización (`syncCurrentTicketUseCase`) después de un envío exitoso.
+        3.  Actualizar el estado de la UI directamente con el objeto `Ticket` devuelto por `addMessageToTicketUseCase`.
+    *   **Análisis Post-Fallo:** El hecho de que la UI no se actualice sugiere que la emisión del `Flow` que alimenta `TicketConversationScreen` no está reaccionando a los cambios en la base de datos local o que el objeto `Ticket` devuelto por la API no se está integrando correctamente en el `_uiState` del ViewModel. Se requiere un diagnóstico a fondo del flujo de datos del `TicketConversationViewModel` y el `TicketRepositoryImpl` para ver si el `Flow` de Room se está "disparando" correctamente o si hay un problema en el mapeo/actualización de la base de datos local.
+
+2.  **Error Inmediato al Crear Ticket:**
+    *   **Problema:** Al enviar una nueva consulta desde `CreateTicketMessageScreen`, aparece un mensaje de error inmediatamente, aunque el ticket sí se envía (confirmado por pull-to-refresh en `TicketsListScreen`).
+    *   **Diagnóstico:** Mi intento de corregir esto fue usar `SavedStateHandle` para pasar un mensaje de éxito ("Consulta enviada con éxito") de `CREATE_TICKET_MESSAGE` a `TICKETS_LIST`, y que `TicketsListScreen` muestre un `Snackbar` y fuerce la sincronización.
+    *   **Análisis Post-Fallo:** El problema de que aparezca un error sugiere que la UI de `CreateTicketMessageScreen` está mostrando un error antes de que la operación `createTicketUseCase` termine o antes de que se maneje el resultado de éxito. Es posible que la navegación hacia atrás esté ocurriendo antes de que se limpie un estado de error, o que el `LaunchedEffect` en `CreateTicketMessageScreen` para mostrar el `Snackbar` esté reaccionando a un `CreateTicketEvent.ShowError` que no debería. Se necesita revisar el `eventFlow` y el manejo del estado en `CreateTicketViewModel` y `CreateTicketMessageScreen` para asegurar que solo se muestre el `Snackbar` de éxito al final de la operación, y que no haya condiciones de carrera que disparen un error prematuro.
+
+---
+
+**Conclusión:**
+
+Es evidente que, aunque el código compila y las características están implementadas, el comportamiento en tiempo de ejecución no es el esperado para estas dos funcionalidades críticas. Necesitamos investigar a fondo el flujo de datos y el manejo de estados para identificar la condición de carrera o el error lógico que está causando este comportamiento.

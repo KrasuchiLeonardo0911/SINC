@@ -38,7 +38,7 @@ fun TicketListItem(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Estado: ${ticket.status.replaceFirstChar { it.uppercase() }}",
+                    text = "Estado: ${ticket.status?.replaceFirstChar { it.uppercase() } ?: "Desconocido"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

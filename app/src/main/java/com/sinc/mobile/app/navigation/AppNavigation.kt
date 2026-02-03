@@ -354,11 +354,13 @@ fun AppNavigation(
                 ticketType = ticketType,
                 onNavigateBack = { navController.popBackStack() },
                 onTicketCreated = {
-                    // Set a result on the previous screen's SavedStateHandle
+                    // Set the result on the TicketsListScreen's entry
                     navController.getBackStackEntry(Routes.TICKETS_LIST)
                         .savedStateHandle
-                        .set("snackbar_message", "Consulta enviada con éxito")
-                    navController.popBackStack(Routes.TICKETS_LIST, false)
+                        .set("snackbar_message", "Consulta enviada con éxito.")
+
+                    // Pop backstack up to the list screen
+                    navController.popBackStack(Routes.TICKETS_LIST, inclusive = false)
                 }
             )
         }

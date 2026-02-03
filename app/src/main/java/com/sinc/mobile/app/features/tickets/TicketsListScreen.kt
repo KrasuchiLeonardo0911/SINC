@@ -14,8 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.sinc.mobile.app.features.tickets.components.TicketListItem
 import com.sinc.mobile.app.ui.components.EmptyState
@@ -41,15 +44,26 @@ fun TicketsListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val lifecycleOwner = LocalLifecycleOwner.current
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    LaunchedEffect(currentBackStackEntry) {
-        val message = currentBackStackEntry?.savedStateHandle?.get<String>("snackbar_message")
-        if (message != null) {
-            viewModel.syncTickets()
-            scope.launch {
-                snackbarHostState.showSnackbar(message)
+
+    DisposableEffect(lifecycleOwner, currentBackStackEntry) {
+        val observer = LifecycleEventObserver { _, event ->
+            // Trigger the check when the screen is resumed
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val message = currentBackStackEntry?.savedStateHandle?.get<String>("snackbar_message")
+                if (message != null) {
+                    viewModel.syncTickets()
+                    scope.launch {
+                        snackbarHostState.showSnackbar(message)
+                    }
+                    currentBackStackEntry?.savedStateHandle?.remove<String>("snackbar_message")
+                }
             }
-            currentBackStackEntry?.savedStateHandle?.remove<String>("snackbar_message")
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

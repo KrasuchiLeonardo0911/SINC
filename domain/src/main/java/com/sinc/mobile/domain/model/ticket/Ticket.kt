@@ -5,8 +5,10 @@ import java.time.LocalDateTime
 data class Ticket(
     val id: Long,
     val userId: Long,
+    val solicitableId: Long?,
+    val solicitableType: String?,
     val tipo: String,
-    val status: String,
+    val status: String?,
     val asunto: String,
     val responderId: Long?,
     val createdAt: LocalDateTime,

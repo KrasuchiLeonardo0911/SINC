@@ -14,6 +14,8 @@ fun TicketDto.toTicketWithMessages(currentUserId: Long): TicketWithMessages {
     val ticketEntity = TicketEntity(
         id = this.id,
         userId = this.userId,
+        solicitableId = this.solicitableId,
+        solicitableType = this.solicitableType,
         tipo = this.tipo,
         status = this.status,
         asunto = this.asunto,
@@ -42,6 +44,8 @@ fun TicketWithMessages.toDomain(): Ticket {
     return Ticket(
         id = this.ticket.id,
         userId = this.ticket.userId,
+        solicitableId = this.ticket.solicitableId,
+        solicitableType = this.ticket.solicitableType,
         tipo = this.ticket.tipo,
         status = this.ticket.status,
         asunto = this.ticket.asunto,
