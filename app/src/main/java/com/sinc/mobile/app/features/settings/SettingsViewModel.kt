@@ -3,19 +3,45 @@ package com.sinc.mobile.app.features.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.use_case.LogoutUseCase
+import com.sinc.mobile.domain.use_case.profile.GetUserProfileUseCase
+import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val getUserProfileUseCase: GetUserProfileUseCase
 ) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(SettingsState())
+    val uiState = _uiState.asStateFlow()
 
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
+
+    init {
+        fetchUserName()
+    }
+
+    private fun fetchUserName() {
+        viewModelScope.launch {
+            when (val result = getUserProfileUseCase()) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(userFullName = result.data.name) }
+                }
+                is Result.Failure -> {
+                    // Keep default name "Productor"
+                }
+            }
+        }
+    }
 
     fun logout() {
         viewModelScope.launch {

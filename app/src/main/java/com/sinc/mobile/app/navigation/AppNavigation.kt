@@ -37,6 +37,7 @@ import com.sinc.mobile.app.features.tickets.TicketsListScreen
 object Routes {
     const val LOGIN = "login"
     const val HOME = "home"
+    const val PROFILE = "profile"
     const val MOVIMIENTO = "movimiento"
     const val SETTINGS = "settings"
     const val CHANGE_PASSWORD = "change_password"
@@ -131,7 +132,21 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
-                onNavigateToHelp = { navController.navigate(Routes.HELP) }
+                onNavigateToHelp = { navController.navigate(Routes.HELP) },
+                onNavigateToProfile = { navController.navigate(Routes.PROFILE) }
+            )
+        }
+        composable(
+            route = Routes.PROFILE,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            com.sinc.mobile.app.features.profile.ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(

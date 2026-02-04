@@ -16,4 +16,5 @@ interface AuthRepository {
     suspend fun resetPasswordWithCode(data: ResetPasswordWithCodeData): Result<Unit>
     
     suspend fun getInitData(): DomainResult<InitData, DomainError>
+    suspend fun getUserProfile(): DomainResult<com.sinc.mobile.domain.model.User, DomainError>
 }

@@ -37,8 +37,10 @@ fun SettingsScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
     onNavigateToHelp: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = true) {
@@ -65,7 +67,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             MinimalHeader(
-                title = "Configuración (en construcción)",
+                title = "Configuración",
                 onBackPress = onNavigateBack,
                 modifier = Modifier.statusBarsPadding()
             )
@@ -82,21 +84,27 @@ fun SettingsScreen(
 
             // Profile Card
             ProfileCard(
-                name = "Productor", // Hardcoded for now
-                onEditClick = { /* TODO: Navigate to profile edit screen */ }
+                name = uiState.userFullName,
+                onEditClick = onNavigateToProfile
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Settings Items
-            var notificationsEnabled by remember { mutableStateOf(true) }
+            Text(
+                text = "Cuenta",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+            )
+
+            var notificationsEnabled by remember { mutableStateOf(true) } // Moved here
 
             SettingsSection {
                 SettingsItem(
-                    title = "Cuenta",
-                    icon = Icons.Outlined.Person,
+                    title = "Contraseña",
+                    icon = Icons.Outlined.Lock,
                     iconBackgroundColor = CozyLavender,
-                    onClick = onNavigateToChangePassword // Reuse change password screen for "Account"
+                    onClick = onNavigateToChangePassword
                 )
                 SettingsItem(
                     title = "Notificaciones",
@@ -167,13 +175,13 @@ fun ProfileCard(name: String, onEditClick: () -> Unit) {
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = CozyTextMain)
                 )
                 Text(
-                    text = "Editar perfil",
+                    text = "Ver perfil",
                     style = MaterialTheme.typography.bodyMedium.copy(color = CozyTextSecondary)
                 )
             }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Editar perfil",
+                contentDescription = "Ver perfil",
                 tint = CozyIconGray
             )
         }

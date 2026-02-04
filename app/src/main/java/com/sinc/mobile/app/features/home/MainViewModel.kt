@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.AppControl
 import com.sinc.mobile.domain.model.Features
 import com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
+import com.sinc.mobile.domain.use_case.profile.GetUserProfileUseCase
 import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val initializeAppUseCase: InitializeAppUseCase
+    private val initializeAppUseCase: InitializeAppUseCase,
+    private val getUserProfileUseCase: GetUserProfileUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -34,35 +36,59 @@ class MainViewModel @Inject constructor(
 
             // Force minimum splash duration of 1 second for better UX
             val minDelay = async { delay(1000) }
-            
+
             val result = initializeAppUseCase()
 
             // Wait for the minimum delay to finish
             minDelay.await()
-            
+
             when (result) {
                 is Result.Success -> {
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             isLoading = false,
                             appControl = result.data.appControl,
                             features = result.data.features,
                             isInitialized = true
-                        ) 
+                        )
                     }
+                    // After successful initialization, fetch the user profile
+                    fetchUserFirstName()
                 }
                 is Result.Failure -> {
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             isLoading = false,
                             error = "Error al conectar con el servidor",
-                            isInitialized = true 
-                        ) 
+                            isInitialized = true
+                        )
                     }
                 }
             }
         }
     }
+
+    private fun fetchUserFirstName() {
+        viewModelScope.launch {
+            when (val profileResult = getUserProfileUseCase()) {
+                is Result.Success -> {
+                    val firstName = profileResult.data.name.split(" ").firstOrNull() ?: profileResult.data.name
+                    _uiState.update {
+                        it.copy(userName = firstName)
+                    }
+                }
+                is Result.Failure -> {
+                    // We can log this error, but we probably don't want to show it to the user
+                    // as it's not critical for the main screen functionality.
+                    // For now, we'll just use a fallback name.
+                    _uiState.update {
+                        it.copy(userName = "Productor")
+                    }
+                }
+            }
+        }
+    }
+
 
     fun resetNavigationToCreateUnidadProductiva() {
         _uiState.update { it.copy(shouldNavigateToCreateUnidadProductiva = false) }
@@ -75,5 +101,6 @@ data class MainUiState(
     val error: String? = null,
     val shouldNavigateToCreateUnidadProductiva: Boolean = false,
     val appControl: AppControl? = null,
-    val features: Features? = null
+    val features: Features? = null,
+    val userName: String? = null
 )

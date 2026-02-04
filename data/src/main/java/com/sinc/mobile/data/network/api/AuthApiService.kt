@@ -2,6 +2,7 @@ package com.sinc.mobile.data.network.api
 
 import com.sinc.mobile.data.network.dto.InitResponseDto
 import com.sinc.mobile.data.network.dto.LoginRequest
+import com.sinc.mobile.data.network.dto.UserDto
 import com.sinc.mobile.data.network.dto.LoginResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -56,4 +57,6 @@ interface AuthApiService {
         @Field("password") password: String,
         @Field("password_confirmation") passwordConfirmation: String
     ): Response<ResponseBody>
+    @GET("/api/user")
+    suspend fun getUser(): Response<UserDto>
 }

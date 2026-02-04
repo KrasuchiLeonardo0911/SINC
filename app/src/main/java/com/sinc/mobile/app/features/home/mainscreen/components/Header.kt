@@ -16,10 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import com.sinc.mobile.R
 
 @Composable
-fun Header(onSettingsClick: () -> Unit) {
+fun Header(userName: String, onSettingsClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -27,11 +30,15 @@ fun Header(onSettingsClick: () -> Unit) {
     ) {
         // Left: Text
         Text(
-            text = "Hola, Productor", // Reverted text
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface // Keep text color consistent with theme
-            )
+            text = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                    append("Hola, ")
+                }
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append("$userName!")
+                }
+            },
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
         )
 
         // Right: Logo (replaces user icon)

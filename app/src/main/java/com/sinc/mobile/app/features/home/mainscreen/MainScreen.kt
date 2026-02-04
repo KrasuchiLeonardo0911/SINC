@@ -134,6 +134,7 @@ fun MainScreen(
                     Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
                         when (route) {
                             CozyBottomNavRoutes.HOME -> MainContent(
+                                userName = uiState.userName ?: "Productor",
                                 paddingValues = paddingValues,
                                 onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
                                 onDateClick = { showLogisticsPanel = true },
@@ -260,6 +261,7 @@ fun MainScreen(
 
 @Composable
 fun MainContent(
+    userName: String,
     paddingValues: PaddingValues,
     onSettingsClick: () -> Unit,
     onDateClick: () -> Unit,
@@ -284,7 +286,7 @@ fun MainContent(
                 .background(Color.White)
         ) {
             Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp)) {
-                Header(onSettingsClick = onSettingsClick)
+                Header(userName = userName, onSettingsClick = onSettingsClick)
             }
             HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

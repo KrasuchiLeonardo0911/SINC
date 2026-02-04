@@ -197,4 +197,17 @@ class AuthRepositoryImpl @Inject constructor(
             DomainResult.Failure(GenericError("Error de red: ${e.message}"))
         }
     }
+
+    override suspend fun getUserProfile(): DomainResult<com.sinc.mobile.domain.model.User, DomainError> {
+        return try {
+            val response = apiService.getUser()
+            if (response.isSuccessful && response.body() != null) {
+                DomainResult.Success(response.body()!!.toDomain())
+            } else {
+                DomainResult.Failure(GenericError("Error al obtener el perfil del usuario"))
+            }
+        } catch (e: Exception) {
+            DomainResult.Failure(GenericError("Error de red: ${e.message}"))
+        }
+    }
 }
