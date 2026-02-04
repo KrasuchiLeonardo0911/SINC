@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.forgotpassword
 
+import android.util.Patterns
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -39,8 +40,13 @@ class ForgotPasswordViewModel @Inject constructor(
     val eventFlow = _eventFlow.asSharedFlow()
 
     fun onEmailEntered(email: String) {
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _state.value = state.value.copy(error = "El formato del correo electrónico no es válido.")
+            return
+        }
+
         viewModelScope.launch {
-            _state.value = state.value.copy(isLoading = true, email = email)
+            _state.value = state.value.copy(isLoading = true, email = email, error = null)
             val result = requestPasswordResetUseCase(email)
             result.onSuccess {
                 _state.value = state.value.copy(
@@ -56,8 +62,21 @@ class ForgotPasswordViewModel @Inject constructor(
     }
 
     fun onResetWithCode(code: String, password: String, passwordConfirmation: String) {
+        if (code.isBlank()) {
+            _state.value = _state.value.copy(error = "El código de verificación es requerido.")
+            return
+        }
+        if (password.isBlank()) {
+            _state.value = _state.value.copy(error = "La contraseña no puede estar vacía.")
+            return
+        }
+        if (password != passwordConfirmation) {
+            _state.value = _state.value.copy(error = "Las contraseñas no coinciden.")
+            return
+        }
+
         viewModelScope.launch {
-            _state.value = state.value.copy(isLoading = true)
+            _state.value = state.value.copy(isLoading = true, error = null)
             val data = ResetPasswordWithCodeData(
                 email = state.value.email,
                 code = code,

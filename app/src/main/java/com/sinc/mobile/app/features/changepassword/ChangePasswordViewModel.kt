@@ -32,8 +32,21 @@ class ChangePasswordViewModel @Inject constructor(
     val eventFlow = _eventFlow.asSharedFlow()
 
     fun onPasswordChange(passwordData: ChangePasswordData) {
+        if (passwordData.currentPassword.isBlank()) {
+            _state.value = _state.value.copy(error = "La contraseña actual es requerida.")
+            return
+        }
+        if (passwordData.newPassword.isBlank()) {
+            _state.value = _state.value.copy(error = "La nueva contraseña no puede estar vacía.")
+            return
+        }
+        if (passwordData.newPassword != passwordData.newPasswordConfirmation) {
+            _state.value = _state.value.copy(error = "Las nuevas contraseñas no coinciden.")
+            return
+        }
+
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true, error = null)
             val result = changePasswordUseCase(passwordData)
             result.onSuccess {
                 _state.value = _state.value.copy(isLoading = false, showSuccessDialog = true)

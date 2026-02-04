@@ -86,35 +86,52 @@ class MovimientoStepperViewModel @Inject constructor(
     }
 
     private fun loadInitialData() {
-        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.update { it.copy(isLoading = true) }
+
+        // Combine the flows that provide data to the screen
+        val combinedDataFlow = combine(
+            getUnidadesProductivasUseCase(),
+            getMovimientoCatalogosUseCase(),
+            stockRepository.getStock()
+        ) { unidades, catalogos, stock ->
+            // Package them into a data class for clarity
+            Triple(unidades, catalogos, stock)
+        }
 
         viewModelScope.launch {
-            // Explicitly define types to help Kapt
-            val flow: Flow<Triple<List<UnidadProductiva>, Catalogos, Stock>> = combine(
-                getUnidadesProductivasUseCase(),
-                getMovimientoCatalogosUseCase(),
-                stockRepository.getStock()
-            ) { unidades, catalogos, stock ->
-                Triple(unidades, catalogos, stock)
+            // Collect the flow. This will run for the lifetime of the ViewModel.
+            combinedDataFlow.collect { (unidades, catalogosData, stockData) ->
+                // This block will be executed each time the list of unidades,
+                // catalogos, or stock changes in the database.
+
+                val currentUiState = _uiState.value
+
+                // On the very first data emission, determine the initially selected unit if an ID was passed via navigation.
+                // On subsequent emissions, we respect the user's current selection.
+                val selectedUnidad = if (currentUiState.isLoading) { // Use isLoading as a proxy for "first emission"
+                    unidades.find { it.id.toString() == unidadId }
+                } else {
+                    // If a unit is already selected, refresh its instance from the new list.
+                    // If the user hasn't selected one, keep it as null.
+                    currentUiState.selectedUnidad?.let { current -> unidades.find { it.id == current.id } }
+                }
+
+                // Update the local catalogos cache
+                catalogos = catalogosData
+
+                // Update the entire UI state
+                _uiState.update {
+                    it.copy(
+                        isLoading = false, // Turn off loading after the first data emission
+                        unidades = unidades,
+                        catalogos = catalogosData,
+                        stock = stockData,
+                        selectedUnidad = selectedUnidad,
+                        // Re-initialize formManager only on first load to not lose user input
+                        formManager = if (currentUiState.isLoading) MovimientoFormManager(catalogosData) else it.formManager
+                    )
+                }
             }
-            val initialData: Triple<List<UnidadProductiva>, Catalogos, Stock> = flow.first()
-
-            // Artificial delay to ensure spinner is visible
-            delay(400)
-
-            // Update the state all at once
-            val (unidades, catalogosData, stockData) = initialData
-            val selectedUnidad = unidades.find { it.id.toString() == unidadId }
-            catalogos = catalogosData
-
-            _uiState.value = _uiState.value.copy(
-                selectedUnidad = selectedUnidad,
-                formManager = MovimientoFormManager(catalogosData),
-                catalogos = catalogosData,
-                unidades = unidades, // Populate units
-                stock = stockData,
-                isLoading = false
-            )
         }
     }
 

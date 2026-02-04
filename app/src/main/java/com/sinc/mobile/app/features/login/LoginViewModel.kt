@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import android.util.Patterns
 import com.sinc.mobile.BuildConfig
 import com.sinc.mobile.domain.model.GenericError
 
@@ -40,6 +41,15 @@ class LoginViewModel @Inject constructor(
     val navigationEvent = _navigationEvent.asSharedFlow()
 
     fun onLoginClick(email: String, password: String) {
+        if (password.isBlank()) {
+            _state.value = _state.value.copy(error = "La contraseña no puede estar vacía.")
+            return
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _state.value = _state.value.copy(error = "El formato del correo electrónico no es válido.")
+            return
+        }
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null) // Clear previous errors
 
