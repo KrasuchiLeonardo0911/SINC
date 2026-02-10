@@ -7,20 +7,29 @@ import com.sinc.mobile.domain.model.Features
 import com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
 import com.sinc.mobile.domain.use_case.profile.GetUserProfileUseCase
 import com.sinc.mobile.domain.util.Result
+import com.sinc.mobile.data.session.SessionManager
+import com.sinc.mobile.domain.use_case.auth.SendFcmTokenUseCase
+import com.sinc.mobile.domain.use_case.notification.GetUnreadNotificationCountUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val initializeAppUseCase: InitializeAppUseCase,
-    private val getUserProfileUseCase: GetUserProfileUseCase
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val sendFcmTokenUseCase: SendFcmTokenUseCase,
+    private val getUnreadNotificationCountUseCase: GetUnreadNotificationCountUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -28,6 +37,15 @@ class MainViewModel @Inject constructor(
 
     init {
         initializeApp()
+        observeUnreadNotifications()
+    }
+
+    private fun observeUnreadNotifications() {
+        getUnreadNotificationCountUseCase()
+            .onEach { count ->
+                _uiState.update { it.copy(unreadNotificationCount = count) }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun initializeApp() {
@@ -93,6 +111,24 @@ class MainViewModel @Inject constructor(
     fun resetNavigationToCreateUnidadProductiva() {
         _uiState.update { it.copy(shouldNavigateToCreateUnidadProductiva = false) }
     }
+
+    fun sendFcmToken(token: String) {
+        // Only send the token if the user is logged in
+        if (sessionManager.getAuthToken() != null) {
+            viewModelScope.launch {
+                when(val result = sendFcmTokenUseCase(token)) {
+                    is Result.Success -> {
+                        Log.d("FCM_TOKEN_SEND", "FCM Token sent successfully.")
+                    }
+                    is Result.Failure -> {
+                        Log.e("FCM_TOKEN_SEND", "Failed to send FCM Token: ${result.error.message}")
+                    }
+                }
+            }
+        } else {
+            Log.w("FCM_TOKEN_SEND", "User not logged in. FCM Token will not be sent.")
+        }
+    }
 }
 
 data class MainUiState(
@@ -102,5 +138,6 @@ data class MainUiState(
     val shouldNavigateToCreateUnidadProductiva: Boolean = false,
     val appControl: AppControl? = null,
     val features: Features? = null,
-    val userName: String? = null
+    val userName: String? = null,
+    val unreadNotificationCount: Int = 0
 )

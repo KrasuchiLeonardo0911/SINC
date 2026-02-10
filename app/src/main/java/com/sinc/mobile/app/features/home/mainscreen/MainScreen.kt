@@ -119,11 +119,14 @@ fun MainScreen(
                     bottomBar = {
                         CozyBottomNavBar(
                             selectedRoute = currentRoute,
+                            unreadNotificationCount = uiState.unreadNotificationCount,
                             onItemSelected = { newRoute ->
                                 if (newRoute == CozyBottomNavRoutes.PROFILE) {
                                     navController.navigate(Routes.SETTINGS)
                                 } else if (newRoute == CozyBottomNavRoutes.HELP) {
                                     navController.navigate(Routes.HELP)
+                                } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
+                                    navController.navigate(Routes.NOTIFICATIONS)
                                 } else {
                                     currentRoute = newRoute
                                 }
@@ -174,18 +177,6 @@ fun MainScreen(
                                 navController = navController,
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
-                            CozyBottomNavRoutes.NOTIFICATIONS -> {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(paddingValues)
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(text = "Pantalla de '$route' en construcción")
-                                }
-                            }
                             else -> {
                                 Column(
                                     modifier = Modifier

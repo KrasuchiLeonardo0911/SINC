@@ -1781,3 +1781,183 @@ Esta sesión se centró en diagnosticar y resolver dos problemas críticos de co
 *   **Logging Detallado**: Se añadió logging extensivo (`Log.e`, `Log.d`) en `TicketRepositoryImpl` y `TicketConversationViewModel` para facilitar la depuración de flujos de datos y excepciones.
 
 **Estado Actual**: Ambos problemas críticos de UI/UX en el sistema de tickets están resueltos, y la aplicación ahora se comporta como se espera, proporcionando una experiencia de usuario fluida y fiable para la creación y gestión de conversaciones de soporte. El proyecto compila y funciona correctamente.
+
+# Avances de la Sesión Actual
+
+### 04 de Febrero de 2026
+
+-   **Hito**: Implementación y Conexión de la Pantalla "Mi Perfil".
+-   **Detalles**:
+    -   **Capa de Dominio (`:domain`)**:
+        -   Se crearon los modelos `User.kt` y `Productor.kt` para representar los datos del usuario y del productor.
+        -   Se añadió la función `suspend fun getUserProfile(): Result<User, Error>` a la interfaz `AuthRepository.kt`.
+    -   **Capa de Datos (`:data`)**:
+        -   Se crearon los DTOs `UserDto.kt` y `ProductorDto.kt` para mapear la respuesta de la API.
+        -   Se creó `UserMapper.kt` para la conversión entre DTOs y modelos de dominio.
+        -   Se añadió la función `suspend fun getUser(): Response<UserDto>` a `AuthApiService.kt`.
+        -   Se implementó la función `getUserProfile()` en `AuthRepositoryImpl.kt`, que llama a la API y mapea la respuesta.
+    -   **Casos de Uso (`:domain`)**:
+        -   Se creó `GetUserProfileUseCase.kt` para encapsular la lógica de negocio de obtener el perfil del usuario.
+    -   **Capa de Presentación (`:app`)**:
+        -   Se creó el paquete de feature `app/features/profile/`.
+        -   Se implementaron `ProfileState.kt`, `ProfileViewModel.kt` y `ProfileScreen.kt`. La pantalla utiliza el patrón de `InfoCard` e `InfoRow` para mostrar los datos de la cuenta y del productor.
+        -   Se añadió un mensaje y un enlace clicable en `ProfileScreen.kt` (`"Si quiere actualizar los datos, deberá hacerlo desde nuestra web."`) que dirige a `https://sicsurmisiones.online`.
+    -   **Navegación**:
+        -   Se añadió la ruta `PROFILE` a `AppNavigation.kt`.
+        -   Se modificó `SettingsScreen.kt` para que el `ProfileCard` (la tarjeta clicable con el nombre del usuario) navegue a la nueva `ProfileScreen`.
+-   **Hito**: Actualización Dinámica del Nombre de Usuario en la Pantalla Principal y de Configuraciones.
+-   **Detalles**:
+    -   Se modificó `MainViewModel.kt` para inyectar `GetUserProfileUseCase` y obtener el nombre del usuario (`name`). Se extrae solo el primer nombre (`split(" ").firstOrNull()`) para el saludo en el encabezado de `MainScreen`.
+    -   Se actualizó el `Header.kt` para aceptar un parámetro `userName` y mostrar el saludo personalizado. Se aplicó un estilo específico para que "Hola, " esté en color `onSurface` y el `$userName!` en el color `primary`.
+    -   Se modificó `SettingsViewModel.kt` para inyectar `GetUserProfileUseCase` y obtener el nombre completo del usuario (`name`).
+    -   Se actualizó `SettingsScreen.kt` para pasar el nombre completo (`userFullName`) al `ProfileCard`.
+-   **Hito**: Reestructuración de la Sección "Cuenta" en la Pantalla de Configuraciones.
+-   **Detalles**:
+    -   La sección "Cuenta" en `SettingsScreen.kt` fue refactorizada para incluir un título `Text` "Cuenta" antes del `SettingsSection` (la tarjeta que agrupa los ítems).
+    -   El `SettingsItem` original de "Cuenta" fue renombrado a "Contraseña", su ícono se cambió a `Icons.Outlined.Lock`, y su acción sigue navegando a la pantalla de cambio de contraseña.
+    -   El `SettingsItem` de "Notificaciones" con su `CozySwitch` permanece en la misma sección.
+    -   Se corrigió un error de ámbito moviendo la declaración `notificationsEnabled` para asegurar que el `CozySwitch` pudiera acceder a ella.
+-   **Estado**: Todas las funcionalidades implementadas y conectadas. El proyecto compila exitosamente.
+
+# Avances de la Sesión Actual (Fecha actual: miércoles, 5 de febrero de 2026)
+
+Esta sesión se centró en la implementación completa del sistema de notificaciones push, incluyendo el manejo del token FCM, la persistencia local de notificaciones, la interfaz de usuario para visualizarlas y mejoras en su gestión (marcar como leídas, eliminar, indicadores de no leídas). Además, se realizó una depuración importante de un problema de entrega de notificaciones desde el servidor de producción.
+
+## 1. Implementación del Envío de Token FCM al Backend
+
+-   **Objetivo**: Asegurar que el token de Firebase Cloud Messaging (FCM) del dispositivo se registre correctamente en el backend para poder recibir notificaciones personalizadas.
+-   **Implementación**:
+    -   Se creó el DTO `FcmTokenRequest` (`data/src/main/java/com/sinc/mobile/data/network/dto/FcmTokenRequest.kt`) para el cuerpo de la petición.
+    -   Se añadió la función `suspend fun sendFcmToken(@Body request: FcmTokenRequest): Response<ResponseBody>` a `AuthApiService` (`data/src/main/java/com/sinc/mobile/data/network/api/AuthApiService.kt`) para definir el endpoint `POST api/movil/fcm-token`.
+    -   Se extendió la interfaz `AuthRepository` (`domain/src/main/java/com/sinc/mobile/domain/repository/AuthRepository.kt`) con `suspend fun sendFcmToken(token: String): DomainResult<Unit, DomainError>`.
+    -   Se implementó la lógica en `AuthRepositoryImpl` (`data/src/main/java/com/sinc/mobile/data/repository/AuthRepositoryImpl.kt`) para llamar al servicio API y manejar la respuesta.
+    -   Se creó `SendFcmTokenUseCase` (`domain/src/main/java/com/sinc/mobile/domain/use_case/auth/SendFcmTokenUseCase.kt`) para encapsular la lógica de negocio.
+    -   Se integró el `SendFcmTokenUseCase` en `MainViewModel` (`app/src/main/java/com/sinc/mobile/app/features/home/MainViewModel.kt`) y se modificó `MainActivity` (`app/src/main/java/com/sinc/mobile/MainActivity.kt`) para que el token se envíe al backend al iniciar la aplicación (si el usuario está logueado) y cuando se genera un nuevo token.
+    -   `MyFirebaseMessagingService` (`app/src/main/java/com/sinc/mobile/app/firebase/MyFirebaseMessagingService.kt`) fue adaptado para usar Hilt y el `SendFcmTokenUseCase` al recibir un token nuevo (`onNewToken`).
+
+## 2. Implementación de la Pantalla de Notificaciones
+
+-   **Objetivo**: Crear una pantalla en la aplicación para listar y gestionar las notificaciones recibidas, así como asegurar su persistencia local.
+-   **Implementación**:
+    -   **Capa de Datos (Persistencia Local)**:
+        -   Se creó `NotificationEntity` (`data/src/main/java/com/sinc/mobile/data/local/entities/NotificationEntity.kt`) para el esquema de la base de datos local (título, cuerpo, fecha, estado de lectura).
+        -   Se creó `NotificationDao` (`data/src/main/java/com/sinc/mobile/data/local/dao/NotificationDao.kt`) con métodos para insertar, obtener y marcar notificaciones como leídas, y obtener el recuento de no leídas.
+        -   Se actualizó `SincMobileDatabase` (`data/src/main/java/com/sinc/mobile/data/local/SincMobileDatabase.kt`) incluyendo `NotificationEntity` y `NotificationDao`, y se incrementó la versión de la base de datos a `8`.
+        -   Se añadió el proveedor para `NotificationDao` en `DatabaseModule` (`data/src/main/java/com/sinc/mobile/data/di/DatabaseModule.kt`).
+    -   **Capa de Dominio**:
+        -   Se creó el modelo `Notification` (`domain/src/main/java/com/sinc/mobile/domain/model/Notification.kt`).
+        -   Se definió la interfaz `NotificationRepository` (`domain/src/main/java/com/sinc/mobile/domain/repository/NotificationRepository.kt`).
+        -   Se crearon los casos de uso: `GetNotificationsUseCase`, `SaveNotificationUseCase`, `GetUnreadNotificationCountUseCase`, `MarkNotificationAsReadUseCase` y `DeleteNotificationUseCase` (`domain/src/main/java/com/sinc/mobile/domain/use_case/notification/*`).
+    -   **Capa de Datos (Implementación del Repositorio)**:
+        -   Se creó `NotificationMapper` (`data/src/main/java/com/sinc/mobile/data/mapper/NotificationMapper.kt`) para mapear entre `Entity` y `Domain`.
+        -   Se implementó `NotificationRepositoryImpl` (`data/src/main/java/com/sinc/mobile/data/repository/NotificationRepositoryImpl.kt`), utilizando `NotificationDao`.
+        -   Se enlazó `NotificationRepository` con su implementación en `RepositoryModule` (`data/src/main/java/com/sinc/mobile/data/di/RepositoryModule.kt`).
+    -   **Capa de Servicio (`MyFirebaseMessagingService`)**:
+        -   Se modificó `MyFirebaseMessagingService` (`app/src/main/java/com/sinc/mobile/app/firebase/MyFirebaseMessagingService.kt`) para inyectar `SaveNotificationUseCase`. Cada notificación push recibida (sea `notification` o `data` payload) ahora se guarda automáticamente en la base de datos local.
+    -   **Capa de Presentación (UI)**:
+        -   Se creó el paquete de feature `app/src/main/java/com/sinc/mobile/app/features/notifications/*`.
+        -   Se implementaron `NotificationsState`, `NotificationsViewModel` (que utiliza `GetNotificationsUseCase`) y `NotificationsScreen` para mostrar la lista de notificaciones.
+        -   Se creó `NotificationItem` (`app/src/main/java/com/sinc/mobile/app/features/notifications/components/NotificationItem.kt`) como Composable para cada elemento de la lista.
+        -   Se integró la ruta `NOTIFICATIONS` en `AppNavigation` (`app/src/main/java/com/sinc/mobile/app/navigation/AppNavigation.kt`) y se actualizó `CozyBottomNavBar` (`app/src/main/java/com/sinc/mobile/app/ui/components/CozyBottomNavBar.kt`) para navegar a esta pantalla.
+
+## 3. Mejoras en la Gestión de Notificaciones (UI/UX)
+
+-   **Indicador de Notificaciones No Leídas**:
+    -   Se añadió el campo `unreadNotificationCount` a `MainUiState` (`app/src/main/java/com/sinc/mobile/app/features/home/MainViewModel.kt`).
+    -   `MainViewModel` ahora observa el flujo de `GetUnreadNotificationCountUseCase` y actualiza el estado de la UI.
+    -   `CozyBottomNavBar` fue modificado para aceptar este contador y `CozyBottomNavItem` (`app/src/main/java/com/sinc/mobile/app/ui/components/CozyBottomNavBar.kt`) muestra ahora un punto rojo sobre el icono de "Notificaciones" si hay mensajes sin leer.
+-   **Marcar Notificaciones como Leídas**:
+    -   Se implementó la función `markNotificationAsRead(notificationId: Long)` en `NotificationRepository` e `NotificationRepositoryImpl`.
+    -   `MarkNotificationAsReadUseCase` fue creado.
+    -   `NotificationsViewModel` ahora llama a `markAllAsRead()` (que utiliza el Use Case) cuando se carga la lista de notificaciones, lo que hace que todas las notificaciones visibles se marquen como leídas.
+-   **Eliminar Notificaciones por Deslizamiento (Swipe to Dismiss)**:
+    -   Se añadió `deleteNotificationById(notificationId: Long)` a `NotificationDao` y se implementó `deleteNotification` en `NotificationRepository` y `NotificationRepositoryImpl`.
+    -   Se creó `DeleteNotificationUseCase`.
+    -   `NotificationsViewModel` tiene una función `deleteNotification(notificationId: Long)`.
+    -   `NotificationsScreen` (`app/src/main/java/com/sinc/mobile/app/features/notifications/NotificationsScreen.kt`) fue modificada para usar `SwipeToDismissBox` de Material 3, permitiendo eliminar notificaciones de la base de datos local deslizándolas hacia la izquierda.
+-   **Ajuste de `MinimalHeader`**: Se aplicó `Modifier.statusBarsPadding()` al `MinimalHeader` en `NotificationsScreen` (`app/src/main/java/com/sinc/mobile/app/features/notifications/NotificationsScreen.kt`) para evitar solapamientos con la barra de estado de Android.
+
+## 4. Manejo de Notificaciones con "Deep Link"
+
+-   **Objetivo**: Permitir que al tocar una notificación, la aplicación navegue a una pantalla específica (ej. la conversación de un ticket).
+-   **Implementación**:
+    -   `MyFirebaseMessagingService` (`app/src/main/java/com/sinc/mobile/app/firebase/MyFirebaseMessagingService.kt`) fue refactorizado para manejar el `data payload` de las notificaciones FCM de manera más flexible.
+    -   Se crearon constantes `ACTION_OPEN_TICKET_CONVERSATION` y `EXTRA_TICKET_ID`.
+    -   Si el `data payload` contiene `type == "ticket_response"` y un `ticket_id`, se genera un `PendingIntent` que abre `MainActivity` y pasa el `ticket_id` como extra. La notificación resultante utiliza un `notificationId` basado en el `ticket_id`.
+    -   Para otros tipos de notificaciones o si solo hay un `notification` payload, se usa un `PendingIntent` genérico que abre la aplicación.
+    -   `MainActivity` (`app/src/main/java/com/sinc/mobile/MainActivity.kt`) fue modificado con un `LaunchedEffect` para escuchar el `intent` de la actividad. Si el `intent.action` coincide con `ACTION_OPEN_TICKET_CONVERSATION` y contiene un `EXTRA_TICKET_ID`, la aplicación navega a `Routes.createTicketConversationRoute(ticketId)`. El `intent` se limpia después para evitar navegaciones repetidas.
+
+## 5. Diagnóstico de Notificaciones No Entregadas desde Producción
+
+-   **Problema**: El usuario informó que las notificaciones activadas por eventos (ej. "consulta contestada", "usuario inactivo") llegaban desde el entorno local pero no desde el servidor de producción, mientras que las notificaciones de prueba genéricas sí funcionaban desde producción.
+-   **Análisis y Guía**: Se identificó que la causa más probable era una **mala configuración o ausencia de un "Queue Worker"** (procesador de colas) en el servidor de producción. Se explicó la diferencia entre el procesamiento síncrono (típicamente en local) y asíncrono (vía colas en producción) de trabajos en Laravel. Se proporcionó al usuario una guía detallada sobre cómo diagnosticar su sistema de colas en producción, incluyendo:
+    -   Verificar la variable `QUEUE_CONNECTION` en `.env`.
+    -   Confirmar la ejecución de `php artisan queue:work` mediante un gestor de procesos (ej. `Supervisor`).
+    -   Inspeccionar la tabla `jobs` en la base de datos de producción.
+-   **Resolución**: El usuario confirmó que la cola estaba desactualizada y que el problema fue resuelto tras su intervención en el backend.
+
+---
+
+Todos los cambios fueron verificados y el proyecto compila exitosamente.
+
+# Avances de la Sesión Actual (Fecha actual: 05 de Febrero de 2026)
+
+Esta sesión se centró en mejorar la funcionalidad y la experiencia de usuario (UI/UX) de las notificaciones, así como en sentar las bases para la navegación desde las notificaciones.
+
+## 1. Diagnóstico y Solución del Problema de Notificaciones Push (Backend)
+
+*   **Problema Detectado**: Las notificaciones push llegaban correctamente al dispositivo, pero las notificaciones locales (las que se guardan en el historial de la app y permiten navegación específica) solo se generaban si la aplicación estaba abierta (en primer plano). Si la app estaba en segundo plano o cerrada, el sistema operativo mostraba una notificación genérica, pero la lógica interna de la app no se ejecutaba.
+*   **Causa Raíz**: El backend estaba enviando mensajes de Firebase Cloud Messaging (FCM) con el formato de "Mensaje de Notificación" (`->withNotification(...)`). Los mensajes de notificación son interceptados y mostrados automáticamente por el sistema Android cuando la app no está en primer plano, sin ejecutar el `FirebaseMessagingService` de la aplicación.
+*   **Solución (Aplicada en Backend)**: Se instruyó al equipo de backend para modificar el método `toFcm()` del Notification Builder. La solución consiste en:
+    1.  Eliminar la llamada a `->withNotification(...)`.
+    2.  Mover el título (`title`) y el cuerpo (`body`) de la notificación, junto con cualquier dato adicional (`type`, `ticket_id`), dentro de la carga de datos (`->withData(...)`).
+*   **Impacto**: Esta modificación asegura que el `MyFirebaseMessagingService.onMessageReceived()` de la app Android se ejecute consistentemente en todos los estados de la aplicación (primer plano, segundo plano, cerrada), permitiendo la ejecución de la lógica personalizada de guardado y navegación.
+
+## 2. Refactorización Completa de la Pantalla de Notificaciones (UI/UX)
+
+*   **Problema 1 (Diseño)**: El icono de basura (`Delete`) de la acción "deslizar para borrar" se superponía con la hora de la notificación, afectando la estética y la legibilidad. La interacción de borrado (`SwipeToDismiss`) era menos intuitiva para la eliminación múltiple.
+*   **Problema 2 (Interacción)**: Se necesitaba un mecanismo más robusto para seleccionar y eliminar múltiples notificaciones, similar a la experiencia de usuario de las aplicaciones de correo electrónico.
+*   **Solución Implementada**:
+    *   **Remoción de `SwipeToDismissBox`**: Se eliminó la funcionalidad de deslizar para borrar, resolviendo el problema de superposición del icono de basura.
+    *   **Modo de Selección Múltiple**: Se implementó un nuevo flujo de interacción:
+        *   Una **pulsación larga** en cualquier notificación activa un "modo de selección".
+        *   En el modo de selección, se muestra un `Checkbox` al inicio de cada notificación.
+        *   El usuario puede **pulsar** sobre otras notificaciones para seleccionarlas o deseleccionarlas.
+        *   Un `SelectionAppBar` contextual (barra de aplicación superior) aparece mostrando el número de elementos seleccionados y un botón para eliminar.
+        *   Un botón de "Atrás" en el `SelectionAppBar` permite salir del modo de selección y deseleccionar todos los elementos.
+    *   **Componentes Clave Modificados/Creados**:
+        *   `NotificationsState.kt`: Nuevo estado para manejar `isSelectionMode` y `selectedIds`.
+        *   `NotificationsViewModel.kt`: Refactorizado para gestionar el estado de selección, los eventos de clic/pulsación larga, y la eliminación de múltiples notificaciones.
+        *   `SelectionAppBar.kt` (Nuevo): Componente `TopAppBar` para el modo de selección.
+        *   `NotificationItem.kt`: Actualizado para soportar `combinedClickable`, mostrar `Checkbox` condicionalmente, y cambiar el fondo al ser seleccionado.
+        *   `NotificationsScreen.kt`: Orquestación de la lógica de selección, alternando entre `MinimalHeader` y `SelectionAppBar` con animaciones de deslizamiento (`AnimatedVisibility`).
+
+## 3. Implementación de Navegación desde la Lista de Notificaciones
+
+*   **Objetivo**: Permitir que, al pulsar una notificación en la lista (fuera del modo de selección), el usuario sea redirigido a la pantalla relevante (ej. el chat de un ticket específico).
+*   **Impacto en la Arquitectura**: Esta funcionalidad requirió una actualización profunda en todas las capas de la aplicación para asegurar la persistencia y el transporte de los datos de navegación.
+*   **Cambios por Capa**:
+    *   **Capa de Dominio (`:domain`)**:
+        *   `Notification.kt`: Se añadió `type: String?` y `data: Map<String, String>?` al modelo de datos para almacenar el tipo de notificación y un payload de datos flexible.
+        *   `SaveNotificationUseCase.kt`: Se actualizó su firma para aceptar `type` y `data`.
+        *   `NotificationRepository.kt`: Se actualizó la interfaz para reflejar los nuevos parámetros de `saveNotification`.
+    *   **Capa de Datos (`:data`)**:
+        *   `NotificationEntity.kt`: Se añadió `type: String?` y `dataJson: String?` a la entidad Room.
+        *   `SincMobileDatabase.kt`: Se incrementó la versión de la base de datos a `9` y se añadió un `TypeConverter` (`Map<String, String>` a `String` JSON y viceversa) para manejar el campo `dataJson`.
+        *   `NotificationRepositoryImpl.kt`: Se actualizó la implementación de `saveNotification` para persistir `type` y `dataJson` (serializado a JSON).
+        *   `NotificationMapper.kt`: Se actualizó la función `toDomain()` para deserializar `dataJson` a `Map<String, String>?` e incluir los nuevos campos en el modelo de dominio.
+    *   **Capa de Presentación (`:app`)**:
+        *   `MyFirebaseMessagingService.kt`: Se modificó la llamada a `saveNotificationUseCase` para incluir `type` y `data` (obtenidos del payload de FCM).
+        *   `NotificationsViewModel.kt`: Se añadió un `SharedFlow<String>` para eventos de navegación. El método `onEvent` ahora contiene la lógica para construir rutas (ej. `Routes.TICKET_CONVERSATION` con `ticketId`) y emitirlas a través de este `SharedFlow`.
+        *   `AppNavigation.kt`: Se modificó la definición de la ruta `NOTIFICATIONS` para pasar el `navController` al `NotificationsScreen`.
+        *   `NotificationsScreen.kt`: Se modificó para aceptar el `navController` y se añadió un `LaunchedEffect` para escuchar el `SharedFlow` de navegación del ViewModel y ejecutar `navController.navigate()`.
+
+## 4. Correcciones de Compilación y Limpieza
+
+*   **`@OptIn` en `SelectionAppBar`**: Se añadió la anotación `@OptIn(ExperimentalMaterial3Api::class)` al componente `SelectionAppBar.kt` para resolver errores de compilación relacionados con el uso de APIs experimentales de Material 3.
+*   **Importación de `Routes`**: Se corrigió una importación incorrecta del objeto `Routes` en `NotificationsViewModel.kt`, asegurando el acceso correcto a las rutas de navegación de la aplicación.
+*   **Advertencias de Rendimiento de Room**: Se observaron advertencias de KSP (`kspDebugKotlin`) sobre la falta de índices en columnas de claves foráneas de `RazaEntity` y `CategoriaAnimalEntity`. Aunque no son errores críticos, se recomienda añadir índices a estas columnas para optimizar el rendimiento de la base de datos en futuras iteraciones.
+
+---
+
+Este es el registro completo de los avances y cambios realizados en la sesión actual.

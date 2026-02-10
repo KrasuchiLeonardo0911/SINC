@@ -75,6 +75,7 @@ object Routes {
     fun createTicketMessageRoute(ticketType: String) = "create_ticket_message/$ticketType"
     const val TICKET_CONVERSATION = "ticket_conversation/{ticketId}"
     fun createTicketConversationRoute(ticketId: Long) = "ticket_conversation/$ticketId"
+    const val NOTIFICATIONS = "notifications"
 }
 
 @Composable
@@ -390,5 +391,37 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-    }
-}
+
+                composable(
+
+                    route = Routes.NOTIFICATIONS,
+
+                    enterTransition = {
+
+                        slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+
+                    },
+
+                    popExitTransition = {
+
+                        slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+
+                    }
+
+                ) {
+
+                    com.sinc.mobile.app.features.notifications.NotificationsScreen(
+
+                        navController = navController,
+
+                        onBackPress = { navController.popBackStack() }
+
+                    )
+
+                }
+
+            }
+
+        }
+
+        

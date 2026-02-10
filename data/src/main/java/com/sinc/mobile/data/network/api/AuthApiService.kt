@@ -4,6 +4,7 @@ import com.sinc.mobile.data.network.dto.InitResponseDto
 import com.sinc.mobile.data.network.dto.LoginRequest
 import com.sinc.mobile.data.network.dto.UserDto
 import com.sinc.mobile.data.network.dto.LoginResponse
+import com.sinc.mobile.data.network.dto.FcmTokenRequest
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -59,4 +60,8 @@ interface AuthApiService {
     ): Response<ResponseBody>
     @GET("/api/user")
     suspend fun getUser(): Response<UserDto>
+
+    @Headers("Accept: application/json")
+    @POST("api/movil/fcm-token")
+    suspend fun sendFcmToken(@Body request: FcmTokenRequest): Response<ResponseBody>
 }

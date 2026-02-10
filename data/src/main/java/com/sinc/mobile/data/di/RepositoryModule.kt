@@ -35,6 +35,8 @@ import com.sinc.mobile.domain.repository.VentasRepository
 
 import com.sinc.mobile.data.repository.LogisticsRepositoryImpl
 import com.sinc.mobile.domain.repository.LogisticsRepository
+import com.sinc.mobile.data.repository.NotificationRepositoryImpl
+import com.sinc.mobile.domain.repository.NotificationRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -83,4 +85,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLogisticsRepository(impl: LogisticsRepositoryImpl): LogisticsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
 }

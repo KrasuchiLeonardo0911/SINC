@@ -2,11 +2,17 @@ package com.sinc.mobile.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.sinc.mobile.data.local.dao.*
 import com.sinc.mobile.data.local.entities.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+
 
 @Database(
     entities = [
@@ -26,9 +32,10 @@ import java.time.format.DateTimeFormatter
         MovimientoHistorialEntity::class,
         DeclaracionVentaEntity::class,
         TicketEntity::class,
-        MessageEntity::class
+        MessageEntity::class,
+        NotificationEntity::class
     ],
-    version = 7,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)
@@ -39,6 +46,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun movimientoHistorialDao(): MovimientoHistorialDao
     abstract fun declaracionVentaDao(): DeclaracionVentaDao
     abstract fun ticketDao(): TicketDao
+    abstract fun notificationDao(): NotificationDao
 
     // DAOs de Catálogos
     abstract fun especieDao(): EspecieDao
@@ -54,13 +62,23 @@ abstract class SincMobileDatabase : RoomDatabase() {
 }
 
 class Converters {
-    @androidx.room.TypeConverter
+    @TypeConverter
     fun fromTimestamp(value: String?): LocalDateTime? {
         return value?.let { LocalDateTime.parse(it, DateTimeFormatter.ISO_LOCAL_DATE_TIME) }
     }
 
-    @androidx.room.TypeConverter
+    @TypeConverter
     fun dateToTimestamp(date: LocalDateTime?): String? {
         return date?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }
+
+    @TypeConverter
+    fun fromString(value: String?): Map<String, String>? {
+        return value?.let { Json.decodeFromString(MapSerializer(String.serializer(), String.serializer()), it) }
+    }
+
+    @TypeConverter
+    fun fromMap(map: Map<String, String>?): String? {
+        return map?.let { Json.encodeToString(MapSerializer(String.serializer(), String.serializer()), it) }
     }
 }

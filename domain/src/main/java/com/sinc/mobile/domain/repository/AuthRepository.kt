@@ -17,4 +17,5 @@ interface AuthRepository {
     
     suspend fun getInitData(): DomainResult<InitData, DomainError>
     suspend fun getUserProfile(): DomainResult<com.sinc.mobile.domain.model.User, DomainError>
+    suspend fun sendFcmToken(token: String): DomainResult<Unit, DomainError>
 }

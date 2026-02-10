@@ -210,4 +210,19 @@ class AuthRepositoryImpl @Inject constructor(
             DomainResult.Failure(GenericError("Error de red: ${e.message}"))
         }
     }
+
+    override suspend fun sendFcmToken(token: String): DomainResult<Unit, DomainError> {
+        return try {
+            val request = com.sinc.mobile.data.network.dto.FcmTokenRequest(token)
+            val response = apiService.sendFcmToken(request)
+            if (response.isSuccessful) {
+                DomainResult.Success(Unit)
+            } else {
+                DomainResult.Failure(GenericError("Error al enviar el token FCM: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            DomainResult.Failure(GenericError("Error de red al enviar el token FCM: ${e.message}"))
+        }
+    }
 }
+

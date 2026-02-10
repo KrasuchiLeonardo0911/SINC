@@ -17,9 +17,13 @@ import com.sinc.mobile.ui.theme.SincMobileTheme
 import androidx.compose.foundation.layout.Box
 import com.sinc.mobile.app.ui.components.GlobalBanner
 import com.google.firebase.messaging.FirebaseMessaging
+import com.sinc.mobile.app.features.home.MainViewModel
+import com.sinc.mobile.app.firebase.MyFirebaseMessagingService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
+import androidx.activity.viewModels
+import androidx.compose.ui.platform.LocalContext
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,6 +33,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var sessionManager: SessionManager
+
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +50,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SincMobileTheme {
                 val navController = rememberNavController()
+                val context = LocalContext.current
 
                 // LaunchedEffect to collect navigation commands
                 LaunchedEffect(Unit) {
@@ -56,6 +63,23 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // LaunchedEffect to handle notification clicks
+                LaunchedEffect(context) {
+                    val intent = (context as? MainActivity)?.intent
+                    intent?.let {
+                        if (it.action == MyFirebaseMessagingService.ACTION_OPEN_TICKET_CONVERSATION) {
+                            val ticketId = it.extras?.getLong(MyFirebaseMessagingService.EXTRA_TICKET_ID)
+                            if (ticketId != null) {
+                                Log.d("MainActivity", "Navigating to ticket conversation for ID: $ticketId")
+                                navController.navigate(Routes.createTicketConversationRoute(ticketId))
+                                // Clear the intent action and extras to prevent re-triggering
+                                it.action = ""
+                                it.replaceExtras(Bundle())
+                            }
+                        }
+                    }
+                }
+                
                 // LaunchedEffect to get and log FCM token
                 LaunchedEffect(Unit) {
                     FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -64,10 +88,8 @@ class MainActivity : ComponentActivity() {
                             return@addOnCompleteListener
                         }
                         val token = task.result
-                        Log.d("FCM_TOKEN", "FCM Token: $token")
-                        // TODO: Implement sending this token to your backend
-                        // For now, you can copy this token from Logcat and test sending it manually
-                        // using a tool like Postman or curl to http://10.0.2.2:8000/api/movil/fcm-token
+                        Log.d("FCM_TOKEN", "FCM Token retrieved: $token")
+                        mainViewModel.sendFcmToken(token)
                     }
                 }
 
@@ -75,6 +97,7 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(navController, startDestination = startDestination)
                     GlobalBanner()
                 }
+
             }
         }
     }

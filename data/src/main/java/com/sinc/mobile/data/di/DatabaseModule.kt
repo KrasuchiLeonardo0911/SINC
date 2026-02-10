@@ -126,4 +126,10 @@ object DatabaseModule {
     fun provideTicketDao(database: SincMobileDatabase): TicketDao {
         return database.ticketDao()
     }
+
+    @Singleton
+    @Provides
+    fun provideNotificationDao(database: SincMobileDatabase): NotificationDao {
+        return database.notificationDao()
+    }
 }

@@ -39,13 +39,14 @@ data class BottomNavItem(
 @Composable
 fun CozyBottomNavBar(
     selectedRoute: String,
-    onItemSelected: (String) -> Unit
+    onItemSelected: (String) -> Unit,
+    unreadNotificationCount: Int
 ) {
     val items = listOf(
         BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
         BottomNavItem("Ayuda", CozyBottomNavRoutes.HELP, Icons.Outlined.HelpOutline),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person),
-        BottomNavItem("Alertas", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
+        BottomNavItem("Notificaciones", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
     Row(
@@ -58,9 +59,11 @@ fun CozyBottomNavBar(
         horizontalArrangement = Arrangement.SpaceAround // Distribuir uniformemente
     ) {
         items.forEach { item ->
+            val showBadge = item.route == CozyBottomNavRoutes.NOTIFICATIONS && unreadNotificationCount > 0
             CozyBottomNavItem(
                 item = item,
                 isSelected = selectedRoute == item.route,
+                showBadge = showBadge,
                 onClick = { onItemSelected(item.route) }
             )
         }
@@ -69,10 +72,10 @@ fun CozyBottomNavBar(
 
 
 @Composable
-
 fun RowScope.CozyBottomNavItem(
     item: BottomNavItem,
     isSelected: Boolean,
+    showBadge: Boolean,
     onClick: () -> Unit
 ) {
     Box(
@@ -116,12 +119,22 @@ fun RowScope.CozyBottomNavItem(
                 item.icon
             }
 
-            Icon(
-                imageVector = icon,
-                contentDescription = item.label,
-                tint = if (isSelected) CozyTextMain else CozyIconGray,
-                modifier = Modifier.size(24.dp)
-            )
+            Box {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = item.label,
+                    tint = if (isSelected) CozyTextMain else CozyIconGray,
+                    modifier = Modifier.size(24.dp)
+                )
+                if (showBadge) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(Color.Red, CircleShape)
+                            .align(Alignment.TopEnd)
+                    )
+                }
+            }
 
 
             Text(
