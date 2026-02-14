@@ -415,7 +415,7 @@ class CreateUnidadProductivaViewModel @Inject constructor(
             val result = createTicketUseCase(
                 CreateTicketData(
                     mensaje = mensaje,
-                    tipo = "solicitud_rnspa"
+                    tipo = "consulta_negocio"
                 )
             )
             _uiState.update {

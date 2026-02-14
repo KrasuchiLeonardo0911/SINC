@@ -9,13 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -38,6 +38,9 @@ fun Step2FormularioBasico(
     onSuperficieChange: (String) -> Unit,
     superficieError: String?,
 ) {
+    var showInfoDialog by remember { mutableStateOf(false) }
+    val identifierLabel = selectedIdentifierConfig?.type?.uppercase() ?: "Identificador"
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -71,13 +74,24 @@ fun Step2FormularioBasico(
 
 
                 // Dynamic Identifier (RNSPA, etc.)
-                val identifierLabel = selectedIdentifierConfig?.type?.uppercase() ?: "Identificador"
                 OutlinedTextField(
                     value = identifierValue,
                     onValueChange = onIdentifierValueChange,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(identifierLabel) },
                     placeholder = { Text(selectedIdentifierConfig?.hint ?: "") },
+                    trailingIcon = {
+                        IconButton(onClick = { showInfoDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "Información sobre $identifierLabel",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    supportingText = {
+                        Text("Ingrese solo números. Se formateará automáticamente.")
+                    },
                     singleLine = true,
                     isError = identifierError != null,
                     visualTransformation = identifierFormatInfo?.pattern?.let { PatternVisualTransformation(it) } ?: VisualTransformation.None,
@@ -124,5 +138,39 @@ fun Step2FormularioBasico(
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    if (showInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showInfoDialog = false },
+            title = { Text(text = "¿Qué es el $identifierLabel?", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "El $identifierLabel es un registro obligatorio para identificar tu unidad productiva ante los organismos de control."
+                    )
+                    Text(
+                        text = "Cómo obtenerlo:",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Puedes tramitarlo a través de las oficinas locales del INTA o mediante el sistema de autogestión en línea."
+                    )
+                    Text(
+                        text = "Es obligatorio para poder realizar movimientos de stock y ventas de forma legal.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showInfoDialog = false }) {
+                    Text("Entendido")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

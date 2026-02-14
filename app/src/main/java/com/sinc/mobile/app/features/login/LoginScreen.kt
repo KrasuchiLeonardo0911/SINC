@@ -113,7 +113,15 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoadingOverlayVisible // Simplified condition
             ) {
-                Text("Login")
+                Text("Entrar")
+            }
+
+            OutlinedButton(
+                onClick = onNavigateToForgotPassword,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoadingOverlayVisible
+            ) {
+                Text("Es mi primer ingreso")
             }
 
             TextButton(onClick = onNavigateToForgotPassword) {

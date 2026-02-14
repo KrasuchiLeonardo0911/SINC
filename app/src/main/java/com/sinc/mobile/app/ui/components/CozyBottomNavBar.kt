@@ -46,7 +46,7 @@ fun CozyBottomNavBar(
         BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
         BottomNavItem("Ayuda", CozyBottomNavRoutes.HELP, Icons.Outlined.HelpOutline),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person),
-        BottomNavItem("Notificaciones", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
+        BottomNavItem("Alertas", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
     Row(
