@@ -200,6 +200,45 @@ class EditUnidadProductivaViewModel @Inject constructor(
         }
     }
 
+    fun saveBasicInfo() {
+        val s = _uiState.value
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, error = null) }
+            val updateData = UpdateUnidadProductivaData(
+                superficie = s.superficie.toDoubleOrNull(),
+                condicionTenenciaId = s.condicionTenenciaId,
+                habita = s.habita
+            )
+            handleSaveResult(updateUnidadProductivaUseCase(unidadId, updateData))
+        }
+    }
+
+    fun saveWaterInfo() {
+        val s = _uiState.value
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, error = null) }
+            val updateData = UpdateUnidadProductivaData(
+                aguaHumanoFuenteId = s.aguaHumanoFuenteId,
+                aguaHumanoEnCasa = s.aguaHumanoEnCasa,
+                aguaHumanoDistancia = s.aguaHumanoDistancia.toIntOrNull(),
+                aguaAnimalFuenteId = s.aguaAnimalFuenteId,
+                aguaAnimalDistancia = s.aguaAnimalDistancia.toIntOrNull()
+            )
+            handleSaveResult(updateUnidadProductivaUseCase(unidadId, updateData))
+        }
+    }
+
+    fun saveObservations() {
+        val s = _uiState.value
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, error = null) }
+            val updateData = UpdateUnidadProductivaData(
+                observaciones = s.observaciones
+            )
+            handleSaveResult(updateUnidadProductivaUseCase(unidadId, updateData))
+        }
+    }
+
     private fun handleSaveResult(result: Result<UnidadProductiva, com.sinc.mobile.domain.util.Error>) {
         when (result) {
             is Result.Success -> {
