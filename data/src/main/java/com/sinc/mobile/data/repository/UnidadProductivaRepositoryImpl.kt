@@ -2,32 +2,107 @@ package com.sinc.mobile.data.repository
 
 import com.sinc.mobile.data.local.dao.UnidadProductivaDao
 import com.sinc.mobile.data.local.entities.UnidadProductivaEntity
+import com.sinc.mobile.data.local.entities.UnidadProductivaTipoPastoCrossRef
+import com.sinc.mobile.data.local.entities.UnidadProductivaTipoSueloCrossRef
 import com.sinc.mobile.data.network.api.UnidadProductivaApiService
 import com.sinc.mobile.data.network.dto.request.CreateUnidadProductivaRequest
+import com.sinc.mobile.data.network.dto.request.PastoRequestDto
+import com.sinc.mobile.data.network.dto.request.SueloRequestDto
 import com.sinc.mobile.data.network.dto.request.UpdateUnidadProductivaRequest
 import com.sinc.mobile.data.network.dto.response.UnidadProductivaDto
-import com.sinc.mobile.data.session.SessionManager
-import com.sinc.mobile.domain.model.CreateUnidadProductivaData
-import com.sinc.mobile.domain.model.GenericError
-import com.sinc.mobile.domain.model.UnidadProductiva
-import com.sinc.mobile.domain.model.UpdateUnidadProductivaData
+import com.sinc.mobile.data.network.dto.response.TipoSueloPivotDto
+import com.sinc.mobile.data.network.dto.response.RecursoForrajeroPivotDto
+import com.sinc.mobile.domain.model.*
 import com.sinc.mobile.domain.repository.UnidadProductivaRepository
 import com.sinc.mobile.domain.util.Error
 import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.flow.combine
 
 class UnidadProductivaRepositoryImpl @Inject constructor(
     private val unidadProductivaApiService: UnidadProductivaApiService,
-    private val sessionManager: SessionManager,
     private val unidadProductivaDao: UnidadProductivaDao
 ) : UnidadProductivaRepository {
 
     override fun getUnidadesProductivas(): Flow<List<UnidadProductiva>> {
-        return unidadProductivaDao.getAllUnidadesProductivas().map { entities ->
-            entities.map { it.toDomain() }
+        return combine(
+            unidadProductivaDao.getAllUnidadesProductivas(),
+            unidadProductivaDao.getAllSuelosCrossRef(),
+            unidadProductivaDao.getAllPastosCrossRef(),
+            unidadProductivaDao.getAllTiposSuelo(),
+            unidadProductivaDao.getAllTiposPasto()
+        ) { unidades, suelosCrossRef, pastosCrossRef, tiposSuelo, tiposPasto ->
+            val tiposSueloMap = tiposSuelo.associateBy { it.id }
+            val tiposPastoMap = tiposPasto.associateBy { it.id }
+
+            val suelosAgrupados = suelosCrossRef.groupBy { it.unidadProductivaId }
+            val pastosAgrupados = pastosCrossRef.groupBy { it.unidadProductivaId }
+
+            unidades.map { unidad ->
+                val suelosInfo = suelosAgrupados[unidad.id].orEmpty().mapNotNull { crossRef ->
+                    tiposSueloMap[crossRef.tipoSueloId]?.let { tipoSuelo ->
+                        SueloInfo(
+                            id = tipoSuelo.id,
+                            nombre = tipoSuelo.nombre,
+                            porcentaje = crossRef.porcentaje
+                        )
+                    }
+                }
+
+                val pastosInfo = pastosAgrupados[unidad.id].orEmpty().mapNotNull { crossRef ->
+                    tiposPastoMap[crossRef.tipoPastoId]?.let { tipoPasto ->
+                        PastoInfo(
+                            id = tipoPasto.id,
+                            nombre = tipoPasto.nombre,
+                            porcentaje = crossRef.porcentaje
+                        )
+                    }
+                }
+                
+                unidad.toDomain(suelosInfo, pastosInfo)
+            }
+        }
+    }
+
+    override fun getUnidadProductivaById(id: Int): Flow<UnidadProductiva?> {
+        return combine(
+            unidadProductivaDao.getUnidadProductivaById(id),
+            unidadProductivaDao.getAllSuelosCrossRef(),
+            unidadProductivaDao.getAllPastosCrossRef(),
+            unidadProductivaDao.getAllTiposSuelo(),
+            unidadProductivaDao.getAllTiposPasto()
+        ) { unidad, suelosCrossRef, pastosCrossRef, tiposSuelo, tiposPasto ->
+            val currentUnidad = unidad ?: return@combine null
+
+            val tiposSueloMap = tiposSuelo.associateBy { it.id }
+            val tiposPastoMap = tiposPasto.associateBy { it.id }
+
+            val suelosAgrupados = suelosCrossRef.groupBy { it.unidadProductivaId }
+            val pastosAgrupados = pastosCrossRef.groupBy { it.unidadProductivaId }
+
+            val suelosInfo = suelosAgrupados[currentUnidad.id].orEmpty().mapNotNull { crossRef ->
+                tiposSueloMap[crossRef.tipoSueloId]?.let { tipoSuelo ->
+                    SueloInfo(
+                        id = tipoSuelo.id,
+                        nombre = tipoSuelo.nombre,
+                        porcentaje = crossRef.porcentaje
+                    )
+                }
+            }
+
+            val pastosInfo = pastosAgrupados[currentUnidad.id].orEmpty().mapNotNull { crossRef ->
+                tiposPastoMap[crossRef.tipoPastoId]?.let { tipoPasto ->
+                    PastoInfo(
+                        id = tipoPasto.id,
+                        nombre = tipoPasto.nombre,
+                        porcentaje = crossRef.porcentaje
+                    )
+                }
+            }
+
+            currentUnidad.toDomain(suelosInfo, pastosInfo)
         }
     }
 
@@ -37,7 +112,35 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val dtos = response.body()
                 if (dtos != null) {
-                    unidadProductivaDao.clearAndInsert(dtos.map { it.toEntity() })
+                    val unidades = dtos.map { it.toEntity() }
+
+                    val suelos = mutableListOf<UnidadProductivaTipoSueloCrossRef>()
+                    dtos.forEach { dto ->
+                        dto.tiposSuelo.forEach { sueloDto ->
+                            suelos.add(
+                                UnidadProductivaTipoSueloCrossRef(
+                                    unidadProductivaId = dto.id,
+                                    tipoSueloId = sueloDto.id,
+                                    porcentaje = sueloDto.pivot.porcentaje
+                                )
+                            )
+                        }
+                    }
+
+                    val pastos = mutableListOf<UnidadProductivaTipoPastoCrossRef>()
+                    dtos.forEach { dto ->
+                        dto.recursosForrajeros.forEach { pastoDto ->
+                            pastos.add(
+                                UnidadProductivaTipoPastoCrossRef(
+                                    unidadProductivaId = dto.id,
+                                    tipoPastoId = pastoDto.id,
+                                    porcentaje = pastoDto.pivot.porcentaje ?: 0
+                                )
+                            )
+                        }
+                    }
+                    
+                    unidadProductivaDao.clearAndInsert(unidades, suelos, pastos)
                     Result.Success(Unit)
                 } else {
                     Result.Failure(GenericError("El cuerpo de la respuesta de unidades productivas es nulo"))
@@ -62,8 +165,10 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             municipioId = data.municipioId,
             condicionTenenciaId = data.condicionTenenciaId,
             fuenteAguaId = data.fuenteAguaId,
-            tipoSueloId = data.tipoSueloId,
-            tipoPastoId = data.tipoPastoId
+            parajeId = data.parajeId,
+            fechaInicio = data.fechaInicio,
+            tiposSuelo = data.tiposSuelo?.map { SueloRequestDto(it.id, it.porcentaje) },
+            recursosForrajeros = data.recursosForrajeros?.map { PastoRequestDto(it.id, it.porcentaje) }
         )
 
         return try {
@@ -71,7 +176,10 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val dto = response.body()
                 if (dto != null) {
-                    unidadProductivaDao.insertUnidadProductiva(dto.toEntity())
+                    val syncResult = syncUnidadesProductivas()
+                    if (syncResult is Result.Failure) {
+                        return Result.Failure(syncResult.error)
+                    }
                     Result.Success(dto.toDomain())
                 } else {
                     Result.Failure(GenericError("El cuerpo de la respuesta de creación de unidad productiva es nulo"))
@@ -95,11 +203,10 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             aguaHumanoEnCasa = data.aguaHumanoEnCasa?.let { if (it) 1 else 0 },
             aguaHumanoDistancia = data.aguaHumanoDistancia,
             aguaAnimalDistancia = data.aguaAnimalDistancia,
-            tipoSueloId = data.tipoSueloId,
-            tipoPastoId = data.tipoPastoId,
-            forrajerasPredominante = data.forrajerasPredominante?.let { if (it) 1 else 0 },
             habita = data.habita?.let { if (it) 1 else 0 },
-            observaciones = data.observaciones
+            observaciones = data.observaciones,
+            tiposSuelo = data.tiposSuelo?.map { SueloRequestDto(it.id, it.porcentaje) },
+            recursosForrajeros = data.recursosForrajeros?.map { PastoRequestDto(it.id, it.porcentaje) }
         )
 
         return try {
@@ -107,7 +214,10 @@ class UnidadProductivaRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val dto = response.body()
                 if (dto != null) {
-                    unidadProductivaDao.insertUnidadProductiva(dto.toEntity())
+                    val syncResult = syncUnidadesProductivas()
+                    if (syncResult is Result.Failure) {
+                        return Result.Failure(syncResult.error)
+                    }
                     Result.Success(dto.toDomain())
                 } else {
                     Result.Failure(GenericError("El cuerpo de la respuesta de actualización de unidad productiva es nulo"))
@@ -133,15 +243,12 @@ private fun UnidadProductivaDto.toEntity(): UnidadProductivaEntity {
         latitud = this.latitud?.toDoubleOrNull(),
         longitud = this.longitud?.toDoubleOrNull(),
         municipioId = this.municipioId ?: 0,
-        condicionTenenciaId = this.pivot?.condicionTenenciaId,
+        condicionTenenciaId = this.condicionTenenciaId ?: this.pivot?.condicionTenenciaId,
         aguaHumanoFuenteId = this.fuenteAguaId,
         aguaHumanoEnCasa = this.aguaHumanoEnCasa == 1,
         aguaHumanoDistancia = this.aguaHumanoDistancia,
         aguaAnimalFuenteId = this.aguaAnimalFuenteId,
         aguaAnimalDistancia = this.aguaAnimalDistancia,
-        tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId,
-        forrajerasPredominante = this.forrajerasPredominante == 1,
         habita = this.habita == 1,
         observaciones = this.observaciones,
         activo = this.activo == 1,
@@ -158,21 +265,20 @@ private fun UnidadProductivaDto.toDomain(): UnidadProductiva {
         latitud = this.latitud?.toDoubleOrNull(),
         longitud = this.longitud?.toDoubleOrNull(),
         municipioId = this.municipioId,
-        condicionTenenciaId = this.pivot?.condicionTenenciaId,
+        condicionTenenciaId = this.condicionTenenciaId ?: this.pivot?.condicionTenenciaId,
         aguaHumanoFuenteId = this.fuenteAguaId,
         aguaHumanoEnCasa = this.aguaHumanoEnCasa == 1,
         aguaHumanoDistancia = this.aguaHumanoDistancia,
         aguaAnimalFuenteId = this.aguaAnimalFuenteId,
         aguaAnimalDistancia = this.aguaAnimalDistancia,
-        tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId,
-        forrajerasPredominante = this.forrajerasPredominante == 1,
         habita = this.habita == 1,
-        observaciones = this.observaciones
+        observaciones = this.observaciones,
+        tiposSuelo = this.tiposSuelo?.map { SueloInfo(it.id, it.nombre, it.pivot.porcentaje) } ?: emptyList(),
+        recursosForrajeros = this.recursosForrajeros?.map { PastoInfo(it.id, it.nombre, it.pivot.porcentaje) } ?: emptyList()
     )
 }
 
-private fun UnidadProductivaEntity.toDomain(): UnidadProductiva {
+private fun UnidadProductivaEntity.toDomain(suelos: List<SueloInfo>, pastos: List<PastoInfo>): UnidadProductiva {
     return UnidadProductiva(
         id = this.id,
         nombre = this.nombre,
@@ -187,10 +293,9 @@ private fun UnidadProductivaEntity.toDomain(): UnidadProductiva {
         aguaHumanoDistancia = this.aguaHumanoDistancia,
         aguaAnimalFuenteId = this.aguaAnimalFuenteId,
         aguaAnimalDistancia = this.aguaAnimalDistancia,
-        tipoSueloId = this.tipoSueloId,
-        tipoPastoId = this.tipoPastoId,
-        forrajerasPredominante = this.forrajerasPredominante,
         habita = this.habita,
-        observaciones = this.observaciones
+        observaciones = this.observaciones,
+        tiposSuelo = suelos,
+        recursosForrajeros = pastos
     )
 }

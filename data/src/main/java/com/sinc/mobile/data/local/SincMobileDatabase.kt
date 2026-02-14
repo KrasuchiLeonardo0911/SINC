@@ -33,9 +33,11 @@ import kotlinx.serialization.builtins.serializer
         DeclaracionVentaEntity::class,
         TicketEntity::class,
         MessageEntity::class,
-        NotificationEntity::class
+        NotificationEntity::class,
+        UnidadProductivaTipoSueloCrossRef::class,
+        UnidadProductivaTipoPastoCrossRef::class
     ],
-    version = 9,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)

@@ -1,5 +1,17 @@
 package com.sinc.mobile.domain.model
 
+data class SueloInfo(
+    val id: Int,
+    val nombre: String,
+    val porcentaje: Int
+)
+
+data class PastoInfo(
+    val id: Int,
+    val nombre: String,
+    val porcentaje: Int?
+)
+
 data class UnidadProductiva(
     val id: Int,
     val nombre: String?,
@@ -15,9 +27,8 @@ data class UnidadProductiva(
     val aguaHumanoDistancia: Int?,
     val aguaAnimalFuenteId: Int?,
     val aguaAnimalDistancia: Int?,
-    val tipoSueloId: Int?,
-    val tipoPastoId: Int?,
-    val forrajerasPredominante: Boolean?,
     val habita: Boolean?,
-    val observaciones: String? = null
+    val observaciones: String? = null,
+    val tiposSuelo: List<SueloInfo>,
+    val recursosForrajeros: List<PastoInfo>
 )

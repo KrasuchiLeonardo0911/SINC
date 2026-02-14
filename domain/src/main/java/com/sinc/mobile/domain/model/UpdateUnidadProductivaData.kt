@@ -8,9 +8,8 @@ data class UpdateUnidadProductivaData(
     val aguaHumanoEnCasa: Boolean? = null,
     val aguaHumanoDistancia: Int? = null,
     val aguaAnimalDistancia: Int? = null,
-    val tipoSueloId: Int? = null,
-    val tipoPastoId: Int? = null,
-    val forrajerasPredominante: Boolean? = null,
     val habita: Boolean? = null,
-    val observaciones: String? = null
+    val observaciones: String? = null,
+    val tiposSuelo: List<SueloInfo>? = null,
+    val recursosForrajeros: List<PastoInfo>? = null
 )

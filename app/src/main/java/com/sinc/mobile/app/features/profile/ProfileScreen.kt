@@ -15,8 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.app.features.campos.InfoCard
-import com.sinc.mobile.app.features.campos.InfoRow
+import com.sinc.mobile.app.features.profile.components.ProfileInfoCard
+import com.sinc.mobile.app.features.profile.components.InfoRow
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import android.content.Intent
 import android.net.Uri
@@ -62,13 +62,13 @@ fun ProfileScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoCard(title = "Datos de la Cuenta") {
+                        ProfileInfoCard(title = "Datos de la Cuenta") {
                             InfoRow(label = "Nombre", value = user.name)
                             InfoRow(label = "Email", value = user.email)
                         }
 
                         user.productor?.let { productor ->
-                            InfoCard(title = "Datos del Productor") {
+                            ProfileInfoCard(title = "Datos del Productor") {
                                 InfoRow(label = "Nombre Productor", value = productor.nombre)
                                 productor.dni?.let { InfoRow(label = "DNI", value = it) }
                                 productor.cuil?.let { InfoRow(label = "CUIL", value = it) }

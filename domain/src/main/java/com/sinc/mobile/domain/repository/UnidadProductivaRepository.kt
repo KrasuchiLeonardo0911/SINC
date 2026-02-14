@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface UnidadProductivaRepository {
     fun getUnidadesProductivas(): Flow<List<UnidadProductiva>>
+    fun getUnidadProductivaById(id: Int): Flow<UnidadProductiva?>
     suspend fun syncUnidadesProductivas(): Result<Unit, Error>
     suspend fun createUnidadProductiva(data: CreateUnidadProductivaData): Result<UnidadProductiva, Error>
     suspend fun updateUnidadProductiva(id: Int, data: UpdateUnidadProductivaData): Result<UnidadProductiva, Error>

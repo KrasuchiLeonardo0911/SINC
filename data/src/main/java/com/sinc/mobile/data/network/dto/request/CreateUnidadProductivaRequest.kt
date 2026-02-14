@@ -13,6 +13,8 @@ data class CreateUnidadProductivaRequest(
     @SerialName("municipio_id") val municipioId: Int,
     @SerialName("condicion_tenencia_id") val condicionTenenciaId: Int?,
     @SerialName("fuente_agua_id") val fuenteAguaId: Int?,
-    @SerialName("tipo_suelo_id") val tipoSueloId: Int?,
-    @SerialName("tipo_pasto_id") val tipoPastoId: Int?
+    @SerialName("paraje_id") val parajeId: Int? = null,
+    @SerialName("fecha_inicio") val fechaInicio: String? = null,
+    @SerialName("tipos_suelo") val tiposSuelo: List<SueloRequestDto>? = null,
+    @SerialName("recursos_forrajeros") val recursosForrajeros: List<PastoRequestDto>? = null
 )

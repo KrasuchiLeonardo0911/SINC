@@ -9,6 +9,8 @@ data class CreateUnidadProductivaData(
     val municipioId: Int,
     val condicionTenenciaId: Int?,
     val fuenteAguaId: Int?,
-    val tipoSueloId: Int?,
-    val tipoPastoId: Int?
+    val parajeId: Int?,
+    val fechaInicio: String?,
+    val tiposSuelo: List<SueloInfo>?,
+    val recursosForrajeros: List<PastoInfo>?
 )

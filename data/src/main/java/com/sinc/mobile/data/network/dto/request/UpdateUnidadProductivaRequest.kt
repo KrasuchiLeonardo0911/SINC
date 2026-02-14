@@ -12,9 +12,8 @@ data class UpdateUnidadProductivaRequest(
     @SerialName("agua_humano_en_casa") val aguaHumanoEnCasa: Int? = null,
     @SerialName("agua_humano_distancia") val aguaHumanoDistancia: Int? = null,
     @SerialName("agua_animal_distancia") val aguaAnimalDistancia: Int? = null,
-    @SerialName("tipo_suelo_predominante_id") val tipoSueloId: Int? = null,
-    @SerialName("tipo_pasto_predominante_id") val tipoPastoId: Int? = null,
-    @SerialName("forrajeras_predominante") val forrajerasPredominante: Int? = null,
     @SerialName("habita") val habita: Int? = null,
-    @SerialName("observaciones") val observaciones: String? = null
+    @SerialName("observaciones") val observaciones: String? = null,
+    @SerialName("tipos_suelo") val tiposSuelo: List<SueloRequestDto>? = null,
+    @SerialName("recursos_forrajeros") val recursosForrajeros: List<PastoRequestDto>? = null
 )

@@ -214,8 +214,10 @@ class CreateUnidadProductivaViewModel @Inject constructor(
             municipioId = state.selectedMunicipio.id,
             condicionTenenciaId = tenenciaId,
             fuenteAguaId = null, // Optional, not in form
-            tipoSueloId = null,  // Optional, not in form
-            tipoPastoId = null   // Optional, not in form
+            parajeId = null, // Optional, not in form
+            fechaInicio = null, // Optional, not in form
+            tiposSuelo = emptyList(),
+            recursosForrajeros = emptyList()
         )
 
         val result = createUnidadProductivaUseCase(data)

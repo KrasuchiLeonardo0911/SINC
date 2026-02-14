@@ -22,6 +22,7 @@ data class UnidadProductivaDto(
     @SerialName("activo") val activo: Int? = null,
     @SerialName("completo") val completo: Int? = null,
     @SerialName("superficie") val superficie: String? = null,
+    @SerialName("condicion_tenencia_id") val condicionTenenciaId: Int? = null,
     @SerialName("municipio_id") val municipioId: Int? = null,
     @SerialName("paraje_id") val parajeId: Int? = null,
     @SerialName("habita") val habita: Int? = null,
@@ -32,11 +33,12 @@ data class UnidadProductivaDto(
     @SerialName("agua_humano_distancia") val aguaHumanoDistancia: Int? = null,
     @SerialName("agua_animal_fuente_id") val aguaAnimalFuenteId: Int? = null,
     @SerialName("agua_animal_distancia") val aguaAnimalDistancia: Int? = null,
-    @SerialName("tipo_pasto_predominante_id") val tipoPastoId: Int? = null,
-    @SerialName("tipo_suelo_predominante_id") val tipoSueloId: Int? = null,
-    @SerialName("forrajeras_predominante") val forrajerasPredominante: Int? = null,
     @SerialName("observaciones") val observaciones: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
-    @SerialName("pivot") val pivot: PivotDto? = null
+    @SerialName("pivot") val pivot: PivotDto? = null,
+
+    // --- Nuevas relaciones ---
+    @SerialName("tipos_suelo") val tiposSuelo: List<TipoSueloPivotDto> = emptyList(),
+    @SerialName("recursos_forrajeros") val recursosForrajeros: List<RecursoForrajeroPivotDto> = emptyList()
 )
