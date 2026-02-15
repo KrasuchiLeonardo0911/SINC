@@ -34,3 +34,75 @@ Esta sesión se centró en resolver problemas críticos de persistencia, visuali
 
 ---
 **Estado Actual:** El módulo de edición de Unidades Productivas es ahora completamente funcional, robusto y visualmente coherente con los estándares de diseño de la aplicación. Se verificó con éxito la comunicación bidireccional con el servidor de producción.
+
+# Avances de la Sesión Actual (Fecha actual: viernes, 13 de febrero de 2026)
+
+Esta sesión se ha centrado en refinar la experiencia de usuario y la arquitectura de datos del módulo de edición de campos (Unidades Productivas), implementando un patrón de "Guardado Atómico" y una interfaz de usuario más intuitiva.
+
+## 1. Implementación de Atomicidad en la Edición de Datos
+
+*   **Estrategia de Guardado Atómico:** Se ha abandonado el enfoque de un único botón "Guardar Cambios" para todo el formulario. Ahora, cada sección de datos ("Información Básica", "Suelos", "Pastos") se edita y guarda de forma independiente.
+*   **Pantalla de Resumen ("Información del Campo"):** La pantalla principal `EditUnidadProductivaScreen` se ha transformado en un dashboard de solo lectura. Todos los campos interactivos (TextFields, Switches) han sido reemplazados por componentes estáticos `InfoRow` o deshabilitados, eliminando la posibilidad de edición accidental y clarificando el estado de la información.
+*   **Métodos de Guardado Específicos:** Se han creado métodos dedicados en el `EditUnidadProductivaViewModel` (`saveBasicInfo`, `saveSuelos`, `savePastos`) que envían al servidor únicamente los datos de la sección correspondiente, manteniendo el resto intacto.
+
+## 2. Nueva Experiencia de Edición "Slide-in"
+
+*   **Navegación Interna Fluida:** Se ha implementado un sistema de navegación interna utilizando `AnimatedContent`. Al pulsar el botón de editar en una tarjeta de resumen, una pantalla de edición dedicada ("Editor") se desliza desde la derecha, cubriendo la vista principal.
+*   **Editores Implementados:**
+    *   **`BasicInfoEditorScreen`:** Permite editar Superficie, Condición de Tenencia y la opción "Habita".
+    *   **`DistributionEditorScreen`:** Un editor reutilizable y potente para las listas de distribución (Suelos y Pastos).
+
+## 3. Refinamiento de la Edición de Distribuciones (Suelos y Pastos)
+
+*   **UI de Resumen:** Las tarjetas de distribución en la pantalla principal ahora muestran un gráfico de torta (`PieChart`) y una leyenda clara, sirviendo como visualización rápida del estado actual.
+*   **UI de Edición:** El editor dedicado ofrece una lista limpia de ítems donde se ha separado la lógica de modificación:
+    *   **Cambiar Tipo:** Se realiza borrando el ítem y añadiendo uno nuevo desde el catálogo (mostrado en un `ModalBottomSheet` sin desplegables).
+    *   **Editar Porcentaje:** Se realiza tocando el icono de lápiz junto al número, lo que abre un diálogo simple (`PercentageEditDialog`).
+*   **Validación Robusta:** El botón "Guardar" en el editor de distribuciones permanece deshabilitado hasta que la suma de los porcentajes sea exactamente 100% (o la lista esté vacía/unitaria), forzando la integridad de los datos antes de enviarlos al servidor.
+
+## 4. Ajustes Visuales y Técnicos
+
+*   **Manejo de Insets:** Se aseguró que todos los componentes, especialmente los botones de guardado en la parte inferior, respeten los insets de la barra de navegación del sistema (`navigationBarsPadding`).
+*   **Limpieza de UI:** Se eliminaron espacios en blanco innecesarios en las tarjetas y se optimizó la jerarquía de componentes composables.
+*   **Corrección de Errores:** Se solucionaron problemas de compilación relacionados con scopes de variables y referencias a iconos.
+
+---
+**Estado Actual:** La aplicación cuenta ahora con un flujo de edición de campos moderno, seguro y atómico. La persistencia local y la sincronización con el backend funcionan correctamente, y la interfaz de usuario guía al usuario de manera efectiva a través de la visualización y modificación de datos complejos.
+
+# Avances de la Sesión Actual (Fecha actual: viernes, 13 de febrero de 2026)
+
+Esta sesión se ha centrado en refinar la experiencia de usuario, asegurar la integridad de los datos y estandarizar la navegación en los módulos de gestión de campos y acceso a la aplicación.
+
+## 1. Atomicidad y Refactorización del Módulo de Campos (UPs)
+
+*   **Dashboard Informativo:** La pantalla principal de edición se transformó en "Información del Campo", una vista estática de solo lectura que sirve como resumen.
+*   **Guardado Atómico por Sección:** Se implementaron editores independientes que se deslizan desde la derecha ("Slide-in") para:
+    *   **Información Básica:** Superficie, Tenencia y Habita.
+    *   **Agua:** Fuentes y distancias para consumo humano y animal.
+    *   **Suelos y Pastos:** Distribución de tipos con porcentajes.
+    *   **Observaciones:** Editor con estética de "cuaderno con renglones".
+*   **Validación Estricta:** En los editores de distribución, se bloquea el guardado si la suma no es exactamente 100% o si existen ítems con 0%, garantizando datos consistentes.
+
+## 2. Solución de Persistencia y Sincronización
+
+*   **Integridad Referencial:** Se corrigió un bug crítico donde Room borraba los datos de la UP al sincronizar catálogos. Se cambió el comportamiento de las Foreign Keys a `NO_ACTION` y se actualizó la base de datos a la **versión 11**.
+*   **Optimización de Red:** Se configuró el serializador JSON para omitir campos nulos, permitiendo actualizaciones parciales seguras en el backend.
+
+## 3. Mejoras en el Flujo de Acceso (Login)
+
+*   **Primer Ingreso:** Se añadió el botón "Es mi primer ingreso" en la pantalla de login, redirigiendo a los nuevos usuarios al flujo de validación por correo para definir su contraseña inicial.
+*   **Interfaz Natural:** Se cambió el texto del botón principal de "Login" a "Entrar" para una mejor localización.
+
+## 4. Experiencia de Usuario (UI/UX)
+
+*   **Feedback de Guardado:** Se implementó un nuevo overlay blanco a pantalla completa con spinner central que transiciona a un mensaje de éxito, permitiendo un retorno manual y suave a la pantalla anterior.
+*   **Ayuda Contextual:** Se añadió un icono de información (`i`) en el formulario de creación de campos con diálogos explicativos sobre el RNSPA/Identificador.
+*   **Barra de Navegación:** Se cambió la etiqueta "Notificaciones" por "Alertas" para optimizar el espacio y la claridad.
+*   **Modales de Selección:** Se rediseñó el contenido de los `ModalBottomSheet` con un estilo delineado (outlined), fondo blanco y marcadores de selección (Check) en el color principal.
+
+## 5. Corrección en Sistema de Tickets
+
+*   **Enrutamiento de RNSPA:** Se ajustó el tipo de consulta a `consulta_negocio` en las solicitudes de identificador desde el formulario de creación, asegurando que lleguen al buzón del Administrador en lugar de Soporte Técnico.
+
+---
+**Estado Actual:** La aplicación móvil cuenta con una arquitectura de edición atómica robusta, validaciones de negocio en tiempo real y una interfaz de usuario pulida y coherente. El foco de desarrollo se traslada ahora al backend para complementar estas mejoras.
