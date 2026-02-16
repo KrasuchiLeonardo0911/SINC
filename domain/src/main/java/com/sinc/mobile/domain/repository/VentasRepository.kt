@@ -24,4 +24,13 @@ interface VentasRepository {
         razaId: Int,
         categoriaAnimalId: Int
     ): Int
+
+    suspend fun cancelDeclaracion(id: Int): Result<Unit, Error>
+
+    suspend fun getStockDisponible(
+        unidadProductivaId: Int,
+        especieId: Int,
+        razaId: Int,
+        categoriaAnimalId: Int
+    ): Result<Int, Error>
 }

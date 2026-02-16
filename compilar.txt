@@ -1,2 +1,4 @@
 ./gradlew assembleDebug
-.\gradlew assembleReleas
+.\gradlew assembleRelease
+
+

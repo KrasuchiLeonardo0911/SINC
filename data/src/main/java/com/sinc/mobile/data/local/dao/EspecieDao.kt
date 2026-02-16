@@ -14,4 +14,7 @@ interface EspecieDao {
 
     @Query("SELECT * FROM especies")
     fun getAllEspecies(): Flow<List<EspecieEntity>>
+
+    @Query("SELECT COUNT(*) FROM especies")
+    suspend fun getEspecieCount(): Int
 }

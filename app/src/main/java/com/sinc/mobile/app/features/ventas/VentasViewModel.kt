@@ -12,6 +12,9 @@ import com.sinc.mobile.domain.use_case.ventas.CreateDeclaracionVentaUseCase
 import com.sinc.mobile.domain.use_case.ventas.GetDeclaracionesVentaUseCase
 import com.sinc.mobile.domain.use_case.ventas.SyncDeclaracionesVentaUseCase
 import com.sinc.mobile.domain.use_case.ventas.ValidateStockForVentaUseCase
+import com.sinc.mobile.domain.use_case.ventas.CancelDeclaracionVentaUseCase
+import com.sinc.mobile.domain.model.venta.LogisticaStatus
+import com.sinc.mobile.domain.use_case.GetStockUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,7 +31,7 @@ data class VentasState(
     val especies: List<Especie> = emptyList(),
     val razas: List<Raza> = emptyList(),
     val categorias: List<Categoria> = emptyList(),
-    val declaracionesPendientes: List<DeclaracionVenta> = emptyList(),
+    val declaracionesActivas: List<DeclaracionVenta> = emptyList(),
 
     // Formulario
     val selectedUpId: Int? = null,
@@ -48,11 +51,13 @@ class VentasViewModel @Inject constructor(
     private val getDeclaracionesVentaUseCase: GetDeclaracionesVentaUseCase,
     private val createDeclaracionVentaUseCase: CreateDeclaracionVentaUseCase,
     private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase,
+    private val cancelDeclaracionVentaUseCase: CancelDeclaracionVentaUseCase,
     private val validateStockForVentaUseCase: ValidateStockForVentaUseCase,
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase,
     private val syncCatalogosUseCase: SyncCatalogosUseCase,
     private val syncStockUseCase: SyncStockUseCase,
+    private val getStockUseCase: GetStockUseCase,
     private val catalogosRepository: CatalogosRepository
 ) : ViewModel() {
 
@@ -67,9 +72,7 @@ class VentasViewModel @Inject constructor(
 
     private fun syncData() {
         viewModelScope.launch {
-            // Trigger sync in background to ensure data availability
             syncUnidadesProductivasUseCase()
-            // Catalogos are synced smartly on app init
             syncStockUseCase()
             syncDeclaracionesVentaUseCase()
         }
@@ -78,37 +81,30 @@ class VentasViewModel @Inject constructor(
     private fun loadInitialData() {
         _uiState.update { it.copy(isLoading = true) }
 
+        // Cargar UPs
         viewModelScope.launch {
-            combine(
-                getUnidadesProductivasUseCase(),
-                catalogosRepository.getMovimientoCatalogos() // Use lighter method
-            ) { ups, catalogos ->
-                Pair(ups, catalogos)
-            }.collect { (ups, catalogos) ->
+            getUnidadesProductivasUseCase().collect { ups ->
                 _uiState.update { state ->
                     val newState = state.copy(
-                        isLoading = false,
-                        unidadesProductivas = ups,
-                        especies = catalogos.especies
+                        isLoading = false, // Asumimos carga inicial lista cuando llegan UPs
+                        unidadesProductivas = ups
                     )
                     
-                    // Si ya hay selecciones, filtrar razas/categorías
-                    val newRazas = if (newState.selectedEspecieId != null) 
-                        catalogos.razas.filter { it.especieId == newState.selectedEspecieId } 
-                    else newState.razas
-                    
-                    val newCategorias = if (newState.selectedEspecieId != null)
-                        catalogos.categorias.filter { it.especieId == newState.selectedEspecieId }
-                    else newState.categorias
-                    
-                    // Pre-seleccionar UP si solo hay una y no se ha seleccionado nada aún
-                    val finalSelectedUpId = if (newState.selectedUpId == null && ups.size == 1) ups.first().id else newState.selectedUpId
+                    // Pre-seleccionar UP si solo hay una
+                    if (newState.selectedUpId == null && ups.size == 1) {
+                        onUpSelected(ups.first().id)
+                        return@update newState.copy(selectedUpId = ups.first().id)
+                    }
+                    newState
+                }
+            }
+        }
 
-                    newState.copy(
-                        razas = newRazas,
-                        categorias = newCategorias,
-                        selectedUpId = finalSelectedUpId
-                    )
+        // Cargar Catálogos
+        viewModelScope.launch {
+            catalogosRepository.getMovimientoCatalogos().collect { catalogos ->
+                _uiState.update { state ->
+                    state.copy(especies = catalogos.especies) // Se filtrarán después
                 }
             }
         }
@@ -118,28 +114,100 @@ class VentasViewModel @Inject constructor(
         viewModelScope.launch {
             getDeclaracionesVentaUseCase()
                 .map { declaraciones ->
-                    declaraciones.filter { it.estado == "pendiente" }
+                    declaraciones.filter { 
+                        it.estado == LogisticaStatus.COMPROMETIDO.key ||
+                        it.estado == LogisticaStatus.RECOGIDO.key ||
+                        it.estado == LogisticaStatus.EN_MATADERO.key ||
+                        it.estado == "pendiente"
+                    }
                 }
                 .collect { filteredDeclaraciones ->
-                    _uiState.update { it.copy(declaracionesPendientes = filteredDeclaraciones) }
+                    _uiState.update { it.copy(declaracionesActivas = filteredDeclaraciones) }
                 }
         }
     }
 
+    fun onCancelDeclaracion(id: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = cancelDeclaracionVentaUseCase(id)
+            when (result) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(isLoading = false, successMessage = "Declaración cancelada exitosamente.") }
+                    syncDeclaracionesVentaUseCase()
+                }
+                is Result.Failure -> {
+                    val msg = (result.error as? GenericError)?.message ?: "Error al cancelar"
+                    _uiState.update { it.copy(isLoading = false, error = msg) }
+                }
+            }
+        }
+    }
+
     fun onUpSelected(upId: Int) {
-        _uiState.update { it.copy(selectedUpId = upId) }
+        viewModelScope.launch {
+            val stock = getStockUseCase().first()
+            val upStock = stock.unidadesProductivas.find { it.id == upId }
+            
+            // Filtrar especies que tienen stock > 0 en esta UP
+            val catalogos = catalogosRepository.getMovimientoCatalogos().first()
+            val especiesDisponibles = catalogos.especies.filter { especie ->
+                val especieStock = upStock?.especies?.find { it.nombre.equals(especie.nombre, ignoreCase = true) }
+                (especieStock?.stockTotal ?: 0) > 0
+            }
+
+            _uiState.update { 
+                it.copy(
+                    selectedUpId = upId,
+                    selectedEspecieId = null,
+                    selectedRazaId = null,
+                    selectedCategoriaId = null,
+                    especies = especiesDisponibles,
+                    razas = emptyList(),
+                    categorias = emptyList()
+                ) 
+            }
+        }
     }
 
     fun onEspecieSelected(especieId: Int) {
         viewModelScope.launch {
+            val state = _uiState.value
+            if (state.selectedUpId == null) return@launch
+
+            val stock = getStockUseCase().first()
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()
-            _uiState.update { state ->
-                state.copy(
+            
+            val especieNombre = catalogos.especies.find { it.id == especieId }?.nombre ?: return@launch
+            val upStock = stock.unidadesProductivas.find { it.id == state.selectedUpId }
+            val especieStock = upStock?.especies?.find { it.nombre.equals(especieNombre, ignoreCase = true) }
+
+            // Obtener razas y categorías disponibles en el catálogo para esta especie
+            val allRazas = catalogos.razas.filter { it.especieId == especieId }
+            val allCategorias = catalogos.categorias.filter { it.especieId == especieId }
+
+            // Filtrar solo las que tienen stock > 0
+            val razasConStock = allRazas.filter { raza ->
+                val count = especieStock?.desglose?.filter { 
+                    it.raza.equals(raza.nombre, ignoreCase = true) 
+                }?.sumOf { it.cantidad } ?: 0
+                count > 0
+            }
+
+            val categoriasConStock = allCategorias.filter { cat ->
+                val count = especieStock?.desglose?.filter { 
+                    it.categoria.equals(cat.nombre, ignoreCase = true) 
+                }?.sumOf { it.cantidad } ?: 0
+                count > 0
+            }
+
+            _uiState.update { 
+                it.copy(
                     selectedEspecieId = especieId,
                     selectedRazaId = null,
                     selectedCategoriaId = null,
-                    razas = catalogos.razas.filter { it.especieId == especieId },
-                    categorias = catalogos.categorias.filter { it.especieId == especieId }
+                    razas = razasConStock,
+                    categorias = categoriasConStock
                 )
             }
         }

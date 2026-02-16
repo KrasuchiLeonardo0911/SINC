@@ -31,7 +31,10 @@ interface DeclaracionVentaDao {
         AND especieId = :especieId 
         AND razaId = :razaId 
         AND categoriaAnimalId = :categoriaId 
-        AND estado = 'pendiente'
+        AND (estado = 'pendiente' OR estado = 'comprometido')
     """)
     suspend fun getSumPendientes(upId: Int, especieId: Int, razaId: Int, categoriaId: Int): Int?
+
+    @Query("DELETE FROM declaraciones_venta WHERE id = :id")
+    suspend fun deleteById(id: Int)
 }

@@ -87,4 +87,38 @@ class VentasRepositoryImpl @Inject constructor(
     ): Int {
         return dao.getSumPendientes(unidadProductivaId, especieId, razaId, categoriaAnimalId) ?: 0
     }
+
+    override suspend fun cancelDeclaracion(id: Int): Result<Unit, Error> {
+        return try {
+            val response = api.cancelDeclaracionVenta(id)
+            if (response.isSuccessful) {
+                dao.deleteById(id)
+                syncDeclaraciones()
+                Result.Success(Unit)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Sin detalles"
+                Result.Failure(GenericError("No se pudo cancelar: $errorBody"))
+            }
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error al cancelar declaración: ${e.message}"))
+        }
+    }
+
+    override suspend fun getStockDisponible(
+        unidadProductivaId: Int,
+        especieId: Int,
+        razaId: Int,
+        categoriaAnimalId: Int
+    ): Result<Int, Error> {
+        return try {
+            val response = api.getStockDisponibleVenta(unidadProductivaId, especieId, razaId, categoriaAnimalId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.Success(response.body()!!.stockDisponible)
+            } else {
+                Result.Failure(GenericError("Error al obtener stock disponible."))
+            }
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error de conexión al obtener stock."))
+        }
+    }
 }

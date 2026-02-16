@@ -12,6 +12,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -21,13 +22,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.*
 import com.sinc.mobile.domain.model.Categoria
@@ -43,10 +45,11 @@ fun VentasScreen(
     viewModel: VentasViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val tabs = listOf("Nueva Venta", "Seguimiento")
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Nueva Venta", "Pendientes")
+    
     val snackbarHostState = remember { SnackbarHostState() }
-
+    
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -91,8 +94,8 @@ fun VentasScreen(
                 contentColor = MaterialTheme.colorScheme.primary
             ) {
                 tabs.forEachIndexed { index, title ->
-                    val tabTitle = if (index == 1 && uiState.declaracionesPendientes.isNotEmpty()) {
-                        "$title (${uiState.declaracionesPendientes.size})"
+                    val tabTitle = if (index == 1 && uiState.declaracionesActivas.isNotEmpty()) {
+                        "$title (${uiState.declaracionesActivas.size})"
                     } else {
                         title
                     }
@@ -111,14 +114,15 @@ fun VentasScreen(
                     viewModel = viewModel
                 )
                 1 -> VentasList(
-                    declaraciones = uiState.declaracionesPendientes,
+                    declaraciones = uiState.declaracionesActivas,
                     isLoading = uiState.isLoading,
-                    onRefresh = { viewModel.onSyncRequested() }
+                    onRefresh = { viewModel.onSyncRequested() },
+                    onCancel = { id -> viewModel.onCancelDeclaracion(id) }
                 )
             }
         }
 
-        if (uiState.isLoading && selectedTabIndex == 0) { // Solo mostrar overlay en formulario
+        if (uiState.isLoading) {
             LoadingOverlay(isLoading = true)
         }
     }
@@ -266,7 +270,7 @@ fun VentasForm(
             OutlinedTextField(
                 value = uiState.pesoAproximado,
                 onValueChange = { viewModel.onPesoAproximadoChanged(it) },
-                label = { Text("Peso Aproximado (Kg) (Opcional)") },
+                label = { Text("Peso Vivo Aproximado (Kg) (Opcional)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
@@ -314,7 +318,8 @@ fun VentasForm(
 fun VentasList(
     declaraciones: List<DeclaracionVenta>,
     isLoading: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onCancel: (Int) -> Unit
 ) {
     val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = onRefresh)
 
@@ -322,7 +327,7 @@ fun VentasList(
         if (declaraciones.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No hay declaraciones pendientes.\nDeslice para actualizar.",
+                    text = "No hay declaraciones en seguimiento.\nDeslice para actualizar.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = Color.Gray
@@ -335,7 +340,7 @@ fun VentasList(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(declaraciones) { declaracion ->
-                    DeclaracionCard(declaracion)
+                    DeclaracionCard(declaracion, onCancel)
                 }
             }
         }
@@ -349,7 +354,26 @@ fun VentasList(
 }
 
 @Composable
-fun DeclaracionCard(declaracion: DeclaracionVenta) {
+fun DeclaracionCard(
+    declaracion: DeclaracionVenta,
+    onCancel: (Int) -> Unit
+) {
+    val statusUi = com.sinc.mobile.app.ui.util.LogisticaUiMapper.getStatusUi(declaracion.estado)
+    var showCancelDialog by remember { mutableStateOf(false) }
+
+    if (showCancelDialog) {
+        com.sinc.mobile.app.ui.components.ConfirmationDialog(
+            showDialog = true,
+            title = "Cancelar Venta",
+            message = "¿Está seguro de que desea cancelar esta declaración de venta? Esta acción no se puede deshacer.",
+            onConfirm = {
+                onCancel(declaracion.id)
+                showCancelDialog = false
+            },
+            onDismiss = { showCancelDialog = false }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -357,6 +381,7 @@ fun DeclaracionCard(declaracion: DeclaracionVenta) {
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Header: Cantidad y Estado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -369,31 +394,110 @@ fun DeclaracionCard(declaracion: DeclaracionVenta) {
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    color = Color(0xFFFFF3E0),
+                    color = statusUi.containerColor,
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(
-                        text = "PENDIENTE",
+                    Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFE65100),
-                        fontWeight = FontWeight.Bold
-                    )
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        statusUi.icon?.let {
+                            Icon(it, contentDescription = null, tint = statusUi.contentColor, modifier = Modifier.size(16.dp))
+                        }
+                        Text(
+                            text = statusUi.label.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = statusUi.contentColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Stepper Simplificado
+            if (statusUi.stepIndex >= 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Pasos: Comprometido -> Recogido -> Planta -> Final
+                    // Dibujamos 4 pasos
+                    for (i in 0..3) {
+                        val isCompleted = i <= statusUi.stepIndex
+                        val isCurrent = i == statusUi.stepIndex
+                        
+                        // Dot
+                        Box(
+                            modifier = Modifier
+                                .size(if (isCurrent) 12.dp else 8.dp)
+                                .background(
+                                    color = if (isCompleted) statusUi.contentColor else Color.LightGray,
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                )
+                        )
+                        
+                        // Line (excepto el último)
+                        if (i < 3) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(2.dp)
+                                    .background(if (i < statusUi.stepIndex) statusUi.contentColor else Color.LightGray.copy(alpha = 0.5f))
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Fecha: ${declaracion.fechaDeclaracion.take(10)}")
+            
+            // Detalles
+            Text("Fecha Declaración: ${declaracion.fechaDeclaracion.take(10)}")
             
             declaracion.pesoAproximadoKg?.let { peso ->
                 if (peso > 0) {
-                    Text("Peso Aprox.: ${peso} Kg", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+                    Text("Peso Vivo Aprox.: ${peso} Kg", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
                 }
             }
             
             if (!declaracion.observaciones.isNullOrBlank()) {
                 Text("Obs: ${declaracion.observaciones}", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+            }
+            
+            // Motivo Rechazo (si existe)
+            if (!declaracion.motivoRechazo.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Motivo: ${declaracion.motivoRechazo}",
+                        color = Color(0xFFC62828),
+                        modifier = Modifier.padding(8.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            // Botón Cancelar
+            if (statusUi.canCancel) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { showCancelDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancelar Venta")
+                }
             }
         }
     }
@@ -408,7 +512,7 @@ fun VentasChip(label: String, isSelected: Boolean, onSelected: () -> Unit) {
     val border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
 
     Card(
-        modifier = Modifier.clickable { onSelected() },
+        modifier = Modifier.clip(RoundedCornerShape(50)).clickable { onSelected() },
         shape = RoundedCornerShape(50), // Fully rounded for chips
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
         border = border
@@ -546,7 +650,7 @@ fun <T> SelectionSheetLayout(
         ) {
             items(items) { item ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onItemSelected(item) },
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onItemSelected(item) },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {

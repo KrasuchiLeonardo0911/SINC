@@ -163,8 +163,10 @@ class CatalogosRepositoryImpl @Inject constructor(
         Log.d("CatalogosRepo", "Iniciando syncCatalogos. Remote version: $remoteVersion")
 
         val localVersion = prefs.getString("catalogs_version", null)
-        if (remoteVersion != null && localVersion == remoteVersion) {
-            Log.d("CatalogosRepo", "Versión local ($localVersion) coincide con remota ($remoteVersion). Saltando sync.")
+        val isDbEmpty = especieDao.getEspecieCount() == 0
+
+        if (remoteVersion != null && localVersion == remoteVersion && !isDbEmpty) {
+            Log.d("CatalogosRepo", "Versión local ($localVersion) coincide con remota ($remoteVersion) y DB tiene datos. Saltando sync.")
             return com.sinc.mobile.domain.util.Result.Success(Unit)
         }
 
