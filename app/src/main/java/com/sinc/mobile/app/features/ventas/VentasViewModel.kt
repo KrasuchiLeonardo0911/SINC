@@ -103,9 +103,10 @@ class VentasViewModel @Inject constructor(
         // Cargar Catálogos
         viewModelScope.launch {
             catalogosRepository.getMovimientoCatalogos().collect { catalogos ->
-                _uiState.update { state ->
-                    state.copy(especies = catalogos.especies) // Se filtrarán después
-                }
+                // Solo actualizamos razas y categorías si ya estaban cargadas, 
+                // pero NO sobrescribimos la lista de especies filtrada.
+                // La lista de especies se gestiona exclusivamente a través de onUpSelected
+                // o cuando cambia la selección de UP.
             }
         }
     }

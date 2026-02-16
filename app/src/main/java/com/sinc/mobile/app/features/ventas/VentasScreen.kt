@@ -465,19 +465,25 @@ fun DeclaracionCard(
                 }
             }
             
-            if (!declaracion.observaciones.isNullOrBlank()) {
-                Text("Obs: ${declaracion.observaciones}", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+            declaracion.observaciones?.takeIf { it.isNotBlank() }?.let { obs ->
+                ExpandableText(
+                    text = obs,
+                    prefix = "Obs:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.DarkGray
+                )
             }
             
             // Motivo Rechazo (si existe)
-            if (!declaracion.motivoRechazo.isNullOrBlank()) {
+            declaracion.motivoRechazo?.takeIf { it.isNotBlank() }?.let { motivo ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Motivo: ${declaracion.motivoRechazo}",
+                    ExpandableText(
+                        text = motivo,
+                        prefix = "Motivo:",
                         color = Color(0xFFC62828),
                         modifier = Modifier.padding(8.dp),
                         style = MaterialTheme.typography.bodySmall

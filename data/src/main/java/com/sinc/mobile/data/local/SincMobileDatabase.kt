@@ -37,7 +37,7 @@ import kotlinx.serialization.builtins.serializer
         UnidadProductivaTipoSueloCrossRef::class,
         UnidadProductivaTipoPastoCrossRef::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.HorizontalDivider
+import com.sinc.mobile.app.ui.components.ExpandableText
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.DeclaracionVenta
@@ -299,10 +300,13 @@ fun DetalleVentaSheet(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Motivo del Rechazo/Cancelación:", color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
-                        Text(motivo, color = Color(0xFFC62828))
-                    }
+                    ExpandableText(
+                        text = motivo,
+                        prefix = "Motivo:",
+                        color = Color(0xFFC62828),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(12.dp)
+                    )
                 }
             }
         }
@@ -322,8 +326,12 @@ fun DetalleVentaSheet(
         declaracion.observaciones?.let { obs ->
             if (obs.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Observaciones:", fontWeight = FontWeight.Bold)
-                Text(obs, color = Color.DarkGray)
+                ExpandableText(
+                    text = obs,
+                    prefix = "Obs:",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.DarkGray
+                )
             }
         }
 
@@ -404,9 +412,15 @@ fun TimelineRow(label: String, date: String?, isCompleted: Boolean) {
 fun DetalleRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
     ) {
-        Text(text = label, color = Color.Gray)
-        Text(text = value, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = Color.Gray, modifier = Modifier.weight(1f))
+        Text(
+            text = value,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(2f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
     }
 }
