@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SincPrimary
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -46,8 +48,8 @@ fun LogisticsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showHelpDialog by remember { mutableStateOf(false) }
 
-    // Current month and year based on today
-    val currentMonth = YearMonth.of(today.year, today.month)
+    // Current month and year state
+    var currentMonth by remember { mutableStateOf(YearMonth.from(today)) }
     val firstDayOfMonth = currentMonth.atDay(1)
     val daysInMonth = currentMonth.lengthOfMonth()
 
@@ -98,7 +100,11 @@ fun LogisticsScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
 
-            MonthYearSelectors(currentMonth = currentMonth)
+            MonthYearSelectors(
+                currentMonth = currentMonth,
+                onPreviousMonth = { currentMonth = currentMonth.minusMonths(1) },
+                onNextMonth = { currentMonth = currentMonth.plusMonths(1) }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -110,7 +116,8 @@ fun LogisticsScreen(
                 startOffset = startOffset,
                 days = calendarDays,
                 today = today,
-                nextTruckDate = uiState.logisticsInfo?.proximaVisita
+                nextTruckDate = uiState.logisticsInfo?.proximaVisita,
+                displayedMonth = currentMonth
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -247,19 +254,45 @@ private fun LogisticsLegend(
 }
 
 @Composable
-private fun MonthYearSelectors(currentMonth: YearMonth) {
+private fun MonthYearSelectors(
+    currentMonth: YearMonth,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit
+) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        SelectorChip(
-            text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
+        IconButton(onClick = onPreviousMonth) {
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = "Mes Anterior",
+                tint = SincPrimary
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)
-        )
-        SelectorChip(
-            text = currentMonth.year.toString(),
-            modifier = Modifier.weight(1f)
-        )
+        ) {
+            SelectorChip(
+                text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
+                modifier = Modifier.weight(1f)
+            )
+            SelectorChip(
+                text = currentMonth.year.toString(),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        IconButton(onClick = onNextMonth) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Mes Siguiente",
+                tint = SincPrimary
+            )
+        }
     }
 }
 
@@ -280,7 +313,8 @@ private fun SelectorChip(text: String, modifier: Modifier = Modifier) {
             Icon(
                 imageVector = Icons.Default.CalendarToday,
                 contentDescription = null,
-                tint = SincPrimary
+                tint = SincPrimary,
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -310,7 +344,8 @@ private fun CalendarGrid(
     startOffset: Int,
     days: List<Int>,
     today: LocalDate,
-    nextTruckDate: LocalDate?
+    nextTruckDate: LocalDate?,
+    displayedMonth: YearMonth
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
@@ -324,13 +359,15 @@ private fun CalendarGrid(
 
         items(days) { day ->
             // Check if this day is Today
-            val isToday = (day == today.dayOfMonth && today.month == YearMonth.of(today.year, today.month).month && today.year == YearMonth.of(today.year, today.month).year)
+            val isToday = (day == today.dayOfMonth && 
+                           displayedMonth.month == today.month && 
+                           displayedMonth.year == today.year)
             
             // Check if this day is the Next Truck Date
             val isNextTruck = nextTruckDate != null && 
                               day == nextTruckDate.dayOfMonth && 
-                              nextTruckDate.month == YearMonth.of(today.year, today.month).month && 
-                              nextTruckDate.year == YearMonth.of(today.year, today.month).year
+                              displayedMonth.month == nextTruckDate.month && 
+                              displayedMonth.year == nextTruckDate.year
 
             DayCell(
                 day = day,
