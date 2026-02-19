@@ -31,7 +31,8 @@ import java.util.Locale
 @Composable
 fun WeekdaySelector(
     onDateClick: () -> Unit,
-    today: LocalDate
+    today: LocalDate,
+    orderDeadline: LocalDate? = null
 ) {
 
     val weekDays = remember(today) {
@@ -64,6 +65,8 @@ fun WeekdaySelector(
         ) {
             weekDays.forEach { date ->
                 val isToday = date.isEqual(today)
+                val isDeadline = orderDeadline != null && date.isEqual(orderDeadline)
+                
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -72,13 +75,27 @@ fun WeekdaySelector(
                         .clickable { onDateClick() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (isToday) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = date.dayOfMonth.toString(),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (isToday) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            )
                         )
-                    )
+                        if (isDeadline && !isToday) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFF9800)) // Orange marker for deadline
+                            )
+                        }
+                    }
                 }
             }
         }

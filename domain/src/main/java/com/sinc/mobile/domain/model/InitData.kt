@@ -35,5 +35,13 @@ data class Features(
 
 data class Configuration(
     val syncIntervalMinutes: Int?,
-    val catalogsVersion: String?
+    val catalogsVersion: String?,
+    val logistics: LogisticsConfig?
+)
+
+data class LogisticsConfig(
+    val nextVisitDate: String?,
+    val orderDeadline: String?,
+    val frequencyDays: Int?,
+    val isOpen: Boolean?
 )

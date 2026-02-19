@@ -187,6 +187,14 @@ class AuthRepositoryImpl @Inject constructor(
                 dto.userContext?.productorId?.let { id ->
                     prefs.edit().putInt("productor_id", id).apply()
                 }
+
+                dto.configuration?.logistics?.let { log ->
+                    sessionManager.saveLogisticsConfig(
+                        isOpen = log.isOpen ?: false,
+                        nextVisit = log.nextVisitDate,
+                        deadline = log.orderDeadline
+                    )
+                }
                 
                 DomainResult.Success(dto.toDomain())
             } else {
@@ -223,6 +231,10 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             DomainResult.Failure(GenericError("Error de red al enviar el token FCM: ${e.message}"))
         }
+    }
+
+    override fun isLogisticsOpen(): Boolean {
+        return sessionManager.isLogisticsOpen()
     }
 }
 

@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val initializeAppUseCase: InitializeAppUseCase,
@@ -62,12 +65,25 @@ class MainViewModel @Inject constructor(
 
             when (result) {
                 is Result.Success -> {
+                    val deadlineString = sessionManager.getOrderDeadline()
+                    var deadlineDate: LocalDate? = null
+                    if (deadlineString != null) {
+                        try {
+                            // Assume format is ISO-8601 or standard datetime (e.g. "2026-02-19T12:00:00+00:00")
+                            // We take just the date part for the calendar marker
+                            deadlineDate = LocalDate.parse(deadlineString.take(10))
+                        } catch (e: Exception) {
+                            Log.e("DATE_PARSE", "Error parsing deadline: $deadlineString")
+                        }
+                    }
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             appControl = result.data.appControl,
                             features = result.data.features,
-                            isInitialized = true
+                            isInitialized = true,
+                            orderDeadline = deadlineDate
                         )
                     }
                     // After successful initialization, fetch the user profile
@@ -139,5 +155,6 @@ data class MainUiState(
     val appControl: AppControl? = null,
     val features: Features? = null,
     val userName: String? = null,
-    val unreadNotificationCount: Int = 0
+    val unreadNotificationCount: Int = 0,
+    val orderDeadline: LocalDate? = null
 )

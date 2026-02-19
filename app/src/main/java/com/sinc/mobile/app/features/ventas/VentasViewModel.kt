@@ -43,7 +43,13 @@ data class VentasState(
     val pesoAproximado: String = "",
     
     // Estado de Validación
-    val stockValidationMessage: String? = null
+    val stockValidationMessage: String? = null,
+    
+    // Logística
+    val isLogisticsOpen: Boolean = true,
+    val logisticsMessage: String? = null,
+    val nextVisitDate: String? = null,
+    val orderDeadline: String? = null
 )
 
 @HiltViewModel
@@ -58,16 +64,31 @@ class VentasViewModel @Inject constructor(
     private val syncCatalogosUseCase: SyncCatalogosUseCase,
     private val syncStockUseCase: SyncStockUseCase,
     private val getStockUseCase: GetStockUseCase,
-    private val catalogosRepository: CatalogosRepository
+    private val catalogosRepository: CatalogosRepository,
+    private val getLogisticsStatusUseCase: com.sinc.mobile.domain.use_case.ventas.GetLogisticsStatusUseCase,
+    private val sessionManager: com.sinc.mobile.data.session.SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VentasState())
     val uiState: StateFlow<VentasState> = _uiState.asStateFlow()
 
     init {
+        checkLogisticsStatus()
         loadInitialData()
         syncData()
         observeDeclaraciones()
+    }
+
+    private fun checkLogisticsStatus() {
+        val isOpen = getLogisticsStatusUseCase()
+        _uiState.update { 
+            it.copy(
+                isLogisticsOpen = isOpen,
+                logisticsMessage = if (!isOpen) "El periodo de inscripciones ha cerrado." else null,
+                nextVisitDate = sessionManager.getNextVisitDate(),
+                orderDeadline = sessionManager.getOrderDeadline()
+            )
+        }
     }
 
     private fun syncData() {
@@ -119,7 +140,11 @@ class VentasViewModel @Inject constructor(
                         it.estado == LogisticaStatus.COMPROMETIDO.key ||
                         it.estado == LogisticaStatus.RECOGIDO.key ||
                         it.estado == LogisticaStatus.EN_MATADERO.key ||
-                        it.estado == "pendiente"
+                        it.estado == "pendiente" ||
+                        it.estado == LogisticaStatus.RECHAZADO_CARGA.key ||
+                        it.estado == LogisticaStatus.MATADERO_RECHAZADO.key ||
+                        it.estado == LogisticaStatus.RECHAZADO_FINAL.key ||
+                        it.estado == LogisticaStatus.CANCELADO_REGRESANDO.key
                     }
                 }
                 .collect { filteredDeclaraciones ->
@@ -136,6 +161,7 @@ class VentasViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoading = false, successMessage = "Declaración cancelada exitosamente.") }
                     syncDeclaracionesVentaUseCase()
+                    syncStockUseCase() // Refrescar stock tras cancelar
                 }
                 is Result.Failure -> {
                     val msg = (result.error as? GenericError)?.message ?: "Error al cancelar"
@@ -289,6 +315,9 @@ class VentasViewModel @Inject constructor(
                                     pesoAproximado = ""
                                 )
                             }
+                            // 3. Sincronizar Stock y Declaraciones tras éxito
+                            syncDeclaracionesVentaUseCase()
+                            syncStockUseCase()
                         }
                         is Result.Failure -> {
                             val msg = if (result.error is GenericError) (result.error as GenericError).message else "Error al guardar"

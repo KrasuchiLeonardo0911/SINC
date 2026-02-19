@@ -5,11 +5,13 @@ import com.sinc.mobile.data.network.dto.ConfigurationDto
 import com.sinc.mobile.data.network.dto.FeaturesDto
 import com.sinc.mobile.data.network.dto.InitResponseDto
 import com.sinc.mobile.data.network.dto.UserContextDto
+import com.sinc.mobile.data.network.dto.LogisticsConfigDto
 import com.sinc.mobile.domain.model.AppControl
 import com.sinc.mobile.domain.model.Configuration
 import com.sinc.mobile.domain.model.Features
 import com.sinc.mobile.domain.model.InitData
 import com.sinc.mobile.domain.model.UserContext
+import com.sinc.mobile.domain.model.LogisticsConfig
 
 fun InitResponseDto.toDomain(): InitData {
     return InitData(
@@ -48,5 +50,13 @@ fun FeaturesDto.toDomain() = Features(
 
 fun ConfigurationDto.toDomain() = Configuration(
     syncIntervalMinutes = syncIntervalMinutes,
-    catalogsVersion = catalogsVersion
+    catalogsVersion = catalogsVersion,
+    logistics = logistics?.toDomain()
+)
+
+fun LogisticsConfigDto.toDomain() = LogisticsConfig(
+    nextVisitDate = nextVisitDate,
+    orderDeadline = orderDeadline,
+    frequencyDays = frequencyDays,
+    isOpen = isOpen
 )

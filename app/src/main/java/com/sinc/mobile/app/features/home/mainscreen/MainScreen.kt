@@ -142,6 +142,7 @@ fun MainScreen(
                                 onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
                                 onDateClick = { showLogisticsPanel = true },
                                 today = today,
+                                orderDeadline = uiState.orderDeadline,
                                 onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
                                 onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
                                 onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
@@ -257,6 +258,7 @@ fun MainContent(
     onSettingsClick: () -> Unit,
     onDateClick: () -> Unit,
     today: LocalDate,
+    orderDeadline: LocalDate?,
     onStockClick: () -> Unit,
     onAddClick: () -> Unit,
     onHistoryClick: () -> Unit,
@@ -283,7 +285,8 @@ fun MainContent(
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 WeekdaySelector(
                     onDateClick = onDateClick,
-                    today = today
+                    today = today,
+                    orderDeadline = orderDeadline
                 )
             }
         }

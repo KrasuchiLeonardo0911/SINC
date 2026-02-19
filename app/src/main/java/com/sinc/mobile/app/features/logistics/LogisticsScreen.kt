@@ -117,16 +117,18 @@ fun LogisticsScreen(
                 days = calendarDays,
                 today = today,
                 nextTruckDate = uiState.logisticsInfo?.proximaVisita,
+                orderDeadline = uiState.orderDeadline,
                 displayedMonth = currentMonth
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Leyenda e Información
-            if (uiState.logisticsInfo != null) {
+            if (uiState.logisticsInfo != null || uiState.orderDeadline != null) {
                 LogisticsLegend(
                     daysRemaining = uiState.daysRemaining,
-                    frequencyDays = uiState.logisticsInfo?.frecuenciaDias
+                    frequencyDays = uiState.logisticsInfo?.frecuenciaDias,
+                    hasDeadline = uiState.orderDeadline != null
                 )
             } else if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -195,7 +197,8 @@ private fun LogisticsHelpDialog(
 @Composable
 private fun LogisticsLegend(
     daysRemaining: Long?,
-    frequencyDays: Int?
+    frequencyDays: Int?,
+    hasDeadline: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -205,16 +208,23 @@ private fun LogisticsLegend(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Puntos de referencia
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
             Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF4CAF50))) // Verde
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Próxima pasada", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF374151))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Visita", style = MaterialTheme.typography.bodySmall, color = Color(0xFF374151))
             
-            Spacer(modifier = Modifier.width(24.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             
             Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(SincPrimary)) // Bordó
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Fecha actual", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF374151))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Hoy", style = MaterialTheme.typography.bodySmall, color = Color(0xFF374151))
+
+            if (hasDeadline) {
+                Spacer(modifier = Modifier.width(16.dp))
+                Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFF9800))) // Naranja
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Cierre", style = MaterialTheme.typography.bodySmall, color = Color(0xFF374151))
+            }
         }
 
         HorizontalDivider(color = Color(0xFFE5E7EB))
@@ -345,6 +355,7 @@ private fun CalendarGrid(
     days: List<Int>,
     today: LocalDate,
     nextTruckDate: LocalDate?,
+    orderDeadline: LocalDate?,
     displayedMonth: YearMonth
 ) {
     LazyVerticalGrid(
@@ -369,29 +380,37 @@ private fun CalendarGrid(
                               displayedMonth.month == nextTruckDate.month && 
                               displayedMonth.year == nextTruckDate.year
 
+            // Check if this day is the Order Deadline
+            val isDeadline = orderDeadline != null && 
+                             day == orderDeadline.dayOfMonth && 
+                             displayedMonth.month == orderDeadline.month && 
+                             displayedMonth.year == orderDeadline.year
+
             DayCell(
                 day = day,
                 isToday = isToday,
-                isNextTruck = isNextTruck
+                isNextTruck = isNextTruck,
+                isDeadline = isDeadline
             )
         }
     }
 }
 
 @Composable
-private fun DayCell(day: Int, isToday: Boolean, isNextTruck: Boolean) {
+private fun DayCell(day: Int, isToday: Boolean, isNextTruck: Boolean, isDeadline: Boolean) {
     val backgroundColor = when {
         isToday -> SincPrimary
         isNextTruck -> Color(0xFF4CAF50) // Verde
+        isDeadline -> Color(0xFFFF9800) // Naranja
         else -> Color.Transparent
     }
     
     val textColor = when {
-        isToday || isNextTruck -> Color.White
+        isToday || isNextTruck || isDeadline -> Color.White
         else -> Color(0xFF374151)
     }
 
-    val fontWeight = if (isToday || isNextTruck) FontWeight.Bold else FontWeight.Normal
+    val fontWeight = if (isToday || isNextTruck || isDeadline) FontWeight.Bold else FontWeight.Normal
 
     Box(
         modifier = Modifier

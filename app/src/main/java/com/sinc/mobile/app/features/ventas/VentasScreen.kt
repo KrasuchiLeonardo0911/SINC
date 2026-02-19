@@ -10,11 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -143,6 +139,39 @@ fun VentasForm(
     var showSheet by remember { mutableStateOf(false) }
     var sheetContent by remember { mutableStateOf<VentasSheetContent?>(null) }
 
+    if (!uiState.isLogisticsOpen) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Block,
+                    contentDescription = null,
+                    tint = Color.Gray,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uiState.logisticsMessage ?: "El periodo de inscripciones ha cerrado.",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Consulte el calendario logístico para más información.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
+
     if (showSheet && sheetContent != null) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
@@ -193,6 +222,14 @@ fun VentasForm(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // Info Logística
+        item {
+            LogisticsInfoCard(
+                deadline = uiState.orderDeadline,
+                nextVisit = uiState.nextVisitDate
+            )
+        }
+
         // Título del Formulario
         item {
             Column {
@@ -503,6 +540,42 @@ fun DeclaracionCard(
                     Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Cancelar Venta")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LogisticsInfoCard(deadline: String?, nextVisit: String?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Event, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text("Ciclo de Logística Activo", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+            
+            if (deadline != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Text(
+                        text = "Fecha límite inscripción: ${deadline.take(16).replace("T", " ")}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            
+            if (nextVisit != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Text(
+                        text = "Próxima visita estimada: ${nextVisit.take(10)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }

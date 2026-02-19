@@ -43,5 +43,14 @@ data class FeaturesDto(
 @Serializable
 data class ConfigurationDto(
     @SerialName("sync_interval_minutes") val syncIntervalMinutes: Int?,
-    @SerialName("catalogs_version") val catalogsVersion: String?
+    @SerialName("catalogs_version") val catalogsVersion: String?,
+    val logistics: LogisticsConfigDto? = null
+)
+
+@Serializable
+data class LogisticsConfigDto(
+    @SerialName("next_visit_date") val nextVisitDate: String?,
+    @SerialName("order_deadline") val orderDeadline: String?,
+    @SerialName("frequency_days") val frequencyDays: Int?,
+    @SerialName("is_open") val isOpen: Boolean?
 )
