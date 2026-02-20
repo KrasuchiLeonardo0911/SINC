@@ -46,10 +46,6 @@ class HistorialMovimientosViewModel @Inject constructor(
     private fun loadMovimientos() {
         getMovimientosHistorialUseCase()
             .onEach { movimientos ->
-                Log.d("ReactiveCheck", "DB emitted ${movimientos.size} items. Selected Month: ${YearMonth.from(_state.value.selectedDate)}")
-                if (movimientos.isNotEmpty()) {
-                    Log.d("ReactiveCheck", "First item: ${movimientos.first().fechaRegistro}, Last item: ${movimientos.last().fechaRegistro}")
-                }
                 _state.update { 
                     it.copy(allMovimientos = movimientos) 
                 }
@@ -63,12 +59,9 @@ class HistorialMovimientosViewModel @Inject constructor(
         val selectedMonth = YearMonth.from(currentState.selectedDate)
         
         val filtered = currentState.allMovimientos.filter {
-            val itemMonth = YearMonth.from(it.fechaRegistro)
-            // Log.d("ReactiveCheck", "Checking item from ${it.fechaRegistro} (Month: $itemMonth) vs $selectedMonth")
-            itemMonth == selectedMonth
+            YearMonth.from(it.fechaRegistro) == selectedMonth
         }
         
-        Log.d("ReactiveCheck", "Filtered items for $selectedMonth: ${filtered.size} (out of ${currentState.allMovimientos.size})")
         _state.update { it.copy(filteredMovimientos = filtered) }
     }
 
