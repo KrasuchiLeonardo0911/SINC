@@ -25,4 +25,7 @@ interface MovimientoHistorialDao {
         clearAll()
         insertAll(movimientos)
     }
+
+    @Query("SELECT COUNT(*) FROM movimiento_historial")
+    suspend fun getMovimientoCount(): Int
 }

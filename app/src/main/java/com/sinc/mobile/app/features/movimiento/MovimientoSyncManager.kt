@@ -2,6 +2,7 @@ package com.sinc.mobile.app.features.movimiento
 
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
+import com.sinc.mobile.domain.use_case.SyncMovimientosHistorialUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosLocalesUseCase
 import com.sinc.mobile.domain.use_case.SyncStockUseCase
 import com.sinc.mobile.domain.util.Result
@@ -34,6 +35,7 @@ class MovimientoSyncManager(
     private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase,
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
     private val syncStockUseCase: SyncStockUseCase,
+    private val syncMovimientosHistorialUseCase: SyncMovimientosHistorialUseCase,
     private val scope: CoroutineScope
 ) {
     private val _syncState = MutableStateFlow(MovimientoSyncState())
@@ -103,8 +105,9 @@ class MovimientoSyncManager(
                     deleteMovimientoLocalUseCase(it)
                 }
 
-                // Now, trigger a refresh of the total stock
+                // Now, trigger a refresh of the total stock AND movement history
                 syncStockUseCase()
+                syncMovimientosHistorialUseCase()
             } else if (result is Result.Failure) {
                 val error = result.error
                 val duration = System.currentTimeMillis() - startTime

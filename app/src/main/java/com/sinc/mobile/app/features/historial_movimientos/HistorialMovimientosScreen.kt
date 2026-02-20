@@ -33,10 +33,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,6 +64,13 @@ fun HistorialMovimientosScreen(
     onNavigateToResumen: (Int, Int) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            snackbarHostState.showSnackbar(message = error)
+        }
+    }
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = state.isLoading,
@@ -68,6 +79,7 @@ fun HistorialMovimientosScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             MinimalHeader(
                 title = "Historial de Movimientos",
@@ -119,11 +131,23 @@ fun HistorialMovimientosScreen(
                         .pullRefresh(pullRefreshState)
                 ) {
                     if (state.filteredMovimientos.isEmpty() && !state.isLoading) {
-                        Text(
-                            text = "No hay movimientos en este mes.",
+                        Column(
                             modifier = Modifier.align(Alignment.Center),
-                            color = Color.Gray
-                        )
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = if (state.error != null) "Error al sincronizar" else "No hay movimientos en este mes.",
+                                color = if (state.error != null) MaterialTheme.colorScheme.error else Color.Gray
+                            )
+                            state.error?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
                     }
 
                     LazyColumn(
@@ -228,7 +252,7 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "${movimiento.especie} - ${movimiento.categoria}",
+                text = "${movimiento.especie} (${movimiento.raza}) - ${movimiento.categoria}",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )

@@ -80,7 +80,7 @@ fun StockScreen(
                         colors = ButtonDefaults.textButtonColors(contentColor = SincPrimary)
                     ) {
                         Text(
-                            text = "Vender Stock",
+                            text = "Ventas",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )

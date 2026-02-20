@@ -38,6 +38,25 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import java.time.format.DateTimeFormatter
+
+private data class CalendarEvent(
+    val date: LocalDate,
+    val title: String,
+    val color: Color,
+    val type: String // "VISITA", "CIERRE", "HOY"
+)
+
 @Composable
 fun LogisticsScreen(
     onBackPress: () -> Unit,
@@ -59,6 +78,32 @@ fun LogisticsScreen(
     val startOffset = if (dayOfWeekOffset < 0) dayOfWeekOffset + 7 else dayOfWeekOffset
 
     val calendarDays = (1..daysInMonth).map { it }
+
+    // Generar lista de eventos para el mes actual
+    val events = remember(currentMonth, uiState.logisticsInfo, uiState.orderDeadline, today) {
+        val list = mutableListOf<CalendarEvent>()
+        
+        // Evento: Hoy
+        if (YearMonth.from(today) == currentMonth) {
+            list.add(CalendarEvent(today, "Día actual", SincPrimary, "HOY"))
+        }
+
+        // Evento: Próxima Visita
+        uiState.logisticsInfo?.proximaVisita?.let { visitDate ->
+            if (YearMonth.from(visitDate) == currentMonth) {
+                list.add(CalendarEvent(visitDate, "Recogida de animales", Color(0xFF4CAF50), "VISITA"))
+            }
+        }
+
+        // Evento: Cierre de Pedidos
+        uiState.orderDeadline?.let { deadline ->
+            if (YearMonth.from(deadline) == currentMonth) {
+                list.add(CalendarEvent(deadline, "Fecha límite para vender", Color(0xFFFF9800), "CIERRE"))
+            }
+        }
+
+        list.sortedBy { it.date }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -88,12 +133,12 @@ fun LogisticsScreen(
             
             // Título
             Text(
-                text = "Ciclo de logística",
+                text = "Calendario",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color(0xFF1F2937)
             )
             Text(
-                text = "Fechas de recogida",
+                text = "Actividades y fechas importantes",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF6B7280)
             )
@@ -123,18 +168,16 @@ fun LogisticsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Leyenda e Información
-            if (uiState.logisticsInfo != null || uiState.orderDeadline != null) {
-                LogisticsLegend(
-                    daysRemaining = uiState.daysRemaining,
-                    frequencyDays = uiState.logisticsInfo?.frecuenciaDias,
-                    hasDeadline = uiState.orderDeadline != null
-                )
-            } else if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = SincPrimary)
-                }
-            }
+            // Lista de Eventos (Tipo Agenda)
+            Text(
+                text = "Eventos del mes",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF374151)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            EventsList(events = events)
         }
     }
 
@@ -148,6 +191,73 @@ fun LogisticsScreen(
         )
     }
 }
+
+@Composable
+private fun EventsList(events: List<CalendarEvent>) {
+    if (events.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Sin actividades programadas para este mes.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF9CA3AF),
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(events) { event ->
+                EventRow(event)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EventRow(event: CalendarEvent) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Indicador de Color
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(event.color)
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        // Título y Fecha
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = event.title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF374151)
+            )
+        }
+        
+        Text(
+            text = event.date.format(DateTimeFormatter.ofPattern("dd MMM", Locale("es", "ES"))),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = event.color
+        )
+    }
+}
+
 
 @Composable
 private fun LogisticsHelpDialog(
@@ -166,7 +276,7 @@ private fun LogisticsHelpDialog(
                 
                 pushStringAnnotation(tag = "VENTAS", annotation = "ventas")
                 withStyle(style = SpanStyle(color = SincPrimary, fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
-                    append("Vender Stock")
+                    append("Ventas")
                 }
                 pop() 
                 

@@ -52,7 +52,8 @@ class MovimientoStepperViewModel @Inject constructor(
     private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase, // Updated UseCase
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
     private val stockRepository: StockRepository, // Keep for getStock()
-    private val syncStockUseCase: SyncStockUseCase, // Add this
+    private val syncStockUseCase: SyncStockUseCase,
+    private val syncMovimientosHistorialUseCase: SyncMovimientosHistorialUseCase, // Add this
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -70,9 +71,10 @@ class MovimientoStepperViewModel @Inject constructor(
     init {
         syncManager = MovimientoSyncManager(
             getMovimientosPendientesUseCase,
-            syncMovimientosLocalesUseCase, // Updated parameter
+            syncMovimientosLocalesUseCase,
             deleteMovimientoLocalUseCase,
             syncStockUseCase,
+            syncMovimientosHistorialUseCase, // Pass this
             viewModelScope
         )
 

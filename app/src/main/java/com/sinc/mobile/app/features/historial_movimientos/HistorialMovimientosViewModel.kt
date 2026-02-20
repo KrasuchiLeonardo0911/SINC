@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.historial_movimientos
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.MovimientoHistorial
@@ -45,6 +46,10 @@ class HistorialMovimientosViewModel @Inject constructor(
     private fun loadMovimientos() {
         getMovimientosHistorialUseCase()
             .onEach { movimientos ->
+                Log.d("ReactiveCheck", "DB emitted ${movimientos.size} items. Selected Month: ${YearMonth.from(_state.value.selectedDate)}")
+                if (movimientos.isNotEmpty()) {
+                    Log.d("ReactiveCheck", "First item: ${movimientos.first().fechaRegistro}, Last item: ${movimientos.last().fechaRegistro}")
+                }
                 _state.update { 
                     it.copy(allMovimientos = movimientos) 
                 }
@@ -58,9 +63,12 @@ class HistorialMovimientosViewModel @Inject constructor(
         val selectedMonth = YearMonth.from(currentState.selectedDate)
         
         val filtered = currentState.allMovimientos.filter {
-            YearMonth.from(it.fechaRegistro) == selectedMonth
+            val itemMonth = YearMonth.from(it.fechaRegistro)
+            // Log.d("ReactiveCheck", "Checking item from ${it.fechaRegistro} (Month: $itemMonth) vs $selectedMonth")
+            itemMonth == selectedMonth
         }
         
+        Log.d("ReactiveCheck", "Filtered items for $selectedMonth: ${filtered.size} (out of ${currentState.allMovimientos.size})")
         _state.update { it.copy(filteredMovimientos = filtered) }
     }
 
