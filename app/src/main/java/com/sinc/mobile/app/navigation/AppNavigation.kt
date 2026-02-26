@@ -30,6 +30,8 @@ import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 
+import com.sinc.mobile.app.features.weather.WindyMapScreen
+import com.sinc.mobile.app.features.weather.WeatherScreen
 import com.sinc.mobile.app.features.ventas.VentasScreen
 import com.sinc.mobile.app.features.ventas.HistorialVentasScreen
 import com.sinc.mobile.app.features.tickets.TicketsListScreen
@@ -76,6 +78,9 @@ object Routes {
     const val TICKET_CONVERSATION = "ticket_conversation/{ticketId}"
     fun createTicketConversationRoute(ticketId: Long) = "ticket_conversation/$ticketId"
     const val NOTIFICATIONS = "notifications"
+    const val WEATHER = "weather"
+    const val WINDY_MAP = "windy_map/{layer}"
+    fun createWindyMapRoute(layer: String) = "windy_map/$layer"
 }
 
 @Composable
@@ -312,7 +317,6 @@ fun AppNavigation(
                 slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
         ) {
-            // Need to create this screen first, but I'll add the import later or rely on auto-import when I create the file
             com.sinc.mobile.app.features.historial_movimientos.resumen.ResumenMovimientosScreen(
                 onBack = { navController.popBackStack() }
             )
@@ -392,36 +396,41 @@ fun AppNavigation(
             )
         }
 
-                composable(
-
-                    route = Routes.NOTIFICATIONS,
-
-                    enterTransition = {
-
-                        slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
-
-                    },
-
-                    popExitTransition = {
-
-                        slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
-
-                    }
-
-                ) {
-
-                    com.sinc.mobile.app.features.notifications.NotificationsScreen(
-
-                        navController = navController,
-
-                        onBackPress = { navController.popBackStack() }
-
-                    )
-
-                }
-
+        composable(
+            route = Routes.NOTIFICATIONS,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
-
+        ) {
+            com.sinc.mobile.app.features.notifications.NotificationsScreen(
+                navController = navController,
+                onBackPress = { navController.popBackStack() }
+            )
         }
 
-        
+        composable(
+            route = Routes.WINDY_MAP,
+            arguments = listOf(navArgument("layer") { type = NavType.StringType }),
+            enterTransition = {
+                fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300))
+            }
+        ) { backStackEntry ->
+            val layer = backStackEntry.arguments?.getString("layer") ?: "radar"
+            val baseLat = -27.367
+            val baseLong = -55.896
+            val defaultZoom = 8
+            // Construir la URL para el modo embed limpio
+            val windyUrl = "https://embed.windy.com/embed2.html?lat=$baseLat&lon=$baseLong&detailLat=$baseLat&detailLon=$baseLong&zoom=$defaultZoom&level=surface&overlay=$layer&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km/h&metricTemp=°C&radarRange=-1"
+
+            WindyMapScreen(
+                windyUrl = windyUrl,
+                onBackPress = { navController.popBackStack() }
+            )
+        }
+    }}

@@ -11,6 +11,7 @@ import com.sinc.mobile.data.network.IdentifierApiService
 import com.sinc.mobile.data.network.api.HistorialMovimientosApiService
 import com.sinc.mobile.data.network.api.StockApiService
 import com.sinc.mobile.data.network.api.VentasApiService
+import com.sinc.mobile.data.network.api.WeatherAlertApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -113,6 +114,12 @@ object NetworkModule {
     @Singleton
     fun provideLogisticsApiService(retrofit: Retrofit): com.sinc.mobile.data.network.api.LogisticsApiService {
         return retrofit.create(com.sinc.mobile.data.network.api.LogisticsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherAlertApiService(retrofit: Retrofit): WeatherAlertApiService {
+        return retrofit.create(WeatherAlertApiService::class.java)
     }
 }
 

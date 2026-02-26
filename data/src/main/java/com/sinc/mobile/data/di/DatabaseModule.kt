@@ -132,4 +132,10 @@ object DatabaseModule {
     fun provideNotificationDao(database: SincMobileDatabase): NotificationDao {
         return database.notificationDao()
     }
+
+    @Singleton
+    @Provides
+    fun provideWeatherAlertDao(database: SincMobileDatabase): WeatherAlertDao {
+        return database.weatherAlertDao()
+    }
 }

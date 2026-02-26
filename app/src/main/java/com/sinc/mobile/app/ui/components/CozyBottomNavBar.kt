@@ -10,10 +10,12 @@ import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.WbCloudy
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.WbCloudy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,9 +46,10 @@ fun CozyBottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
+        BottomNavItem("Clima", CozyBottomNavRoutes.WEATHER, Icons.Outlined.WbCloudy),
         BottomNavItem("Ayuda", CozyBottomNavRoutes.HELP, Icons.Outlined.HelpOutline),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person),
-        BottomNavItem("Alertas", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
+        BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
     Row(
@@ -112,6 +115,7 @@ fun RowScope.CozyBottomNavItem(
                     CozyBottomNavRoutes.HELP -> Icons.Filled.Help
                     CozyBottomNavRoutes.PROFILE -> Icons.Filled.Person
                     CozyBottomNavRoutes.NOTIFICATIONS -> Icons.Filled.Notifications
+                    CozyBottomNavRoutes.WEATHER -> Icons.Filled.WbCloudy
                     else -> item.icon // Fallback
                 }
             } else {

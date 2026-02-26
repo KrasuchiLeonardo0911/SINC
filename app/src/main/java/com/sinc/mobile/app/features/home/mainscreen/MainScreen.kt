@@ -52,12 +52,13 @@ import com.sinc.mobile.app.features.historial_movimientos.HistorialMovimientosSc
 import com.sinc.mobile.app.features.home.MainViewModel
 import com.sinc.mobile.app.features.home.mainscreen.components.Header
 import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
-import com.sinc.mobile.app.features.home.mainscreen.components.SyncStatusDashboard;
-import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector;
+import com.sinc.mobile.app.features.home.mainscreen.components.SyncStatusDashboard
+import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
 import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.logistics.components.LogisticsDraggableHandle
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.stock.StockScreen
+import com.sinc.mobile.app.features.weather.WeatherScreen
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
@@ -125,6 +126,10 @@ fun MainScreen(
                                     navController.navigate(Routes.SETTINGS)
                                 } else if (newRoute == CozyBottomNavRoutes.HELP) {
                                     navController.navigate(Routes.HELP)
+                                } else if (newRoute == CozyBottomNavRoutes.PROFILE) {
+                                    navController.navigate(Routes.SETTINGS)
+                                } else if (newRoute == CozyBottomNavRoutes.HELP) {
+                                    navController.navigate(Routes.HELP)
                                 } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
                                     navController.navigate(Routes.NOTIFICATIONS)
                                 } else {
@@ -154,6 +159,10 @@ fun MainScreen(
                                 mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 onNavigateToVentas = { navController.navigate(Routes.VENTAS) }
+                            )
+                            CozyBottomNavRoutes.WEATHER -> WeatherScreen(
+                                navController = navController,
+                                onBackPress = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
                             CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
                                 mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),

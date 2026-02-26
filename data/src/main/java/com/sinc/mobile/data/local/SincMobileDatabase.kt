@@ -35,9 +35,10 @@ import kotlinx.serialization.builtins.serializer
         MessageEntity::class,
         NotificationEntity::class,
         UnidadProductivaTipoSueloCrossRef::class,
-        UnidadProductivaTipoPastoCrossRef::class
+        UnidadProductivaTipoPastoCrossRef::class,
+        WeatherAlertEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)
@@ -49,6 +50,7 @@ abstract class SincMobileDatabase : RoomDatabase() {
     abstract fun declaracionVentaDao(): DeclaracionVentaDao
     abstract fun ticketDao(): TicketDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun weatherAlertDao(): WeatherAlertDao
 
     // DAOs de Catálogos
     abstract fun especieDao(): EspecieDao

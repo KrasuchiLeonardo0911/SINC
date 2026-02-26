@@ -144,3 +144,42 @@ Se ha adaptado la aplicación al nuevo ciclo de logística robusto, mejorando ta
 *   **Compilación**: Exitosa (`./gradlew assembleDebug`).
 *   **Versión de DB**: 13.
 *   **Funcionalidad**: Verificada y robustecida frente a borrado de datos locales.
+# Avances de la Sesión Actual (24 de Febrero de 2026)
+
+## Implementación de Alertas Meteorológicas (Infraestructura y Datos)
+
+Se ha implementado la funcionalidad completa para obtener, almacenar y gestionar alertas meteorológicas, siguiendo la arquitectura limpia y el patrón offline-first.
+
+### 1. Capa de Dominio (`:domain`)
+- **Modelo de Negocio**: Creación de `WeatherAlert.kt`.
+- **Repositorio**: Definición de la interfaz `WeatherAlertRepository.kt`.
+- **Casos de Uso**:
+    - `GetWeatherAlertsUseCase`: Lectura reactiva desde la DB.
+    - `SyncWeatherAlertsUseCase`: Sincronización con la API móvil.
+    - `SaveWeatherAlertUseCase`: Guardado manual (útil para Push).
+
+### 2. Capa de Datos (`:data`)
+- **Networking**:
+    - Creación de `WeatherAlertDto.kt` y `WeatherAlertResponseDto.kt`.
+    - Definición de `WeatherAlertApiService.kt` con el endpoint `GET /api/movil/alertas-meteorologicas`.
+- **Persistencia (Room)**:
+    - Creación de `WeatherAlertEntity.kt`.
+    - Implementación de `WeatherAlertDao.kt` con soporte para limpieza automática de alertas expiradas.
+    - Actualización de `SincMobileDatabase.kt` a la **Versión 15**.
+- **Repositorio**: Implementación de `WeatherAlertRepositoryImpl.kt` y mappers asociados.
+- **DI (Hilt)**: Configuración en `NetworkModule`, `DatabaseModule` y `RepositoryModule`.
+
+### 3. Capa de Presentación (Lógica)
+- **Firebase Messaging**: Actualización de `MyFirebaseMessagingService.kt` para detectar notificaciones de tipo `weather_alert`. Al recibirlas, se dispara una sincronización automática en segundo plano para actualizar la base de datos local.
+- **MainViewModel**:
+    - Integración de los casos de uso de clima.
+    - Observación continua del flujo de alertas para el Dashboard.
+    - Sincronización proactiva durante la inicialización de la App.
+
+### 4. Verificación y Calidad
+- **Compilación**: Se verificó la compilación exitosa del módulo `:data`, confirmando la correcta generación de código de Room y Hilt.
+- **Testing**: Se ejecutó exitosamente el test unitario `WeatherAlertRepositoryTest.kt`, validando la lógica de sincronización, mapeo y manejo de errores de la API.
+
+---
+**Estado Actual**: La infraestructura de datos está 100% operativa. Las alertas ya se descargan y guardan automáticamente. Queda pendiente el diseño visual de la sección "Clima" en el Dashboard para la próxima sesión.
+

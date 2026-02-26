@@ -15,6 +15,7 @@ import com.sinc.mobile.R
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.use_case.auth.SendFcmTokenUseCase
 import com.sinc.mobile.domain.use_case.notification.SaveNotificationUseCase
+import com.sinc.mobile.domain.use_case.weather.SyncWeatherAlertsUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     lateinit var sessionManager: SessionManager
     @Inject
     lateinit var saveNotificationUseCase: SaveNotificationUseCase
+    @Inject
+    lateinit var syncWeatherAlertsUseCase: SyncWeatherAlertsUseCase
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
@@ -80,6 +83,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 pendingIntent = createGenericAppPendingIntent()
                 // A specific notification ID could be used for reminders if we want to update it
                 notificationId = UNIDAD_PRODUCTIVA_REMINDER_ID
+            }
+            "weather_alert" -> {
+                pendingIntent = createGenericAppPendingIntent()
+                serviceScope.launch {
+                    syncWeatherAlertsUseCase()
+                }
             }
             else -> {
                 // Handle generic data messages based on 'screen' hint or default to app launch

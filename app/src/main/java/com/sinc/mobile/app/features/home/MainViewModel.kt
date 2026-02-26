@@ -10,6 +10,9 @@ import com.sinc.mobile.domain.util.Result
 import com.sinc.mobile.data.session.SessionManager
 import com.sinc.mobile.domain.use_case.auth.SendFcmTokenUseCase
 import com.sinc.mobile.domain.use_case.notification.GetUnreadNotificationCountUseCase
+import com.sinc.mobile.domain.use_case.weather.GetWeatherAlertsUseCase
+import com.sinc.mobile.domain.use_case.weather.SyncWeatherAlertsUseCase
+import com.sinc.mobile.domain.model.WeatherAlert
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -32,6 +35,8 @@ class MainViewModel @Inject constructor(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val sendFcmTokenUseCase: SendFcmTokenUseCase,
     private val getUnreadNotificationCountUseCase: GetUnreadNotificationCountUseCase,
+    private val getWeatherAlertsUseCase: GetWeatherAlertsUseCase,
+    private val syncWeatherAlertsUseCase: SyncWeatherAlertsUseCase,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -41,6 +46,15 @@ class MainViewModel @Inject constructor(
     init {
         initializeApp()
         observeUnreadNotifications()
+        observeWeatherAlerts()
+    }
+
+    private fun observeWeatherAlerts() {
+        getWeatherAlertsUseCase()
+            .onEach { alerts ->
+                _uiState.update { it.copy(weatherAlerts = alerts) }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun observeUnreadNotifications() {
@@ -86,8 +100,9 @@ class MainViewModel @Inject constructor(
                             orderDeadline = deadlineDate
                         )
                     }
-                    // After successful initialization, fetch the user profile
+                    // After successful initialization, fetch the user profile and sync weather alerts
                     fetchUserFirstName()
+                    syncWeatherAlerts()
                 }
                 is Result.Failure -> {
                     _uiState.update {
@@ -124,6 +139,12 @@ class MainViewModel @Inject constructor(
     }
 
 
+    private fun syncWeatherAlerts() {
+        viewModelScope.launch {
+            syncWeatherAlertsUseCase()
+        }
+    }
+
     fun resetNavigationToCreateUnidadProductiva() {
         _uiState.update { it.copy(shouldNavigateToCreateUnidadProductiva = false) }
     }
@@ -154,7 +175,9 @@ data class MainUiState(
     val shouldNavigateToCreateUnidadProductiva: Boolean = false,
     val appControl: AppControl? = null,
     val features: Features? = null,
-    val userName: String? = null,
-    val unreadNotificationCount: Int = 0,
-    val orderDeadline: LocalDate? = null
-)
+        val userName: String? = null,
+        val unreadNotificationCount: Int = 0,
+        val weatherAlerts: List<WeatherAlert> = emptyList(),
+        val orderDeadline: LocalDate? = null
+    )
+    
