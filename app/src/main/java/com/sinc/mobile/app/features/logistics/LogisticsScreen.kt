@@ -126,9 +126,8 @@ fun LogisticsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, top = 24.dp, end = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
             
             // Título
             Text(

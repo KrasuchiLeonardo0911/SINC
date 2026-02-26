@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.sinc.mobile.app.features.notifications.components.NotificationItem
@@ -72,7 +73,8 @@ fun NotificationsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .padding(top = 24.dp),
             contentAlignment = Alignment.Center
         ) {
             if (uiState.isLoading) {

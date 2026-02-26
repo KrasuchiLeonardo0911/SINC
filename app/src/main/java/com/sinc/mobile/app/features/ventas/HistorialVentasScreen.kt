@@ -59,6 +59,7 @@ fun HistorialVentasScreen(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
+                .padding(top = 24.dp)
                 .fillMaxSize()
         ) {
             // Filtro de Mes

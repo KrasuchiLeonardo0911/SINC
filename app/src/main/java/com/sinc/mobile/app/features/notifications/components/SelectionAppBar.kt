@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBarsPadding
 import com.sinc.mobile.ui.theme.SincGrayBackground
 
@@ -25,10 +27,11 @@ fun SelectionAppBar(
         modifier = modifier
     ) {
         TopAppBar(
-            modifier = Modifier.statusBarsPadding(),
+            modifier = Modifier.statusBarsPadding().height(48.dp),
             title = {
                 Text(
                     text = "$selectedCount",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             },

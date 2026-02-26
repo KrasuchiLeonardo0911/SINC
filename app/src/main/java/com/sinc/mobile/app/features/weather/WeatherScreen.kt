@@ -81,7 +81,7 @@ fun WeatherScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 16.dp),
+                contentPadding = PaddingValues(top = 24.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 // SECCIÓN ALERTAS

@@ -81,7 +81,7 @@ fun SeleccionCampoScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp), // Add horizontal padding to the LazyColumn
-                    contentPadding = PaddingValues(top = 16.dp) // Add top padding for content separation
+                    contentPadding = PaddingValues(top = 24.dp) // Add top padding for content separation
                 ) {
                     item {
                         // Header

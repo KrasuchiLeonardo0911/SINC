@@ -6,34 +6,28 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import com.sinc.mobile.ui.theme.SincMobileTheme
 import com.sinc.mobile.ui.theme.SincGrayBackground
-import androidx.compose.material3.Surface
+import com.sinc.mobile.ui.theme.SincMobileTheme
 
 @Composable
 fun MinimalHeader(
@@ -50,7 +44,7 @@ fun MinimalHeader(
             modifier = Modifier
                 .statusBarsPadding() // Padding interno para respetar la barra de estado
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(48.dp) // Altura compacta
                 .padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
@@ -61,7 +55,7 @@ fun MinimalHeader(
                 contentDescription = "Atrás",
                 tint = Color(0xFF111111),
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp) // Icono más compacto
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,

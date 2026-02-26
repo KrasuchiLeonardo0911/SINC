@@ -119,6 +119,17 @@ fun MainScreen(
                 Scaffold(
                     modifier = Modifier.navigationBarsPadding(),
                     containerColor = SincBackground,
+                    topBar = {
+                        if (currentRoute == CozyBottomNavRoutes.HOME) {
+                            StickyMainHeader(
+                                userName = uiState.userName ?: "Productor",
+                                onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
+                                onDateClick = { showLogisticsPanel = true },
+                                today = today,
+                                orderDeadline = uiState.orderDeadline
+                            )
+                        }
+                    },
                     bottomBar = {
                         CozyBottomNavBar(
                             selectedRoute = currentRoute,
@@ -281,31 +292,12 @@ fun MainContent(
 ) {
     Column(
         modifier = Modifier
-            .padding(bottom = paddingValues.calculateBottomPadding()) // Solo padding inferior
+            .padding(paddingValues)
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(SincGrayBackground) // Fondo gris para el header y calendario
-        ) {
-            Spacer(Modifier.statusBarsPadding()) // Padding interno para cubrir la barra de estado
-            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp)) {
-                Header(userName = userName, onSettingsClick = onSettingsClick)
-            }
-            HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                WeekdaySelector(
-                    onDateClick = onDateClick,
-                    today = today,
-                    orderDeadline = orderDeadline
-                )
-            }
-        }
-
-        // Separador gris
+        // Separador gris inicial debajo del header fijo
         Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
 
         Column(
@@ -339,5 +331,37 @@ fun MainContent(
         
         // Espacio final gris para que no termine abruptamente
         Box(modifier = Modifier.fillMaxWidth().height(40.dp).background(SincGrayBackground))
+    }
+}
+
+@Composable
+fun StickyMainHeader(
+    userName: String,
+    onSettingsClick: () -> Unit,
+    onDateClick: () -> Unit,
+    today: LocalDate,
+    orderDeadline: LocalDate?
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SincBackground) // Fondo blanco para el header fijo
+    ) {
+        Spacer(Modifier.statusBarsPadding()) // Cubre la barra de estado
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp)) {
+            Header(userName = userName, onSettingsClick = onSettingsClick)
+        }
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 1.dp,
+            color = Color.LightGray.copy(alpha = 0.5f)
+        )
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            WeekdaySelector(
+                onDateClick = onDateClick,
+                today = today,
+                orderDeadline = orderDeadline
+            )
+        }
     }
 }

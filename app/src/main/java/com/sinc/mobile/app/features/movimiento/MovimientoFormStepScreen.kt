@@ -140,7 +140,7 @@ fun MovimientoFormStepContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 32.dp),
+        contentPadding = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
