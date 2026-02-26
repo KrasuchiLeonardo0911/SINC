@@ -34,6 +34,8 @@ import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.domain.model.UnidadProductiva
 
+import com.sinc.mobile.app.ui.theme.CozyMediumGray
+
 @Composable
 fun VentasScreen(
     onNavigateBack: () -> Unit,
@@ -77,7 +79,8 @@ fun VentasScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = CozyMediumGray // Fondo gris claro para contraste
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -86,8 +89,9 @@ fun VentasScreen(
         ) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary
+                containerColor = Color.White, // Pestañas blancas para resaltar
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {} // Remove default divider to use our custom one
             ) {
                 tabs.forEachIndexed { index, title ->
                     val tabTitle = if (index == 1 && uiState.declaracionesActivas.isNotEmpty()) {
@@ -99,10 +103,19 @@ fun VentasScreen(
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
-                        text = { Text(tabTitle) }
+                        text = { 
+                            Text(
+                                text = tabTitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium
+                            ) 
+                        }
                     )
                 }
             }
+            
+            // Divisor sutil para separar las pestañas del contenido
+            HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.4f))
 
             when (selectedTabIndex) {
                 0 -> VentasForm(

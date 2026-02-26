@@ -78,138 +78,141 @@ fun WeatherScreen(
                 .padding(paddingValues)
                 .pullRefresh(pullRefreshState)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                // SECCIÓN ALERTAS (1/3 o Mitad de pantalla aprox)
-                Box(modifier = Modifier.weight(0.45f)) {
+                // SECCIÓN ALERTAS
+                item {
+                    Text(
+                        text = "Alertas Meteorológicas",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
                     if (uiState.alerts.isNotEmpty()) {
-                        Column {
-                            Text(
-                                text = "Alertas Meteorológicas",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
-                            
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(bottom = 16.dp)
-                            ) {
-                                items(uiState.alerts) { alert ->
-                                    WeatherAlertCard(alert = alert)
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            uiState.alerts.forEach { alert ->
+                                WeatherAlertCard(alert = alert)
                             }
                         }
                     } else {
-                        // Estado Despejado / Sin Alertas Mejorado
+                        // Estado Despejado / Sin Alertas (Rediseñado)
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
-                                .padding(16.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)),
-                            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFC5E1A5))
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB)), // Gris extra claro
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
                         ) {
                             Row(
                                 modifier = Modifier
-                                    .padding(24.dp)
-                                    .fillMaxSize(),
+                                    .padding(20.dp)
+                                    .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Todo en orden",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        color = Color(0xFF2E7D32),
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "No hay alertas activas en tu zona para las próximas horas. El cielo está despejado.",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = Color(0xFF558B2F),
-                                        lineHeight = 24.sp
-                                    )
-                                }
-                                
-                                // Ilustración de sol a la derecha
                                 Image(
                                     painter = painterResource(id = R.drawable.img_weather_sunny),
                                     contentDescription = "Cielo despejado",
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .padding(start = 12.dp),
+                                    modifier = Modifier.size(64.dp),
                                     contentScale = ContentScale.Fit
                                 )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        text = "Sin alertas activas",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Las condiciones actuales en tu zona son favorables.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        lineHeight = 20.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // FRANJA GRIS DE SEPARACIÓN (Espaciador visual)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp)
-                        .background(Color(0xFFF5F5F7)) // Gris muy claro
-                )
-
-                // SECCIÓN MAPA (Resto de la pantalla)
-                Column(
-                    modifier = Modifier
-                        .weight(0.55f)
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    Text(
-                        text = "Mapa en Tiempo Real",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-
-                    // Preview limpia
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f) // Que el mapa tome el espacio sobrante
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color.LightGray)
-                            .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                            .clickable { viewModel.onLayerSelected(uiState.selectedLayer) },
-                        contentAlignment = Alignment.Center
+                // SECCIÓN MAPA
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.windy_preview),
-                            contentDescription = "Ver mapa meteorológico",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                        Text(
+                            text = "Mapa en Tiempo Real",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = 12.dp)
                         )
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Botones de capas
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        WindyLayer.values().forEach { layer ->
-                            Button(
-                                onClick = { viewModel.onLayerSelected(layer) },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (uiState.selectedLayer == layer) SincPrimary else Color(0xFFF5F5F5),
-                                    contentColor = if (uiState.selectedLayer == layer) Color.White else Color.DarkGray
+                        // Preview del mapa interactivo
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .clickable { viewModel.onLayerSelected(uiState.selectedLayer) },
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.windy_preview),
+                                    contentDescription = "Ver mapa meteorológico",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
                                 )
-                            ) {
-                                Text(layer.label, fontSize = 13.sp)
+                                // Indicador visual de interacción
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = "Tocar para abrir mapa",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Botones de capas (Filtros)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            WindyLayer.values().forEach { layer ->
+                                val isSelected = uiState.selectedLayer == layer
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { viewModel.onLayerSelected(layer) },
+                                    label = { Text(layer.label, fontSize = 13.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = Color.White
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
+                                        borderColor = Color(0xFFE5E7EB),
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary
+                                    )
+                                )
                             }
                         }
                     }
@@ -220,7 +223,7 @@ fun WeatherScreen(
                 refreshing = uiState.isLoading,
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                contentColor = SincPrimary
+                contentColor = MaterialTheme.colorScheme.primary
             )
         }
     }

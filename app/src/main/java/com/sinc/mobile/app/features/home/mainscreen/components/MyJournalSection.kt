@@ -101,7 +101,7 @@ fun MyJournalSection(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Text(text = "Ver Historial", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Historial", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
