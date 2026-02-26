@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.app.ui.theme.*
+import com.sinc.mobile.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -68,11 +68,10 @@ fun SettingsScreen(
         topBar = {
             MinimalHeader(
                 title = "Configuración",
-                onBackPress = onNavigateBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onNavigateBack
             )
         },
-        containerColor = CozyLightGray
+        containerColor = SincBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier

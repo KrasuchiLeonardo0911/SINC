@@ -84,7 +84,6 @@ fun HistorialMovimientosScreen(
             MinimalHeader(
                 title = "Historial de Movimientos",
                 onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding(),
                 actions = {
                     IconButton(onClick = { 
                         onNavigateToResumen(state.selectedDate.monthValue, state.selectedDate.year) 

@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import com.sinc.mobile.ui.theme.SincMobileTheme
+import com.sinc.mobile.ui.theme.SincGrayBackground
+import androidx.compose.material3.Surface
 
 @Composable
 fun MinimalHeader(
@@ -37,45 +42,51 @@ fun MinimalHeader(
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp) // Aumentamos ligeramente la altura para darle aire
-            .padding(horizontal = 10.dp), // Padding lateral estricto
-        horizontalArrangement = Arrangement.Start, // Alineación forzada a la izquierda
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = SincGrayBackground,
+        modifier = modifier.fillMaxWidth()
     ) {
-        // Icono de Retorno
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-            contentDescription = "Atrás",
-            tint = Color(0xFF111111), // Negro casi puro
+        Row(
             modifier = Modifier
-                .size(36.dp) // Aumentamos el tamaño visual del icono
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null, // Quitamos el efecto de ripple gris circular que ensucia el diseño minimalista
-                    onClick = onBackPress
-                )
-        )
-
-        if (!title.isNullOrBlank()) {
-            Spacer(modifier = Modifier.width(8.dp)) // Redujimos el espacio porque el icono ahora es más grande
-
-            // Título del Encabezado
-            Text(
-                text = title,
-                color = Color(0xFF1F2937), // Negro suave
-                fontSize = 18.sp,          // Tamaño ajustado al diseño original
-                fontWeight = FontWeight.Medium, // CAMBIO CLAVE: De SemiBold a Medium
-                letterSpacing = 0.sp       // Quitamos el tracking negativo
+                .statusBarsPadding() // Padding interno para respetar la barra de estado
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icono de Retorno
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                contentDescription = "Atrás",
+                tint = Color(0xFF111111),
+                modifier = Modifier
+                    .size(36.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onBackPress
+                    )
             )
+
+            if (!title.isNullOrBlank()) {
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Título del Encabezado
+                Text(
+                    text = title,
+                    color = Color(0xFF1F2937),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Acciones del Header
+            actions()
         }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Acciones del Header
-        actions()
     }
 }
 

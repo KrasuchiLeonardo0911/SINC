@@ -28,6 +28,7 @@ import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.SyncResultOverlay
 import com.sinc.mobile.ui.theme.SincMobileTheme
+import com.sinc.mobile.ui.theme.SincBackground
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -99,7 +100,6 @@ fun MovimientoStepperScreen(
             MinimalHeader(
                 title = "",
                 onBackPress = onBackPress,
-                modifier = Modifier.statusBarsPadding(),
                 actions = {
                     IconButton(onClick = { /* TODO: Show instructions modal */ }) {
                         Icon(imageVector = Icons.Outlined.Info, contentDescription = "Instrucciones")
@@ -107,7 +107,7 @@ fun MovimientoStepperScreen(
                 }
             )
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SincBackground,
         bottomBar = {
             Column(
                 modifier = Modifier.fillMaxWidth(),

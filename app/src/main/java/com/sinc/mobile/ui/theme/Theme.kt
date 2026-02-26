@@ -33,11 +33,11 @@ private val LightColors = lightColorScheme(
     outline = SincDivider,
     primaryContainer = SincPrimaryLight,
     onPrimaryContainer = SincPrimary,
-    secondaryContainer = SincBackground,
+    secondaryContainer = SincGrayBackground,
     onSecondaryContainer = SincTextSecondary,
-    tertiaryContainer = SincBackground,
+    tertiaryContainer = SincGrayBackground,
     onTertiaryContainer = SincTextSecondary,
-    surfaceVariant = SincBackground,
+    surfaceVariant = SincGrayBackground,
     onSurfaceVariant = SincTextSecondary,
 )
 
@@ -83,7 +83,7 @@ fun SincMobileTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            val grayBackgroundColor = Color(0xFFE0E0E0) // Gris claro estándar para las barras del sistema
+            val grayBackgroundColor = SincGrayBackground // Usar el gris de la app para las barras del sistema
 
             // Configurar la barra de estado (superior)
             window.statusBarColor = grayBackgroundColor.toArgb()

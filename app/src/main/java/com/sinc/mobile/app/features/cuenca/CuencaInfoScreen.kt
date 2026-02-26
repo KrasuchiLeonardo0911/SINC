@@ -77,6 +77,7 @@ import androidx.navigation.NavController
 import com.sinc.mobile.R
 
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 
 @Composable
 fun CuencaInfoScreen(navController: NavController) {
@@ -84,10 +85,10 @@ fun CuencaInfoScreen(navController: NavController) {
         topBar = {
             MinimalHeader(
                 title = "Más Info",
-                onBackPress = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = { navController.popBackStack() }
             )
-        }
+        },
+        containerColor = SincBackground
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 
 data class FaqItem(
     val question: String,
@@ -100,11 +101,11 @@ fun HelpScreen(
 ) {
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
+        containerColor = SincBackground,
         topBar = {
             MinimalHeader(
                 title = "Centro de Ayuda",
-                onBackPress = onBackPress,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBackPress
             )
         }
     ) { paddingValues ->

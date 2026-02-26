@@ -40,6 +40,7 @@ import androidx.navigation.NavController
 import com.sinc.mobile.app.features.movimiento.components.CampoListItem
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,13 +59,11 @@ fun SeleccionCampoScreen(
         modifier = modifier
             .fillMaxSize()
             .navigationBarsPadding(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SincBackground,
         topBar = {
             MinimalHeader(
-                title = "Seleccionar Campo",
-                onBackPress = onBack,
-                modifier = Modifier
-                    .statusBarsPadding()
+                title = "",
+                onBackPress = onBack
             )
         }
     ) { paddingValues ->

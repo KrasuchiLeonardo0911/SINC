@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -64,7 +65,8 @@ import com.sinc.mobile.app.ui.components.CozyBottomNavBar
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
 import com.sinc.mobile.app.ui.components.LoadingOverlay
 import com.sinc.mobile.app.ui.components.SlidingPanel
-import com.sinc.mobile.app.ui.theme.CozyMediumGray
+import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincGrayBackground
 import java.time.LocalDate
 import android.content.Intent
 import android.net.Uri
@@ -116,7 +118,7 @@ fun MainScreen(
                 // Initialized State: Show Dashboard
                 Scaffold(
                     modifier = Modifier.navigationBarsPadding(),
-                    containerColor = CozyMediumGray,
+                    containerColor = SincBackground,
                     bottomBar = {
                         CozyBottomNavBar(
                             selectedRoute = currentRoute,
@@ -152,6 +154,7 @@ fun MainScreen(
                                 onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
                                 onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
                                 onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS },
+                                onWeatherClick = { currentRoute = CozyBottomNavRoutes.WEATHER },
                                 onPendingMovementsClick = { navController.navigate(Routes.createMovimientoFormRoute(unidadId = null, initialPage = 1)) },
                                 onSalesHistoryClick = { navController.navigate(Routes.VENTAS_HISTORIAL) }
                             )
@@ -272,25 +275,27 @@ fun MainContent(
     onAddClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onCamposClick: () -> Unit,
+    onWeatherClick: () -> Unit,
     onPendingMovementsClick: () -> Unit,
     onSalesHistoryClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .padding(paddingValues)
+            .padding(bottom = paddingValues.calculateBottomPadding()) // Solo padding inferior
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.Top
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(SincGrayBackground) // Fondo gris para el header y calendario
         ) {
+            Spacer(Modifier.statusBarsPadding()) // Padding interno para cubrir la barra de estado
             Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp)) {
                 Header(userName = userName, onSettingsClick = onSettingsClick)
             }
-            HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray)
+            HorizontalDivider(modifier = Modifier.fillMaxWidth(), thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.5f))
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 WeekdaySelector(
                     onDateClick = onDateClick,
@@ -299,10 +304,14 @@ fun MainContent(
                 )
             }
         }
+
+        // Separador gris
+        Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(SincBackground)
                 .padding(16.dp)
         ) {
             MyJournalSection(
@@ -312,10 +321,14 @@ fun MainContent(
                 onCamposClick = onCamposClick
             )
         }
+
+        // Separador gris
+        Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(SincBackground)
                 .padding(16.dp)
         ) {
             SyncStatusDashboard(
@@ -323,5 +336,8 @@ fun MainContent(
                 onSalesHistoryClick = onSalesHistoryClick
             )
         }
+        
+        // Espacio final gris para que no termine abruptamente
+        Box(modifier = Modifier.fillMaxWidth().height(40.dp).background(SincGrayBackground))
     }
 }

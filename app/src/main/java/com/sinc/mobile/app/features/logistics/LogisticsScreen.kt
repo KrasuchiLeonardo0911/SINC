@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.MinimalHeader
-import com.sinc.mobile.ui.theme.SincPrimary
+import com.sinc.mobile.ui.theme.*
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import java.time.DayOfWeek
@@ -106,11 +106,10 @@ fun LogisticsScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SincBackground,
         topBar = {
             MinimalHeader(
                 onBackPress = onBackPress,
-                modifier = Modifier.statusBarsPadding(),
                 actions = {
                     IconButton(onClick = { showHelpDialog = true }) {
                         Icon(

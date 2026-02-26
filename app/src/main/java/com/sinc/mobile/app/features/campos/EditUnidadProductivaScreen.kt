@@ -42,6 +42,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.*
+import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincGrayBackground
 import com.sinc.mobile.app.ui.components.charts.ChartLegend
 import com.sinc.mobile.app.ui.components.charts.LegendItem
 import com.sinc.mobile.app.ui.components.charts.PieChart
@@ -110,12 +112,11 @@ fun EditUnidadProductivaScreen(
                         topBar = {
                             MinimalHeader(
                                 title = "Información del Campo",
-                                onBackPress = onNavigateBack,
-                                modifier = Modifier.statusBarsPadding()
+                                onBackPress = onNavigateBack
                             )
                         },
                         snackbarHost = { SnackbarHost(snackbarHostState) },
-                        containerColor = MaterialTheme.colorScheme.background
+                        containerColor = SincBackground
                     ) { paddingValues ->
                         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                             if (uiState.isLoading) {
@@ -505,8 +506,7 @@ fun BasicInfoEditorScreen(
         topBar = {
             MinimalHeader(
                 title = "Editar Información Básica",
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBack
             )
         },
         bottomBar = {
@@ -522,7 +522,7 @@ fun BasicInfoEditorScreen(
                 Text("Guardar")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SincBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -575,8 +575,7 @@ fun WaterInfoEditorScreen(
         topBar = {
             MinimalHeader(
                 title = "Editar Agua",
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBack
             )
         },
         bottomBar = {
@@ -592,7 +591,7 @@ fun WaterInfoEditorScreen(
                 Text("Guardar")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SincBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -661,8 +660,7 @@ fun ObservationsEditorScreen(
         topBar = {
             MinimalHeader(
                 title = "Editar Observaciones",
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBack
             )
         },
         bottomBar = {
@@ -678,7 +676,7 @@ fun ObservationsEditorScreen(
                 Text("Guardar")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SincBackground
     ) { padding ->
         Box(
             modifier = Modifier
@@ -818,8 +816,7 @@ fun <T> DistributionEditorScreen(
         topBar = {
             MinimalHeader(
                 title = title,
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBack
             )
         },
         floatingActionButton = {

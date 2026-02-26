@@ -22,7 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.app.ui.theme.DarkerGray
+import com.sinc.mobile.ui.theme.*
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle

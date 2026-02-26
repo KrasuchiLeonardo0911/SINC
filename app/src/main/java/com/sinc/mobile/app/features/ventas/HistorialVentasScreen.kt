@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.HorizontalDivider
 import com.sinc.mobile.app.ui.components.ExpandableText
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.DeclaracionVenta
 import com.sinc.mobile.app.ui.util.LogisticaUiMapper
@@ -50,10 +51,10 @@ fun HistorialVentasScreen(
         topBar = {
             MinimalHeader(
                 title = "Historial de Ventas",
-                onBackPress = onNavigateBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onNavigateBack
             )
-        }
+        },
+        containerColor = SincBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier

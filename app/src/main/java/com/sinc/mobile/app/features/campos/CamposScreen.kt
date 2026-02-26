@@ -61,8 +61,7 @@ fun CamposScreen(
         topBar = {
             MinimalHeader(
                 title = "Mis Campos",
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onBack
             )
         }
     ) { paddingValues ->

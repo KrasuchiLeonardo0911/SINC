@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.profile.components.ProfileInfoCard
 import com.sinc.mobile.app.features.profile.components.InfoRow
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 import android.content.Intent
 import android.net.Uri
 
@@ -32,11 +33,10 @@ fun ProfileScreen(
         topBar = {
             MinimalHeader(
                 title = "Mi Perfil",
-                onBackPress = onNavigateBack,
-                modifier = Modifier.statusBarsPadding()
+                onBackPress = onNavigateBack
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SincBackground
     ) { paddingValues ->
         Box(
             modifier = Modifier

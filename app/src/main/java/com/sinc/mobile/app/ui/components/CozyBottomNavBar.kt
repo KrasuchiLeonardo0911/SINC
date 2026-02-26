@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.WbCloudy
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,7 +29,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.sinc.mobile.app.ui.theme.*
+import com.sinc.mobile.ui.theme.*
 
 
 data class BottomNavItem(
@@ -52,23 +53,26 @@ fun CozyBottomNavBar(
         BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp) // Altura reducida
-            .background(Color.White)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround // Distribuir uniformemente
-    ) {
-        items.forEach { item ->
-            val showBadge = item.route == CozyBottomNavRoutes.NOTIFICATIONS && unreadNotificationCount > 0
-            CozyBottomNavItem(
-                item = item,
-                isSelected = selectedRoute == item.route,
-                showBadge = showBadge,
-                onClick = { onItemSelected(item.route) }
-            )
+    Column {
+        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.3f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp) // Altura reducida
+                .background(SincBackground)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround // Distribuir uniformemente
+        ) {
+            items.forEach { item ->
+                val showBadge = item.route == CozyBottomNavRoutes.NOTIFICATIONS && unreadNotificationCount > 0
+                CozyBottomNavItem(
+                    item = item,
+                    isSelected = selectedRoute == item.route,
+                    showBadge = showBadge,
+                    onClick = { onItemSelected(item.route) }
+                )
+            }
         }
     }
 }

@@ -24,6 +24,7 @@ import com.sinc.mobile.app.features.notifications.components.NotificationItem
 import com.sinc.mobile.app.features.notifications.components.SelectionAppBar
 import com.sinc.mobile.app.ui.components.EmptyState
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.ui.theme.SincBackground
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -41,6 +42,7 @@ fun NotificationsScreen(
     }
 
     Scaffold(
+        containerColor = SincBackground,
         topBar = {
             val isSelectionMode = uiState.isSelectionMode
             // Animate between the two app bars
@@ -50,7 +52,6 @@ fun NotificationsScreen(
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
                 SelectionAppBar(
-                    modifier = Modifier.statusBarsPadding(),
                     selectedCount = uiState.selectedIds.size,
                     onClose = { viewModel.onEvent(NotificationsEvent.OnExitSelectionMode) },
                     onDelete = { viewModel.onEvent(NotificationsEvent.OnDeleteSelected) }
@@ -62,7 +63,6 @@ fun NotificationsScreen(
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
                 MinimalHeader(
-                    modifier = Modifier.statusBarsPadding(),
                     title = "Notificaciones",
                     onBackPress = onBackPress
                 )

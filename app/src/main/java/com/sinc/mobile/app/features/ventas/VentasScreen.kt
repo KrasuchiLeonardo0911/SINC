@@ -28,13 +28,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.*
+import com.sinc.mobile.ui.theme.*
 import com.sinc.mobile.domain.model.Categoria
 import com.sinc.mobile.domain.model.DeclaracionVenta
 import com.sinc.mobile.domain.model.Especie
 import com.sinc.mobile.domain.model.Raza
 import com.sinc.mobile.domain.model.UnidadProductiva
-
-import com.sinc.mobile.app.ui.theme.CozyMediumGray
 
 @Composable
 fun VentasScreen(
@@ -67,7 +66,6 @@ fun VentasScreen(
             MinimalHeader(
                 title = "Declaración de Ventas",
                 onBackPress = onNavigateBack,
-                modifier = Modifier.statusBarsPadding(),
                 actions = {
                     IconButton(onClick = onNavigateToHistorial) {
                         Icon(
@@ -80,7 +78,7 @@ fun VentasScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = CozyMediumGray // Fondo gris claro para contraste
+        containerColor = SincBackground // Fondo blanco para contraste
     ) { paddingValues ->
         Column(
             modifier = Modifier
