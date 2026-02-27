@@ -7,6 +7,7 @@ import com.sinc.mobile.domain.model.WeatherAlert
 import com.sinc.mobile.domain.use_case.weather.GetWeatherAlertsUseCase
 import com.sinc.mobile.domain.use_case.weather.SyncWeatherAlertsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import javax.inject.Inject
 
 data class WeatherUiState(
     val alerts: List<WeatherAlert> = emptyList(),
+    val isInitialLoad: Boolean = true,
     val isLoading: Boolean = false,
     val selectedLayer: WindyLayer = WindyLayer.RADAR,
 )
@@ -45,7 +47,22 @@ class WeatherViewModel @Inject constructor(
     init {
         Log.d("WeatherVM", "Iniciando WeatherViewModel...")
         observeAlerts()
-        refreshAlerts()
+        initialSync()
+    }
+
+    private fun initialSync() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isInitialLoad = true) }
+            val startTime = System.currentTimeMillis()
+            
+            syncWeatherAlertsUseCase()
+            
+            val duration = System.currentTimeMillis() - startTime
+            if (duration < 1500) {
+                delay(1500 - duration)
+            }
+            _uiState.update { it.copy(isInitialLoad = false) }
+        }
     }
 
     private fun observeAlerts() {

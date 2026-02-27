@@ -66,7 +66,7 @@ fun WeatherAlertCard(
             
             // Animación muy grande
             Box(
-                modifier = Modifier.size(110.dp),
+                modifier = Modifier.size(140.dp),
                 contentAlignment = Alignment.Center
             ) {
                 LottieAnimation(

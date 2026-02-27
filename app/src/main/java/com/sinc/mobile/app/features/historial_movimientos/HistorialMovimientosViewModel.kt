@@ -39,8 +39,23 @@ class HistorialMovimientosViewModel @Inject constructor(
 
     init {
         loadMovimientos()
-        // Sync is now called from the UI
-        syncMovimientos()
+        initialSync()
+    }
+
+    private fun initialSync() {
+        viewModelScope.launch {
+            _state.update { it.copy(isInitialLoad = true, error = null) }
+            val startTime = System.currentTimeMillis()
+            
+            // Sincronización en segundo plano bajo la pantalla blanca
+            syncMovimientosHistorialUseCase()
+            
+            val duration = System.currentTimeMillis() - startTime
+            if (duration < 1500) {
+                delay(1500 - duration)
+            }
+            _state.update { it.copy(isInitialLoad = false) }
+        }
     }
 
     private fun loadMovimientos() {
@@ -79,19 +94,14 @@ class HistorialMovimientosViewModel @Inject constructor(
         viewModelScope.launch {
             if (_state.value.isLoading) return@launch
             _state.update { it.copy(isLoading = true, error = null) }
-            val startTime = System.currentTimeMillis()
-
+            
             val result = syncMovimientosHistorialUseCase()
 
             if (result is Result.Failure) {
                 _state.update { it.copy(error = result.error.message) }
             }
 
-            val duration = System.currentTimeMillis() - startTime
-            if (duration < 1000) {
-                delay(1000 - duration)
-            }
-            _state.update { it.copy(isLoading = false, isInitialLoad = false) }
+            _state.update { it.copy(isLoading = false) }
         }
     }
 }

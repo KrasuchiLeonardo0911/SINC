@@ -36,7 +36,9 @@ import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChart
 import com.sinc.mobile.app.features.stock.components.PieChartData
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.app.ui.components.FullscreenLoader
 import com.sinc.mobile.ui.theme.SincPrimary
+import com.sinc.mobile.ui.theme.SincBackground
 import com.sinc.mobile.domain.model.UnidadProductiva
 
 // Paleta de colores local para gráficos dinámicos en la UI
@@ -57,69 +59,41 @@ fun StockScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
     onNavigateToVentas: () -> Unit,
-    mainScaffoldBottomPadding: Dp,
     viewModel: StockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val processedStock = uiState.processedStock
 
-    // Fondo gris del MainScreen
-    val backgroundColor = Color(0xFFF5F7FA)
-
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = backgroundColor,
-        topBar = {
-            MinimalHeader(
-                title = "Mi Stock",
-                onBackPress = onBack,
-                modifier = Modifier.statusBarsPadding(),
-                actions = {
-                    TextButton(
-                        onClick = onNavigateToVentas,
-                        colors = ButtonDefaults.textButtonColors(contentColor = SincPrimary)
-                    ) {
-                        Text(
-                            text = "Ventas",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-            )
-        }
+        modifier = modifier.fillMaxSize().navigationBarsPadding(),
+        containerColor = SincBackground,
+        // Eliminamos el topBar del Scaffold para tener control total
     ) { paddingValues ->
         if (uiState.isInitialLoad) {
-            Box(
+            FullscreenLoader(
+                message = "Cargando su stock...",
                 modifier = Modifier
                     .padding(paddingValues)
-                    .padding(bottom = mainScaffoldBottomPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            )
         } else {
             val pullRefreshState = rememberPullRefreshState(refreshing = uiState.isLoading, onRefresh = viewModel::refresh)
 
             Box(
                 Modifier
-                    .pullRefresh(pullRefreshState)
-                    .padding(paddingValues)
-                    .padding(bottom = mainScaffoldBottomPadding)
                     .fillMaxSize()
             ) {
                 if (processedStock != null) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        // Padding vertical solamente, horizontal es 0 para el estilo "full width"
-                        contentPadding = PaddingValues(top = 0.dp, bottom = 16.dp), 
-                        verticalArrangement = Arrangement.spacedBy(8.dp) // Separación gris entre secciones
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pullRefresh(pullRefreshState),
+                        // El padding superior incluye: StatusBar + Header (48dp) + Espacio (24dp)
+                        contentPadding = PaddingValues(
+                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 24.dp, 
+                            bottom = 24.dp
+                        ), 
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        
                         // Sección de Filtros
                         item {
                             StockFilterSection(
@@ -143,10 +117,31 @@ fun StockScreen(
                     EmptyStockState()
                 }
 
+                // Header Fijo Superior
+                MinimalHeader(
+                    title = "Mi Stock",
+                    onBackPress = onBack,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    actions = {
+                        TextButton(
+                            onClick = onNavigateToVentas,
+                            colors = ButtonDefaults.textButtonColors(contentColor = SincPrimary)
+                        ) {
+                            Text(
+                                text = "Ventas",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                )
+
                 PullRefreshIndicator(
                     refreshing = uiState.isLoading,
                     state = pullRefreshState,
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp),
                     backgroundColor = Color.White,
                     contentColor = MaterialTheme.colorScheme.primary
                 )

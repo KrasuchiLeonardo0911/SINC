@@ -117,39 +117,32 @@ fun MainScreen(
             } else {
                 // Initialized State: Show Dashboard
                 Scaffold(
-                    modifier = Modifier.navigationBarsPadding(),
+                    modifier = Modifier.fillMaxSize(),
                     containerColor = SincBackground,
-                    topBar = {
-                        if (currentRoute == CozyBottomNavRoutes.HOME) {
-                            StickyMainHeader(
-                                userName = uiState.userName ?: "Productor",
-                                onSettingsClick = { navController.navigate(Routes.CUENCA_INFO) },
-                                onDateClick = { showLogisticsPanel = true },
-                                today = today,
-                                orderDeadline = uiState.orderDeadline
+                    bottomBar = {
+                        if (currentRoute != CozyBottomNavRoutes.WEATHER && 
+                            currentRoute != CozyBottomNavRoutes.STOCK &&
+                            currentRoute != CozyBottomNavRoutes.HISTORIAL) {
+                            CozyBottomNavBar(
+                                selectedRoute = currentRoute,
+                                unreadNotificationCount = uiState.unreadNotificationCount,
+                                onItemSelected = { newRoute ->
+                                    if (newRoute == CozyBottomNavRoutes.PROFILE) {
+                                        navController.navigate(Routes.SETTINGS)
+                                    } else if (newRoute == CozyBottomNavRoutes.HELP) {
+                                        navController.navigate(Routes.HELP)
+                                    } else if (newRoute == CozyBottomNavRoutes.PROFILE) {
+                                        navController.navigate(Routes.SETTINGS)
+                                    } else if (newRoute == CozyBottomNavRoutes.HELP) {
+                                        navController.navigate(Routes.HELP)
+                                    } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
+                                        navController.navigate(Routes.NOTIFICATIONS)
+                                    } else {
+                                        currentRoute = newRoute
+                                    }
+                                }
                             )
                         }
-                    },
-                    bottomBar = {
-                        CozyBottomNavBar(
-                            selectedRoute = currentRoute,
-                            unreadNotificationCount = uiState.unreadNotificationCount,
-                            onItemSelected = { newRoute ->
-                                if (newRoute == CozyBottomNavRoutes.PROFILE) {
-                                    navController.navigate(Routes.SETTINGS)
-                                } else if (newRoute == CozyBottomNavRoutes.HELP) {
-                                    navController.navigate(Routes.HELP)
-                                } else if (newRoute == CozyBottomNavRoutes.PROFILE) {
-                                    navController.navigate(Routes.SETTINGS)
-                                } else if (newRoute == CozyBottomNavRoutes.HELP) {
-                                    navController.navigate(Routes.HELP)
-                                } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
-                                    navController.navigate(Routes.NOTIFICATIONS)
-                                } else {
-                                    currentRoute = newRoute
-                                }
-                            }
-                        )
                     }
                 ) { paddingValues ->
                     Crossfade(targetState = currentRoute, label = "main_screen_crossfade") { route ->
@@ -162,7 +155,7 @@ fun MainScreen(
                                 today = today,
                                 orderDeadline = uiState.orderDeadline,
                                 onStockClick = { currentRoute = CozyBottomNavRoutes.STOCK },
-                                onAddClick = { currentRoute = CozyBottomNavRoutes.SELECCION_CAMPO },
+                                onAddClick = { navController.navigate(Routes.SELECCION_CAMPO) },
                                 onHistoryClick = { currentRoute = CozyBottomNavRoutes.HISTORIAL },
                                 onCamposClick = { currentRoute = CozyBottomNavRoutes.CAMPOS },
                                 onWeatherClick = { currentRoute = CozyBottomNavRoutes.WEATHER },
@@ -170,7 +163,6 @@ fun MainScreen(
                                 onSalesHistoryClick = { navController.navigate(Routes.VENTAS_HISTORIAL) }
                             )
                             CozyBottomNavRoutes.STOCK -> StockScreen(
-                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 onNavigateToVentas = { navController.navigate(Routes.VENTAS) }
                             )
@@ -179,7 +171,6 @@ fun MainScreen(
                                 onBackPress = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
                             CozyBottomNavRoutes.HISTORIAL -> HistorialMovimientosScreen(
-                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 onNavigateToResumen = { month, year ->
                                     navController.navigate(Routes.createResumenMovimientosRoute(month, year))
@@ -195,11 +186,6 @@ fun MainScreen(
                                 },
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 navController = navController
-                            )
-                            CozyBottomNavRoutes.SELECCION_CAMPO -> SeleccionCampoScreen(
-                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
-                                navController = navController,
-                                onBack = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
                             else -> {
                                 Column(
@@ -290,47 +276,65 @@ fun MainContent(
     onPendingMovementsClick: () -> Unit,
     onSalesHistoryClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top
-    ) {
-        // Separador gris inicial debajo del header fijo
-        Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
-
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 1. Contenido Escrolleable
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(SincBackground)
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(bottom = paddingValues.calculateBottomPadding())
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Top
         ) {
-            MyJournalSection(
-                onStockClick = onStockClick,
-                onAddClick = onAddClick,
-                onHistoryClick = onHistoryClick,
-                onCamposClick = onCamposClick
-            )
+            // Espacio dinámico para que el contenido empiece debajo del header fijo
+            // Header height: StatusBars + Header Content (~130dp total)
+            Spacer(Modifier.statusBarsPadding())
+            Spacer(Modifier.height(130.dp))
+
+            // Separador gris inicial
+            Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SincBackground)
+                    .padding(16.dp)
+            ) {
+                MyJournalSection(
+                    onStockClick = onStockClick,
+                    onAddClick = onAddClick,
+                    onHistoryClick = onHistoryClick,
+                    onCamposClick = onCamposClick
+                )
+            }
+
+            // Separador gris
+            Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SincBackground)
+                    .padding(16.dp)
+            ) {
+                SyncStatusDashboard(
+                    onPendingMovementsClick = onPendingMovementsClick,
+                    onSalesHistoryClick = onSalesHistoryClick
+                )
+            }
+            
+            // Espacio final gris
+            Box(modifier = Modifier.fillMaxWidth().height(40.dp).background(SincGrayBackground))
         }
 
-        // Separador gris
-        Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(SincBackground)
-                .padding(16.dp)
-        ) {
-            SyncStatusDashboard(
-                onPendingMovementsClick = onPendingMovementsClick,
-                onSalesHistoryClick = onSalesHistoryClick
-            )
-        }
-        
-        // Espacio final gris para que no termine abruptamente
-        Box(modifier = Modifier.fillMaxWidth().height(40.dp).background(SincGrayBackground))
+        // 2. Cabecero Fijo (Top Most)
+        StickyMainHeader(
+            userName = userName,
+            onSettingsClick = onSettingsClick,
+            onDateClick = onDateClick,
+            today = today,
+            orderDeadline = orderDeadline,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
@@ -340,10 +344,11 @@ fun StickyMainHeader(
     onSettingsClick: () -> Unit,
     onDateClick: () -> Unit,
     today: LocalDate,
-    orderDeadline: LocalDate?
+    orderDeadline: LocalDate?,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(SincBackground) // Fondo blanco para el header fijo
     ) {

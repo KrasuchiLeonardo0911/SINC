@@ -36,6 +36,7 @@ import com.sinc.mobile.R
 import com.sinc.mobile.app.features.weather.components.WeatherAlertCard
 import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.app.ui.components.FullscreenLoader
 import com.sinc.mobile.ui.theme.SincPrimary
 import com.sinc.mobile.ui.theme.SincBackground
 import com.sinc.mobile.ui.theme.SincGrayBackground
@@ -73,15 +74,21 @@ fun WeatherScreen(
         },
         containerColor = SincBackground
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .pullRefresh(pullRefreshState)
-        ) {
+        if (uiState.isInitialLoad) {
+            FullscreenLoader(
+                message = "Cargando clima...",
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .pullRefresh(pullRefreshState)
+            ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 24.dp, bottom = 16.dp),
+                contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 // SECCIÓN ALERTAS
@@ -240,4 +247,5 @@ fun WeatherScreen(
             )
         }
     }
+}
 }

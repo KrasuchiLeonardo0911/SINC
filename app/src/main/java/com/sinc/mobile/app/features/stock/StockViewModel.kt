@@ -123,8 +123,8 @@ class StockViewModel @Inject constructor(
             syncStockUseCase()
             syncUnidadesProductivasUseCase()
             val duration = System.currentTimeMillis() - startTime
-            if (duration < 500) { // Ensure spinner is visible for at least 500ms
-                delay(500 - duration)
+            if (duration < 1500) { // Garantizar visibilidad de 1.5s
+                delay(1500 - duration)
             }
             _uiState.update { it.copy(isInitialLoad = false) }
         }

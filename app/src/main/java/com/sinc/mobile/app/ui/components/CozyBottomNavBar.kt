@@ -53,7 +53,7 @@ fun CozyBottomNavBar(
         BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
     )
 
-    Column {
+    Column(modifier = Modifier.navigationBarsPadding()) {
         HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.3f))
         Row(
             modifier = Modifier

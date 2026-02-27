@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -36,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,16 +53,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.MinimalHeader
+import com.sinc.mobile.app.ui.components.FullscreenLoader
 import com.sinc.mobile.domain.model.MovimientoHistorial
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincGrayBackground
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HistorialMovimientosScreen(
     viewModel: HistorialMovimientosViewModel = hiltViewModel(),
-    mainScaffoldBottomPadding: Dp,
     onBack: () -> Unit,
     onNavigateToResumen: (Int, Int) -> Unit
 ) {
@@ -79,88 +87,65 @@ fun HistorialMovimientosScreen(
     )
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            MinimalHeader(
-                title = "Historial de Movimientos",
-                onBackPress = onBack,
-                actions = {
-                    IconButton(onClick = { 
-                        onNavigateToResumen(state.selectedDate.monthValue, state.selectedDate.year) 
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Resumen Mensual",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SincBackground
     ) { paddingValues ->
         if (state.isInitialLoad) {
-            Box(
+            FullscreenLoader(
+                message = "Cargando historial...",
                 modifier = Modifier
                     .padding(paddingValues)
-                    .padding(bottom = mainScaffoldBottomPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp))
-            }
+            )
         } else {
-            Column(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .padding(bottom = mainScaffoldBottomPadding)
-                    .fillMaxSize()
+            Box(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                // Month Selector
-                MonthSelector(
-                    currentDate = state.selectedDate,
-                    onPrevious = { viewModel.previousMonth() },
-                    onNext = { viewModel.nextMonth() }
-                )
-
-                // List
+                // 1. Lista de Movimientos (Scrollable)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .pullRefresh(pullRefreshState)
                 ) {
-                    if (state.filteredMovimientos.isEmpty() && !state.isLoading) {
-                        Column(
-                            modifier = Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = if (state.error != null) "Error al sincronizar" else "No hay movimientos en este mes.",
-                                color = if (state.error != null) MaterialTheme.colorScheme.error else Color.Gray
-                            )
-                            state.error?.let {
-                                Text(
-                                    text = it,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+                        contentPadding = PaddingValues(
+                            // Header (48dp) + MonthSelector (~64dp) + Espaciado (24dp)
+                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 64.dp + 24.dp,
+                            bottom = 32.dp
+                        )
                     ) {
+                        if (state.filteredMovimientos.isEmpty() && !state.isLoading) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillParentMaxSize()
+                                        .padding(bottom = 150.dp), // Ajuste para header y selector
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = if (state.error != null) "Error al sincronizar" else "No hay movimientos en este mes.",
+                                            color = if (state.error != null) MaterialTheme.colorScheme.error else Color.Gray
+                                        )
+                                        state.error?.let {
+                                            Text(
+                                                text = it,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.padding(top = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         itemsIndexed(state.filteredMovimientos) { index, movimiento ->
                             CompactMovimientoRow(movimiento = movimiento)
                             
                             if (index < state.filteredMovimientos.size - 1) {
                                 HorizontalDivider(
-                                    modifier = Modifier.padding(start = 56.dp),
                                     thickness = 0.5.dp,
                                     color = Color.LightGray.copy(alpha = 0.5f)
                                 )
@@ -171,8 +156,47 @@ fun HistorialMovimientosScreen(
                     PullRefreshIndicator(
                         refreshing = state.isLoading,
                         state = pullRefreshState,
-                        modifier = Modifier.align(Alignment.TopCenter)
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 64.dp),
+                        backgroundColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
+                }
+
+                // 2. Cabecero y Selector Fijos (Top)
+                Column(modifier = Modifier.align(Alignment.TopCenter)) {
+                    MinimalHeader(
+                        title = "Historial de Movimientos",
+                        onBackPress = onBack,
+                        actions = {
+                            IconButton(onClick = { 
+                                onNavigateToResumen(state.selectedDate.monthValue, state.selectedDate.year) 
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = "Resumen Mensual",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    )
+                    
+                    // Selector de Mes Fijo sobre fondo blanco
+                    Surface(
+                        color = SincBackground,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            MonthSelector(
+                                currentDate = state.selectedDate,
+                                onPrevious = { viewModel.previousMonth() },
+                                onNext = { viewModel.nextMonth() }
+                            )
+                            // Línea divisoria sutil para marcar el límite al scrollear
+                            HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.3f))
+                        }
+                    }
                 }
             }
         }
@@ -191,7 +215,6 @@ fun MonthSelector(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -229,9 +252,7 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
     ) {
         // Icon
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(bgIconColor, CircleShape),
+            modifier = Modifier.size(40.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(

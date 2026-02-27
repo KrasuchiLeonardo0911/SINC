@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -69,6 +70,7 @@ object Routes {
     const val RESUMEN_MOVIMIENTOS = "resumen_movimientos/{month}/{year}"
     fun createResumenMovimientosRoute(month: Int, year: Int) = "resumen_movimientos/$month/$year"
     const val HELP = "help"
+    const val SELECCION_CAMPO = "seleccion_campo"
 
     // Ticket Routes
     const val TICKETS_LIST = "tickets_list"
@@ -258,16 +260,16 @@ fun AppNavigation(
                 }
             ),
             enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeIn(animationSpec = tween(300))
+                slideInHorizontally(initialOffsetX = { it }) + fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(animationSpec = tween(300))
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -it }) + fadeIn(animationSpec = tween(300))
             },
             popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { 1000 },
-                    animationSpec = tween(300)
-                ) + fadeOut(animationSpec = tween(300))
+                slideOutHorizontally(targetOffsetX = { it }) + fadeOut(animationSpec = tween(300))
             }
         ) { backStackEntry ->
             val initialPage = backStackEntry.arguments?.getInt("initialPage") ?: 0
@@ -334,6 +336,28 @@ fun AppNavigation(
             com.sinc.mobile.app.features.help.HelpScreen(
                 onBackPress = { navController.popBackStack() },
                 onNavigateToTickets = { navController.navigate(Routes.TICKETS_LIST) }
+            )
+        }
+
+        composable(
+            route = Routes.SELECCION_CAMPO,
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { it }) + fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(animationSpec = tween(300))
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -it }) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { it }) + fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            SeleccionCampoScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() },
+                mainScaffoldBottomPadding = 0.dp // Not needed for standalone screen
             )
         }
 
