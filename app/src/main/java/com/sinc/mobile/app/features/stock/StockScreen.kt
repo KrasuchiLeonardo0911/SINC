@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -39,7 +40,10 @@ import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.FullscreenLoader
 import com.sinc.mobile.ui.theme.SincPrimary
 import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincGrayBackground
 import com.sinc.mobile.domain.model.UnidadProductiva
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 
 // Paleta de colores local para gráficos dinámicos en la UI
 private val uiPieChartColors = listOf(
@@ -103,14 +107,29 @@ fun StockScreen(
                             )
                         }
 
+                        // Franja gris de separación
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+                        }
+
                         // Sección de Stock Total
                         item {
                             TotalStockSection(processedStock)
                         }
 
+                        // Franja gris de separación
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+                        }
+
                         // Secciones de Especies
-                        items(processedStock.allSpecies) { especie ->
+                        itemsIndexed(processedStock.allSpecies) { index, especie ->
                             SpeciesStockSection(speciesStock = especie)
+                            
+                            // Agregamos una franja gris entre especies (Ovinos/Caprinos)
+                            if (index < processedStock.allSpecies.size - 1) {
+                                Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(SincGrayBackground))
+                            }
                         }
                     }
                 } else if (!uiState.isLoading) {
@@ -150,7 +169,7 @@ fun StockScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StockFilterSection(
     unidades: List<UnidadProductiva>,
@@ -161,55 +180,77 @@ fun StockFilterSection(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(vertical = 16.dp)
+            .padding(16.dp)
     ) {
         Text(
             text = "Filtrar por Campo:",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF424242),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
         
-        LazyRow(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            item {
-                FilterChip(
-                    selected = selectedUnidadId == null,
-                    onClick = { onSelectUnidad(null) },
-                    label = { Text("Todos") },
+            // Chip "Todos"
+            val isTodosSelected = selectedUnidadId == null
+            FilterChip(
+                selected = isTodosSelected,
+                onClick = { onSelectUnidad(null) },
+                label = { 
+                    Text(
+                        text = "Todos",
+                        fontSize = 12.sp,
+                        fontWeight = if (isTodosSelected) FontWeight.Bold else FontWeight.Normal
+                    ) 
+                },
+                shape = RoundedCornerShape(16.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = Color.White,
+                    labelColor = SincPrimary,
+                    selectedContainerColor = SincPrimary,
+                    selectedLabelColor = Color.White
+                ),
+                border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = SincPrimary.copy(alpha = 0.1f),
-                        selectedLabelColor = SincPrimary
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = selectedUnidadId == null,
-                        borderColor = if (selectedUnidadId == null) SincPrimary else Color.LightGray,
-                        selectedBorderColor = SincPrimary
-                    )
+                    selected = isTodosSelected,
+                    borderColor = SincPrimary,
+                    selectedBorderColor = SincPrimary,
+                    borderWidth = 1.dp,
+                    selectedBorderWidth = 1.dp
                 )
-            }
-            items(unidades) { unidad ->
+            )
+
+            // Chips para cada unidad
+            unidades.forEach { unidad ->
+                val isSelected = selectedUnidadId == unidad.id
                 FilterChip(
-                    selected = selectedUnidadId == unidad.id,
+                    selected = isSelected,
                     onClick = { onSelectUnidad(unidad.id) },
-                    label = { Text(unidad.nombre ?: "Campo ${unidad.id}") },
-                    enabled = true,
+                    label = { 
+                        Text(
+                            text = unidad.nombre ?: "Campo ${unidad.id}",
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        ) 
+                    },
+                    shape = RoundedCornerShape(16.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = SincPrimary.copy(alpha = 0.1f),
-                        selectedLabelColor = SincPrimary
+                        containerColor = Color.White,
+                        labelColor = SincPrimary,
+                        selectedContainerColor = SincPrimary,
+                        selectedLabelColor = Color.White
                     ),
                     border = FilterChipDefaults.filterChipBorder(
                         enabled = true,
-                        selected = selectedUnidadId == unidad.id,
-                        borderColor = if (selectedUnidadId == unidad.id) SincPrimary else Color.LightGray,
-                        selectedBorderColor = SincPrimary
+                        selected = isSelected,
+                        borderColor = SincPrimary,
+                        selectedBorderColor = SincPrimary,
+                        borderWidth = 1.dp,
+                        selectedBorderWidth = 1.dp
                     )
                 )
             }
