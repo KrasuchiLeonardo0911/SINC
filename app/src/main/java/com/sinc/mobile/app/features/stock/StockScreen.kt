@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlin.math.roundToInt
 import com.sinc.mobile.app.features.stock.components.GroupingOptions
 import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChart
@@ -264,74 +265,92 @@ private fun TotalStockSection(stock: ProcessedStock) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(16.dp)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Text(
+            text = "Resumen de Existencias",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF191C1E),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            textAlign = TextAlign.Center
+        )
+
+        // Contenedor del Gráfico y el Número Central
+        Box(
+            modifier = Modifier.size(180.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Stock Total",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color(0xFF757575)
+            if (stock.speciesDistribution.isNotEmpty()) {
+                PieChart(
+                    data = stock.speciesDistribution,
+                    modifier = Modifier.fillMaxSize(),
+                    strokeWidth = 45f // Un poco más grueso para que se vea mejor
                 )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = stock.stockTotalGeneral.toString(),
-                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp
+                    ),
                     color = Color(0xFF191C1E)
                 )
                 Text(
-                    text = "Animales en campo",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF9E9E9E)
+                    text = "Animales",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF757575),
+                    fontWeight = FontWeight.Medium
                 )
-            }
-            if (stock.speciesDistribution.isNotEmpty()) {
-                Box(modifier = Modifier.size(100.dp)) {
-                    PieChart(
-                        data = stock.speciesDistribution,
-                        modifier = Modifier.fillMaxSize(),
-                        strokeWidth = 35f
-                    )
-                }
             }
         }
 
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Leyenda en Fila Inferior
         if (stock.speciesLegendItems.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider(color = Color(0xFFF0F0F0))
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Column(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                stock.speciesLegendItems.forEach { item ->
+                stock.speciesLegendItems.forEachIndexed { index, item ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(item.color)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = item.label,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF424242)
-                            )
-                        }
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(item.color)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${item.percentage.toInt()}%",
-                            style = MaterialTheme.typography.labelLarge,
+                            text = "${item.label}: ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF424242)
+                        )
+                        Text(
+                            text = "${item.percentage.roundToInt()}%",
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF191C1E)
+                        )
+                    }
+                    
+                    // Divisor vertical entre elementos de la leyenda
+                    if (index < stock.speciesLegendItems.size - 1) {
+                        Box(
+                            modifier = Modifier
+                                .size(1.dp, 16.dp)
+                                .background(Color.LightGray.copy(alpha = 0.5f))
                         )
                     }
                 }
