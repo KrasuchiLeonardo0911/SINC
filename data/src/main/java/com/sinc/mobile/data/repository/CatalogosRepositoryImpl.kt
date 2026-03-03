@@ -63,9 +63,10 @@ class CatalogosRepositoryImpl @Inject constructor(
                     "MultiPolygon" -> {
                         // For MultiPolygon, coordinates are [ polygon1, polygon2, ... ]
                         // where a polygon is [ ring, hole1, ... ]
-                        // We take the first ring of the first polygon.
-                        val firstPolygon = coordinates.getOrNull(0) as? JsonArray
-                        firstPolygon?.getOrNull(0) as? JsonArray
+                        // We take the exterior ring (first ring) of the polygon with the most points.
+                        coordinates.mapNotNull { it as? JsonArray }
+                            .mapNotNull { it.getOrNull(0) as? JsonArray }
+                            .maxByOrNull { it.size }
                     }
                     else -> {
                         Log.e("CatalogosRepo", "Unknown GeoJSON type '$type' for municipio $nombre")
