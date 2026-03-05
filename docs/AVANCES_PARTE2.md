@@ -183,3 +183,104 @@ Se ha implementado la funcionalidad completa para obtener, almacenar y gestionar
 ---
 **Estado Actual**: La infraestructura de datos está 100% operativa. Las alertas ya se descargan y guardan automáticamente. Queda pendiente el diseño visual de la sección "Clima" en el Dashboard para la próxima sesión.
 
+# Registro de Avances - Sesión de Pulido y Estabilización UI (26 de Febrero de 2026)
+
+Hoy se realizó una sesión intensiva de refinamiento visual y técnico, enfocada en la uniformidad, la experiencia de usuario (UX) y la estabilidad de la navegación.
+
+---
+
+## 1. Iconografía y Branding
+*   **Icono Adaptativo:** Se corrigió el error de recorte del logo de la aplicación al instalarse.
+    *   Se creó `ic_adaptive_foreground.xml` utilizando un `layer-list`.
+    *   Se ajustó el tamaño del logo de Ovinos a **52dp** dentro del contenedor estándar de **108dp**, garantizando que permanezca dentro de la "zona segura" circular de Android (66dp).
+*   **Reubicación de Clima:** Se restauró el acceso a Clima en la `CozyBottomNavBar` tras explorar otras ubicaciones, manteniendo la navegación original pero mejorada.
+
+## 2. Estandarización del Sistema de Colores
+*   **Refactorización de la Paleta:**
+    *   Se redefinió `SincBackground` como Blanco Puro (`0xFFFFFFFF`).
+    *   Se movió el gris claro anterior a `SincGrayBackground` (`0xFFF5F5F7`), utilizándolo ahora estratégicamente para headers y bloques de separación.
+*   **Limpieza Arquitectónica:**
+    *   Se eliminó la carpeta de temas duplicada (`app/ui/theme`) que causaba conflictos de importación.
+    *   Se unificaron todas las referencias a colores bajo el paquete `com.sinc.mobile.ui.theme`.
+    *   Se restauraron variables de compatibilidad (`DarkerGray`, `CozyLavender`, etc.) para asegurar el funcionamiento de componentes heredados.
+
+## 3. Arquitectura de Layout y Navegación
+*   **Cabecero Fijo (MainScreen):**
+    *   Se implementó el `StickyMainHeader` (Blanco) fijo en la parte superior mediante un layout de `Box`.
+    *   Se eliminó el `topBar` del `Scaffold` raíz para estabilizar las transiciones de `Crossfade`, eliminando el efecto de "salto" o "subida" del contenido al navegar.
+    *   Se compensó la altura del cabecero (~130dp) con `Spacer`s dinámicos para evitar el corte de las tarjetas del dashboard.
+*   **Headers Compactos:**
+    *   Se redujo la altura de `MinimalHeader` y `SelectionAppBar` de **64dp** a **48dp**.
+    *   Se ajustó el tamaño de los iconos de navegación de **36dp** a **32dp**.
+    *   Se integró el manejo de `statusBarsPadding()` dentro del fondo gris del header, logrando que el color sea continuo hasta el borde superior del dispositivo.
+*   **Espaciado Uniforme:** Se estandarizó el `contentPadding` superior a **24dp** en todas las pantallas principales para mejorar la jerarquía y legibilidad.
+*   **Animaciones de Desplazamiento:**
+    *   Se configuraron las rutas `SELECCION_CAMPO` y `MOVIMIENTO_FORM` con el juego completo de transiciones (`enter`, `exit`, `popEnter`, `popExit`).
+    *   Se utilizó el ancho dinámico de pantalla `{ it }` en lugar de valores fijos para garantizar un desplazamiento fluido en cualquier resolución.
+
+## 4. Pantallas de Carga y Sincronización
+*   **Componente `FullscreenLoader`:** Se desarrolló un nuevo componente de carga inicial (fondo blanco, spinner primario y mensaje descriptivo).
+*   **Lógica de Carga Inicial:**
+    *   Se refactorizaron los ViewModels de **Stock**, **Clima** e **Historial** para separar el estado `isInitialLoad` del `isLoading` manual.
+    *   La sincronización de datos ahora ocurre "bajo" la pantalla blanca de carga con una duración mínima de **1.5 segundos**, evitando parpadeos y ocultando la animación del pull-to-refresh durante la navegación.
+
+## 5. Mejoras Específicas por Pantalla
+*   **Clima:**
+    *   Rediseño completo a formato "Flat": Se eliminaron las tarjetas contenedoras de alertas.
+    *   **Animaciones Lottie:** Se aumentó el tamaño a **140dp** y se reasignaron los assets (Rojo: Warning, Amarillo: Storm, Naranja: Exclamation).
+    *   **Alertas Proactivas:** El icono de la barra inferior parpadea y cambia de color según el nivel de alerta. Se implementó lógica para detener la animación automáticamente al entrar a la pantalla.
+*   **Stock & Historial:**
+    *   Se eliminó la barra de navegación inferior en estas pantallas para una experiencia a pantalla completa.
+    *   Se aplicó `navigationBarsPadding()` para asegurar que el fondo blanco cubra de forma sólida el área de botones de Android.
+*   **Historial de Movimientos:**
+    *   Se fijó el selector de mes en la parte superior.
+    *   Se eliminaron fondos circulares en las flechas indicadoras.
+    *   Se extendieron los divisores horizontales a todo el ancho de la pantalla.
+
+## 6. Correcciones Técnicas
+*   Se resolvieron múltiples errores de compilación relacionados con importaciones mal ubicadas, parámetros faltantes en ViewModels y discrepancias de tipos en animaciones de Compose.
+*   Se verificó la funcionalidad de las animaciones de desplazamiento en builds de `release`.
+
+# Avances de la Sesión Actual (03 de Marzo de 2026)
+
+## 1. Corrección Crítica: Límites de Municipios (MultiPolygon)
+
+- **Problema Detectado**: El municipio San José no se dibujaba correctamente en el mapa debido a que su GeoJSON es un `MultiPolygon` que contiene una geometría residual (4 puntos) antes del límite real. La lógica anterior solo tomaba el primer polígono encontrado.
+- **Solución Implementada**:
+    - Se analizó la estructura real del servidor de producción mediante `curl`.
+    - Se refactorizó la lógica de parseo en `CatalogosRepositoryImpl.kt` para que, en el caso de `MultiPolygon`, itere sobre todos los polígonos y seleccione automáticamente aquel que tenga la mayor cantidad de coordenadas en su anillo exterior.
+    - Esto garantiza que se visualice siempre el contorno principal del municipio, ignorando ruidos o errores de digitalización.
+
+## 2. Rediseño Integral de la Pantalla "Mi Stock"
+
+Se ha transformado la pantalla para ofrecer una experiencia más limpia, interactiva y profesional.
+
+### 2.1. Nueva Arquitectura de Visualización
+- **Simplificación Visual**: Se unificó toda la pantalla con fondo blanco puro, eliminando las franjas grises de separación para un aspecto más moderno e integrado.
+- **Flujo de Navegación**: Se eliminaron las listas extensas de la pantalla principal. Ahora el usuario interactúa con el resumen general y profundiza en una nueva pantalla de detalle (`StockDetailScreen`).
+
+### 2.2. Tarjeta de Resumen General Interactiva
+- **Gráfico de Dona**: Se restauró el gráfico de anillo original, añadiéndole una sombra sutil (`shadow`) y centrando el contador total de animales en su interior.
+- **Leyenda Estilo "Mis Campos"**: Las filas de Ovinos y Caprinos fueron rediseñadas para coincidir con la estética de la lista de campos:
+    - Punto de color indicador de especie.
+    - Nombre de la especie en negro y negrita.
+    - Subtítulo gris indicando el porcentaje de representación en el stock.
+    - Icono `ChevronRight` al final de la fila para indicar navegabilidad.
+    - Líneas divisorias más marcadas (`outlineVariant`) para una mejor estructura.
+
+### 2.3. Selector de Vistas (ModalBottomSheet)
+- Al pulsar sobre una especie, se abre un panel inferior que permite elegir cómo visualizar los datos:
+    - **Vista Total**
+    - **Por Categoría**
+    - **Por Raza**
+- Los botones de selección (chips) mantienen el estilo del resto de la aplicación (bordes redondeados, colores institucionales).
+
+### 2.4. Infraestructura de Navegación
+- Se actualizó el objeto `Routes` y `AppNavigation.kt` para soportar la nueva ruta `STOCK_DETAIL`, la cual recibe parámetros dinámicos de especie y tipo de agrupación.
+
+## 3. Ajustes Estéticos y de Identidad
+- **Paleta de Colores**: Se definieron colores específicos y consistentes: **Verde Oscuro** para Ovinos y el **Bordó Principal** de la app para Caprinos.
+- **Consistencia de Datos**: Se implementó el redondeo matemático (`roundToInt`) para todos los porcentajes de la pantalla, evitando decimales innecesarios y mejorando la legibilidad.
+
+---
+**Estado del Proyecto**: El sistema compila correctamente y el nuevo flujo de navegación de Stock es funcional y estéticamente superior.

@@ -71,6 +71,8 @@ object Routes {
     fun createResumenMovimientosRoute(month: Int, year: Int) = "resumen_movimientos/$month/$year"
     const val HELP = "help"
     const val SELECCION_CAMPO = "seleccion_campo"
+    const val STOCK_DETAIL = "stock_detail/{speciesName}/{grouping}"
+    fun createStockDetailRoute(speciesName: String, grouping: String) = "stock_detail/$speciesName/$grouping"
 
     // Ticket Routes
     const val TICKETS_LIST = "tickets_list"
@@ -358,6 +360,28 @@ fun AppNavigation(
                 navController = navController,
                 onBack = { navController.popBackStack() },
                 mainScaffoldBottomPadding = 0.dp // Not needed for standalone screen
+            )
+        }
+
+        composable(
+            route = Routes.STOCK_DETAIL,
+            arguments = listOf(
+                navArgument("speciesName") { type = NavType.StringType },
+                navArgument("grouping") { type = NavType.StringType }
+            ),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+            }
+        ) { backStackEntry ->
+            val speciesName = backStackEntry.arguments?.getString("speciesName") ?: ""
+            val grouping = backStackEntry.arguments?.getString("grouping") ?: "BY_ALL"
+            com.sinc.mobile.app.features.stock.StockDetailScreen(
+                speciesName = speciesName,
+                grouping = grouping,
+                onBack = { navController.popBackStack() }
             )
         }
 

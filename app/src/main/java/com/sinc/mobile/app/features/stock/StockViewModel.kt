@@ -84,14 +84,14 @@ class StockViewModel @Inject constructor(
     val uiState: StateFlow<StockUiState> = _uiState.asStateFlow()
 
     private val pieChartColors = listOf(
-        Color(0xFF2E7D32), // Verde Fuerte
+        Color(0xFF8C2218), // Bordó Principal (Asignado a Caprinos por orden alfabético)
+        Color(0xFF2E7D32), // Verde Oscuro (Asignado a Ovinos por orden alfabético)
+        Color(0xFF43A047), // Verde Medio
         Color(0xFF66BB6A), // Verde Claro
-        Color(0xFF9CCC65), // Verde Lima Suave
-        Color(0xFF26A69A), // Verde Azulado
-        Color(0xFFFFA726), // Naranja (Contraste)
-        Color(0xFF29B6F6), // Azul Claro (Contraste)
-        Color(0xFF78909C), // Gris Azulado
-        Color(0xFF8D6E63)  // Marrón Suave
+        Color(0xFF81C784), // Verde Pálido
+        Color(0xFF546E7A), // Gris Azulado
+        Color(0xFF78909C), // Gris Medio
+        Color(0xFF90A4AE)  // Gris Pálido
     )
 
     init {
@@ -176,6 +176,7 @@ class StockViewModel @Inject constructor(
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .mapValues { entry -> entry.value.sumOf { it.stockTotal } }
+            .toSortedMap() // Ordenar alfabéticamente por especie
         val totalGeneralStock = speciesTotals.values.sum().toFloat()
 
         val speciesDistributionData = speciesTotals.entries.mapIndexed { index, entry ->
