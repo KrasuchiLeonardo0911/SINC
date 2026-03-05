@@ -35,17 +35,12 @@ sealed class DesgloseItem { // Renamed for clarity
     data class Full(val categoria: String, val raza: String, val quantity: Int) : DesgloseItem()
 }
 
-sealed class DesgloseUiData {
-    data class Grouped(val chartData: List<PieChartData>, val legendItems: List<LegendItem>) : DesgloseUiData()
-    data class Full(val tableData: List<DesgloseItem.Full>) : DesgloseUiData()
-}
-
 data class ProcessedStock(
     val stockTotalGeneral: Int,
     val unidadesProductivas: List<ProcessedUnidadProductivaStock>,
     val allSpecies: List<ProcessedEspecieStock>,
     val speciesDistribution: List<PieChartData> = emptyList(),
-    val speciesLegendItems: List<LegendItem> = emptyList() // New field
+    val speciesLegendItems: List<LegendItem> = emptyList()
 )
 
 data class ProcessedUnidadProductivaStock(
@@ -57,7 +52,19 @@ data class ProcessedEspecieStock(
     val nombre: String,
     val stockTotal: Int,
     val desglose: List<DesgloseItem.Full>,
-    val color: Color // NEW FIELD
+    val color: Color
+)
+
+/**
+ * Representa los datos necesarios para visualizar el detalle de una especie.
+ */
+data class SpeciesDetailUiData(
+    val speciesName: String,
+    val stockTotal: Int,
+    val color: Color,
+    val chartData: List<PieChartData> = emptyList(),
+    val legendItems: List<LegendItem> = emptyList(),
+    val tableData: List<DesgloseItem.Full> = emptyList()
 )
 
 data class StockUiState(
@@ -72,7 +79,6 @@ data class StockUiState(
 // endregion
 
 @HiltViewModel
-
 class StockViewModel @Inject constructor(
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase,
@@ -164,6 +170,84 @@ class StockViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Procesa los datos de detalle para una especie y un agrupamiento específico.
+     */
+    fun getSpeciesDetailData(speciesName: String, grouping: StockGrouping): SpeciesDetailUiData? {
+        val processedStock = _uiState.value.processedStock ?: return null
+        val speciesStock = processedStock.allSpecies.find { it.nombre == speciesName } ?: return null
+
+        val totalStock = speciesStock.stockTotal.toFloat()
+        
+        return when (grouping) {
+            StockGrouping.BY_ALL -> {
+                SpeciesDetailUiData(
+                    speciesName = speciesName,
+                    stockTotal = speciesStock.stockTotal,
+                    color = speciesStock.color,
+                    tableData = speciesStock.desglose
+                )
+            }
+            StockGrouping.BY_CATEGORY -> {
+                val byCategory = speciesStock.desglose.groupBy { it.categoria }
+                    .mapValues { it.value.sumOf { item -> item.quantity } }
+                    .toSortedMap()
+                
+                val distribution = calculateDistribution(byCategory, totalStock)
+                
+                SpeciesDetailUiData(
+                    speciesName = speciesName,
+                    stockTotal = speciesStock.stockTotal,
+                    color = speciesStock.color,
+                    chartData = distribution.first,
+                    legendItems = distribution.second,
+                    tableData = speciesStock.desglose
+                )
+            }
+            StockGrouping.BY_BREED -> {
+                val byBreed = speciesStock.desglose.groupBy { it.raza }
+                    .mapValues { it.value.sumOf { item -> item.quantity } }
+                    .toSortedMap()
+                
+                val distribution = calculateDistribution(byBreed, totalStock)
+
+                SpeciesDetailUiData(
+                    speciesName = speciesName,
+                    stockTotal = speciesStock.stockTotal,
+                    color = speciesStock.color,
+                    chartData = distribution.first,
+                    legendItems = distribution.second,
+                    tableData = speciesStock.desglose
+                )
+            }
+        }
+    }
+
+    private fun calculateDistribution(
+        data: Map<String, Int>, 
+        total: Float
+    ): Pair<List<PieChartData>, List<LegendItem>> {
+        if (total == 0f) return emptyList<PieChartData>() to emptyList<LegendItem>()
+
+        val chartData = data.entries.mapIndexed { index, entry ->
+            PieChartData(
+                value = entry.value.toFloat(),
+                color = pieChartColors[index % pieChartColors.size]
+            )
+        }
+
+        val legendItems = data.entries.mapIndexed { index, entry ->
+            LegendItem(
+                label = entry.key,
+                value = entry.value,
+                percentage = (entry.value / total) * 100,
+                color = pieChartColors[index % pieChartColors.size]
+            )
+        }
+
+        return chartData to legendItems
+    }
+
     internal fun processStock(stock: Stock, selectedUnidadId: Int?): ProcessedStock {
         // Filter units based on selection
         val filteredUnits = if (selectedUnidadId == null) {
@@ -215,8 +299,6 @@ class StockViewModel @Inject constructor(
                     }
 
                 // Get the color for this species based on global consistent colors
-                // We find the index of this species in the global list of species names to ensure consistent coloring
-                // regardless of filtering.
                 val globalSpeciesList = stock.unidadesProductivas.flatMap { it.especies }.map { it.nombre }.distinct().sorted()
                 val colorIndex = globalSpeciesList.indexOf(nombreEspecie).takeIf { it >= 0 } ?: 0
                 val speciesColor = pieChartColors[colorIndex % pieChartColors.size]

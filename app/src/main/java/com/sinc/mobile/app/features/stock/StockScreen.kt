@@ -57,10 +57,6 @@ fun StockScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val processedStock = uiState.processedStock
-    
-    var selectedSpeciesForDetail by remember { mutableStateOf<String?>(null) }
-    var showGroupingSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
         modifier = modifier.fillMaxSize().navigationBarsPadding(),
@@ -100,8 +96,8 @@ fun StockScreen(
                             TotalStockSection(
                                 stock = processedStock,
                                 onSpeciesSelected = { species ->
-                                    selectedSpeciesForDetail = species
-                                    showGroupingSheet = true
+                                    // Navegar directamente con el agrupamiento por defecto (BY_ALL)
+                                    onNavigateToDetail(species, "BY_ALL")
                                 }
                             )
                         }
@@ -134,80 +130,6 @@ fun StockScreen(
                     backgroundColor = Color.White,
                     contentColor = MaterialTheme.colorScheme.primary
                 )
-            }
-        }
-    }
-
-    if (showGroupingSheet && selectedSpeciesForDetail != null) {
-        ModalBottomSheet(
-            onDismissRequest = { 
-                showGroupingSheet = false
-                selectedSpeciesForDetail = null
-            },
-            sheetState = sheetState,
-            containerColor = Color.White,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, bottom = 48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Ver stock de $selectedSpeciesForDetail",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF191C1E)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Seleccione cómo desea agrupar los datos",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val options = listOf(
-                        "Vista Total" to "BY_ALL",
-                        "Por Categoría" to "BY_CATEGORY",
-                        "Por Raza" to "BY_BREED"
-                    )
-                    
-                    options.forEach { (label, value) ->
-                        FilterChip(
-                            selected = false,
-                            onClick = {
-                                showGroupingSheet = false
-                                onNavigateToDetail(selectedSpeciesForDetail!!, value)
-                                selectedSpeciesForDetail = null
-                            },
-                            label = { 
-                                Text(
-                                    text = label, 
-                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-                                    fontSize = 14.sp
-                                ) 
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color.White,
-                                labelColor = SincPrimary
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = false,
-                                borderColor = SincPrimary,
-                                borderWidth = 1.dp
-                            )
-                        )
-                    }
-                }
             }
         }
     }
