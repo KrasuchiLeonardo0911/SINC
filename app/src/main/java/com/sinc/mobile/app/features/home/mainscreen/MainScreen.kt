@@ -165,8 +165,8 @@ fun MainScreen(
                             CozyBottomNavRoutes.STOCK -> StockScreen(
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 onNavigateToVentas = { navController.navigate(Routes.VENTAS) },
-                                onNavigateToDetail = { speciesName, grouping ->
-                                    navController.navigate(Routes.createStockDetailRoute(speciesName, grouping))
+                                onNavigateToDetail = { speciesName, grouping, unidadId ->
+                                    navController.navigate(Routes.createStockDetailRoute(speciesName, grouping, unidadId))
                                 }
                             )
                             CozyBottomNavRoutes.WEATHER -> WeatherScreen(

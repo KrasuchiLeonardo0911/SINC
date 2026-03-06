@@ -24,6 +24,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.sinc.mobile.domain.use_case.ventas.CreateDeclaracionVentaUseCase
+import com.sinc.mobile.domain.use_case.ventas.SyncDeclaracionesVentaUseCase
+import com.sinc.mobile.domain.use_case.ventas.ValidateStockForVentaUseCase
+import com.sinc.mobile.domain.model.GenericError
+import kotlinx.coroutines.flow.first
+
 // region Data Models
 enum class StockGrouping {
     BY_ALL,
@@ -70,11 +76,15 @@ data class SpeciesDetailUiData(
 data class StockUiState(
     val isInitialLoad: Boolean = true,
     val isLoading: Boolean = false,
+    val isSelling: Boolean = false,
+    val saleSuccess: String? = null,
+    val saleError: String? = null,
     val unidadesProductivas: List<UnidadProductiva> = emptyList(),
     val error: String? = null,
     val stock: Stock? = null,
     val processedStock: ProcessedStock? = null,
-    val selectedUnidadId: Int? = null
+    val selectedUnidadId: Int? = null,
+    val upSearchQuery: String = ""
 )
 // endregion
 
@@ -83,7 +93,11 @@ class StockViewModel @Inject constructor(
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase,
     private val getStockUseCase: GetStockUseCase,
-    private val syncStockUseCase: SyncStockUseCase
+    private val syncStockUseCase: SyncStockUseCase,
+    private val createDeclaracionVentaUseCase: CreateDeclaracionVentaUseCase,
+    private val validateStockForVentaUseCase: ValidateStockForVentaUseCase,
+    private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase,
+    private val catalogosRepository: com.sinc.mobile.domain.repository.CatalogosRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StockUiState())
@@ -126,14 +140,23 @@ class StockViewModel @Inject constructor(
     private fun initialSync() {
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
-            syncStockUseCase()
-            syncUnidadesProductivasUseCase()
-            val duration = System.currentTimeMillis() - startTime
-            if (duration < 1500) { // Garantizar visibilidad de 1.5s
-                delay(1500 - duration)
+            try {
+                syncStockUseCase()
+                syncUnidadesProductivasUseCase()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Error de conexión") }
+            } finally {
+                val duration = System.currentTimeMillis() - startTime
+                if (duration < 1000) { // Garantizar visibilidad mínima
+                    delay(1000 - duration)
+                }
+                _uiState.update { it.copy(isInitialLoad = false) }
             }
-            _uiState.update { it.copy(isInitialLoad = false) }
         }
+    }
+
+    fun onUpSearchQueryChange(query: String) {
+        _uiState.update { it.copy(upSearchQuery = query) }
     }
 
     fun refresh() {
@@ -158,6 +181,84 @@ class StockViewModel @Inject constructor(
             // End loading state
             _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    fun onSellAnimal(
+        especieNombre: String,
+        categoriaNombre: String,
+        razaNombre: String,
+        cantidad: Int,
+        peso: Float?,
+        observaciones: String,
+        unidadId: Int
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSelling = true, saleError = null, saleSuccess = null) }
+
+            // 1. Obtener IDs de los catálogos basados en los nombres
+            val catalogos = catalogosRepository.getMovimientoCatalogos().first()
+            val especieId = catalogos.especies.find { it.nombre.equals(especieNombre, ignoreCase = true) }?.id
+            val categoriaId = catalogos.categorias.find { it.nombre.equals(categoriaNombre, ignoreCase = true) && it.especieId == especieId }?.id
+            val razaId = catalogos.razas.find { it.nombre.equals(razaNombre, ignoreCase = true) && it.especieId == especieId }?.id
+
+            if (especieId == null || categoriaId == null || razaId == null) {
+                _uiState.update { it.copy(isSelling = false, saleError = "Error al identificar el animal en el catálogo.") }
+                return@launch
+            }
+
+            // 2. Validar Stock
+            val validationResult = validateStockForVentaUseCase(
+                unidadProductivaId = unidadId,
+                especieId = especieId,
+                razaId = razaId,
+                categoriaAnimalId = categoriaId,
+                cantidadSolicitada = cantidad
+            )
+
+            when (validationResult) {
+                is ValidateStockForVentaUseCase.ValidationResult.Success -> {
+                    // 3. Crear Declaración
+                    val result = createDeclaracionVentaUseCase(
+                        unidadProductivaId = unidadId,
+                        especieId = especieId,
+                        razaId = razaId,
+                        categoriaAnimalId = categoriaId,
+                        cantidad = cantidad,
+                        observaciones = observaciones,
+                        pesoAproximadoKg = peso
+                    )
+
+                    when (result) {
+                        is Result.Success -> {
+                            _uiState.update { 
+                                it.copy(
+                                    isSelling = false, 
+                                    saleSuccess = "Venta registrada correctamente."
+                                )
+                            }
+                            // 4. Sincronizar Stock y Declaraciones tras éxito
+                            syncDeclaracionesVentaUseCase()
+                            syncStockUseCase()
+                        }
+                        is Result.Failure -> {
+                            val msg = (result.error as? GenericError)?.message ?: "Error al guardar la venta"
+                            _uiState.update { it.copy(isSelling = false, saleError = msg) }
+                        }
+                    }
+                }
+                is ValidateStockForVentaUseCase.ValidationResult.InsufficientStock -> {
+                    val msg = "Stock insuficiente. Disponible: ${validationResult.real - validationResult.pendiente}"
+                    _uiState.update { it.copy(isSelling = false, saleError = msg) }
+                }
+                is ValidateStockForVentaUseCase.ValidationResult.Error -> {
+                    _uiState.update { it.copy(isSelling = false, saleError = validationResult.message) }
+                }
+            }
+        }
+    }
+
+    fun clearSaleMessages() {
+        _uiState.update { it.copy(saleError = null, saleSuccess = null) }
     }
 
     fun selectUnidad(unidadId: Int?) {

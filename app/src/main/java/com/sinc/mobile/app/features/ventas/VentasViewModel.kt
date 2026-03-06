@@ -94,6 +94,7 @@ class VentasViewModel @Inject constructor(
     private fun syncData() {
         viewModelScope.launch {
             syncUnidadesProductivasUseCase()
+            syncCatalogosUseCase()
             syncStockUseCase()
             syncDeclaracionesVentaUseCase()
         }
@@ -124,10 +125,19 @@ class VentasViewModel @Inject constructor(
         // Cargar Catálogos
         viewModelScope.launch {
             catalogosRepository.getMovimientoCatalogos().collect { catalogos ->
-                // Solo actualizamos razas y categorías si ya estaban cargadas, 
-                // pero NO sobrescribimos la lista de especies filtrada.
-                // La lista de especies se gestiona exclusivamente a través de onUpSelected
-                // o cuando cambia la selección de UP.
+                _uiState.update { state ->
+                    if (state.selectedEspecieId != null) {
+                        state.copy(
+                            especies = catalogos.especies,
+                            razas = catalogos.razas.filter { it.especieId == state.selectedEspecieId },
+                            categorias = catalogos.categorias.filter { it.especieId == state.selectedEspecieId }
+                        )
+                    } else if (state.selectedUpId == null) {
+                        state.copy(especies = catalogos.especies)
+                    } else {
+                        state
+                    }
+                }
             }
         }
     }
@@ -173,15 +183,8 @@ class VentasViewModel @Inject constructor(
 
     fun onUpSelected(upId: Int) {
         viewModelScope.launch {
-            val stock = getStockUseCase().first()
-            val upStock = stock.unidadesProductivas.find { it.id == upId }
-            
-            // Filtrar especies que tienen stock > 0 en esta UP
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()
-            val especiesDisponibles = catalogos.especies.filter { especie ->
-                val especieStock = upStock?.especies?.find { it.nombre.equals(especie.nombre, ignoreCase = true) }
-                (especieStock?.stockTotal ?: 0) > 0
-            }
+            val especiesDisponibles = catalogos.especies
 
             _uiState.update { 
                 it.copy(
@@ -200,41 +203,20 @@ class VentasViewModel @Inject constructor(
     fun onEspecieSelected(especieId: Int) {
         viewModelScope.launch {
             val state = _uiState.value
-            if (state.selectedUpId == null) return@launch
-
-            val stock = getStockUseCase().first()
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()
             
-            val especieNombre = catalogos.especies.find { it.id == especieId }?.nombre ?: return@launch
-            val upStock = stock.unidadesProductivas.find { it.id == state.selectedUpId }
-            val especieStock = upStock?.especies?.find { it.nombre.equals(especieNombre, ignoreCase = true) }
-
-            // Obtener razas y categorías disponibles en el catálogo para esta especie
+            // Obtener todas las razas y categorías disponibles en el catálogo para esta especie
+            // Eliminamos el filtrado restrictivo por stock para permitir la selección fluida
             val allRazas = catalogos.razas.filter { it.especieId == especieId }
             val allCategorias = catalogos.categorias.filter { it.especieId == especieId }
-
-            // Filtrar solo las que tienen stock > 0
-            val razasConStock = allRazas.filter { raza ->
-                val count = especieStock?.desglose?.filter { 
-                    it.raza.equals(raza.nombre, ignoreCase = true) 
-                }?.sumOf { it.cantidad } ?: 0
-                count > 0
-            }
-
-            val categoriasConStock = allCategorias.filter { cat ->
-                val count = especieStock?.desglose?.filter { 
-                    it.categoria.equals(cat.nombre, ignoreCase = true) 
-                }?.sumOf { it.cantidad } ?: 0
-                count > 0
-            }
 
             _uiState.update { 
                 it.copy(
                     selectedEspecieId = especieId,
                     selectedRazaId = null,
                     selectedCategoriaId = null,
-                    razas = razasConStock,
-                    categorias = categoriasConStock
+                    razas = allRazas,
+                    categorias = allCategorias
                 )
             }
         }

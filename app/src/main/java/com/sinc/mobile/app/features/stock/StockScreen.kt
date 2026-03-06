@@ -1,17 +1,10 @@
 package com.sinc.mobile.app.features.stock
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,7 +13,6 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,23 +20,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sinc.mobile.app.features.stock.components.GroupingOptions
-import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChart
-import com.sinc.mobile.app.features.stock.components.PieChartData
+import com.sinc.mobile.app.features.stock.components.CampoSelector
+import com.sinc.mobile.app.features.stock.components.UpSelectorBottomSheet
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.FullscreenLoader
-import com.sinc.mobile.ui.theme.SincPrimary
-import com.sinc.mobile.ui.theme.SincBackground
-import com.sinc.mobile.ui.theme.SincGrayBackground
-import com.sinc.mobile.domain.model.UnidadProductiva
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import kotlin.math.roundToInt
+
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -52,11 +37,12 @@ fun StockScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
     onNavigateToVentas: () -> Unit,
-    onNavigateToDetail: (String, String) -> Unit,
+    onNavigateToDetail: (String, String, Int?) -> Unit,
     viewModel: StockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val processedStock = uiState.processedStock
+    var showUpSelector by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize().navigationBarsPadding(),
@@ -71,39 +57,47 @@ fun StockScreen(
             val pullRefreshState = rememberPullRefreshState(refreshing = uiState.isLoading, onRefresh = viewModel::refresh)
 
             Box(Modifier.fillMaxSize()) {
-                if (processedStock != null) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pullRefresh(pullRefreshState),
-                        contentPadding = PaddingValues(
-                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 24.dp, 
-                            bottom = 24.dp
-                        ), 
-                        verticalArrangement = Arrangement.spacedBy(0.dp)
-                    ) {
-                        // Sección de Filtros
-                        item {
-                            StockFilterSection(
-                                unidades = uiState.unidadesProductivas,
-                                selectedUnidadId = uiState.selectedUnidadId,
-                                onSelectUnidad = viewModel::selectUnidad
-                            )
-                        }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pullRefresh(pullRefreshState),
+                    contentPadding = PaddingValues(
+                        start = 0.dp,
+                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 32.dp, 
+                        end = 0.dp,
+                        bottom = 24.dp
+                    ), 
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    // Selector de Campo (Estilo Barra de Búsqueda)
+                    item {
+                        val selectedUnidad = uiState.unidadesProductivas.find { it.id == uiState.selectedUnidadId }
+                        CampoSelector(
+                            selectedUnidadName = selectedUnidad?.nombre ?: "Todos los campos",
+                            onClick = { showUpSelector = true }
+                        )
+                        Spacer(modifier = Modifier.height(64.dp))
+                    }
 
+                    if (processedStock != null && processedStock.stockTotalGeneral > 0) {
                         // Sección de Stock Total (Interactiva)
                         item {
                             TotalStockSection(
                                 stock = processedStock,
                                 onSpeciesSelected = { species ->
-                                    // Navegar directamente con el agrupamiento por defecto (BY_ALL)
-                                    onNavigateToDetail(species, "BY_ALL")
+                                    onNavigateToDetail(species, "BY_ALL", uiState.selectedUnidadId)
                                 }
                             )
                         }
+                    } else if (!uiState.isLoading) {
+                        item {
+                            EmptyStockState(
+                                message = if (uiState.selectedUnidadId != null) 
+                                    "Este campo no tiene stock registrado." 
+                                else "Aún no tienes stock registrado en tus campos."
+                            )
+                        }
                     }
-                } else if (!uiState.isLoading) {
-                    EmptyStockState()
                 }
 
                 // Header Fijo Superior
@@ -112,11 +106,12 @@ fun StockScreen(
                     onBackPress = onBack,
                     modifier = Modifier.align(Alignment.TopCenter),
                     actions = {
-                        TextButton(
-                            onClick = onNavigateToVentas,
-                            colors = ButtonDefaults.textButtonColors(contentColor = SincPrimary)
-                        ) {
-                            Text(text = "Ventas", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        IconButton(onClick = onNavigateToVentas) {
+                            Icon(
+                                imageVector = Icons.Default.LocalShipping,
+                                contentDescription = "Seguimiento",
+                                tint = Color.Black
+                            )
                         }
                     }
                 )
@@ -133,94 +128,17 @@ fun StockScreen(
             }
         }
     }
-}
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun StockFilterSection(
-    unidades: List<UnidadProductiva>,
-    selectedUnidadId: Int?,
-    onSelectUnidad: (Int?) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Filtrar por Campo:",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF424242),
-            modifier = Modifier.padding(bottom = 12.dp)
+    if (showUpSelector) {
+        UpSelectorBottomSheet(
+            unidades = uiState.unidadesProductivas,
+            selectedUnidadId = uiState.selectedUnidadId,
+            onSelectUnidad = { 
+                viewModel.selectUnidad(it)
+                showUpSelector = false
+            },
+            onDismiss = { showUpSelector = false }
         )
-        
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // Chip "Todos"
-            val isTodosSelected = selectedUnidadId == null
-            FilterChip(
-                selected = isTodosSelected,
-                onClick = { onSelectUnidad(null) },
-                label = { 
-                    Text(
-                        text = "Todos",
-                        fontSize = 12.sp,
-                        fontWeight = if (isTodosSelected) FontWeight.Bold else FontWeight.Normal
-                    ) 
-                },
-                shape = RoundedCornerShape(16.dp),
-                colors = FilterChipDefaults.filterChipColors(
-                    containerColor = Color.White,
-                    labelColor = SincPrimary,
-                    selectedContainerColor = SincPrimary,
-                    selectedLabelColor = Color.White
-                ),
-                border = FilterChipDefaults.filterChipBorder(
-                    enabled = true,
-                    selected = isTodosSelected,
-                    borderColor = SincPrimary,
-                    selectedBorderColor = SincPrimary,
-                    borderWidth = 1.dp,
-                    selectedBorderWidth = 1.dp
-                )
-            )
-
-            // Chips para cada unidad
-            unidades.forEach { unidad ->
-                val isSelected = selectedUnidadId == unidad.id
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onSelectUnidad(unidad.id) },
-                    label = { 
-                        Text(
-                            text = unidad.nombre ?: "Campo ${unidad.id}",
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        ) 
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = Color.White,
-                        labelColor = SincPrimary,
-                        selectedContainerColor = SincPrimary,
-                        selectedLabelColor = Color.White
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isSelected,
-                        borderColor = SincPrimary,
-                        selectedBorderColor = SincPrimary,
-                        borderWidth = 1.dp,
-                        selectedBorderWidth = 1.dp
-                    )
-                )
-            }
-        }
     }
 }
 
@@ -233,18 +151,9 @@ private fun TotalStockSection(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(24.dp),
+            .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Resumen de Existencias",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF191C1E),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            textAlign = TextAlign.Center
-        )
-
         // Gráfico de Dona con Sombra y Total en el centro
         Box(
             modifier = Modifier
@@ -342,27 +251,27 @@ private fun TotalStockSection(
 }
 
 @Composable
-private fun EmptyStockState() {
-    Box(modifier = Modifier.fillMaxSize().padding(32.dp)) {
+private fun EmptyStockState(message: String) {
+    Box(modifier = Modifier.fillMaxWidth().height(400.dp).padding(32.dp)) {
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
+                imageVector = Icons.Default.Map,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = Color.Gray
+                tint = Color.LightGray
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No se pudo cargar el stock.",
+                text = message,
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = Color.Gray
             )
             Text(
-                text = "Desliza hacia abajo para reintentar.",
+                text = "Desliza hacia abajo para actualizar.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = Color.LightGray

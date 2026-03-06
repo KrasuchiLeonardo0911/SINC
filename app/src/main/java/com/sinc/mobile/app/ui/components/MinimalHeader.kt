@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sinc.mobile.ui.theme.SincGrayBackground
@@ -34,6 +35,7 @@ fun MinimalHeader(
     title: String? = null,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
+    titleFontSize: TextUnit = 18.sp,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(
@@ -70,9 +72,10 @@ fun MinimalHeader(
                 Text(
                     text = title,
                     color = Color(0xFF1F2937),
-                    fontSize = 18.sp,
+                    fontSize = titleFontSize,
                     fontWeight = FontWeight.Medium,
-                    letterSpacing = 0.sp
+                    letterSpacing = 0.sp,
+                    maxLines = 1
                 )
             }
 
