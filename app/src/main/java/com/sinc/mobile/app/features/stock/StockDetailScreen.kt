@@ -73,9 +73,9 @@ fun StockDetailScreen(
 
     LaunchedEffect(uiState.saleSuccess) {
         uiState.saleSuccess?.let {
+            showSaleSheet = false
             snackbarHostState.showSnackbar(it)
             viewModel.clearSaleMessages()
-            showSaleSheet = false
         }
     }
 

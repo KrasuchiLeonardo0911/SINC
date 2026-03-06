@@ -2,12 +2,16 @@ package com.sinc.mobile.app.features.ventas
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,22 +22,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.*
+import com.sinc.mobile.app.ui.util.LogisticaUiMapper
 import com.sinc.mobile.ui.theme.*
-import com.sinc.mobile.domain.model.Categoria
 import com.sinc.mobile.domain.model.DeclaracionVenta
-import com.sinc.mobile.domain.model.Especie
-import com.sinc.mobile.domain.model.Raza
-import com.sinc.mobile.domain.model.UnidadProductiva
 
 @Composable
 fun VentasScreen(
@@ -96,7 +94,7 @@ fun VentasScreen(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun VentasList(
     declaraciones: List<DeclaracionVenta>,
@@ -105,29 +103,94 @@ fun VentasList(
     onCancel: (Int) -> Unit
 ) {
     val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = onRefresh)
+    var showSheet by remember { mutableStateOf(false) }
+    var isCancelMode by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
         if (declaraciones.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No hay declaraciones en seguimiento.\nDeslice para actualizar.",
+                    text = "No hay ventas activas en este ciclo.\nDeslice para actualizar.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = Color.Gray
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            val totalAnimales = declaraciones.sumOf { it.cantidad }
+            val rechazos = declaraciones.filter { it.motivoRechazo?.isNotBlank() == true }
+            
+            val maxStep = declaraciones.map { 
+                LogisticaUiMapper.getStatusUi(it.estado).stepIndex 
+            }.maxOrNull() ?: 0
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp)
             ) {
-                items(declaraciones) { declaracion ->
-                    DeclaracionCard(declaracion, onCancel)
+                Surface(
+                    onClick = { 
+                        isCancelMode = false
+                        showSheet = true 
+                    },
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Estado del Lote Actual",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = SincPrimary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "$totalAnimales Animales en Proceso",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                                color = Color.Black
+                            )
+                            Icon(
+                                Icons.Default.Info, 
+                                contentDescription = "Ver Detalle",
+                                tint = SincPrimary.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                 }
+                
+                Spacer(modifier = Modifier.height(32.dp))
+
+                UnifiedVerticalStepper(
+                    currentStep = maxStep,
+                    declaraciones = declaraciones,
+                    rechazos = rechazos,
+                    onManageLot = {
+                        isCancelMode = true
+                        showSheet = true
+                    }
+                )
             }
         }
         
+        if (showSheet) {
+            LotDetailBottomSheet(
+                declaraciones = declaraciones,
+                isCancelMode = isCancelMode,
+                onCancel = { id ->
+                    onCancel(id)
+                },
+                onDismiss = { showSheet = false }
+            )
+        }
+
         PullRefreshIndicator(
             refreshing = isLoading,
             state = pullRefreshState,
@@ -137,158 +200,231 @@ fun VentasList(
 }
 
 @Composable
-fun DeclaracionCard(
-    declaracion: DeclaracionVenta,
-    onCancel: (Int) -> Unit
+fun UnifiedVerticalStepper(
+    currentStep: Int,
+    declaraciones: List<DeclaracionVenta>,
+    rechazos: List<DeclaracionVenta>,
+    onManageLot: () -> Unit
 ) {
-    val statusUi = com.sinc.mobile.app.ui.util.LogisticaUiMapper.getStatusUi(declaracion.estado)
-    var showCancelDialog by remember { mutableStateOf(false) }
+    val steps = listOf(
+        "Publicado" to "Declaración de intención de venta",
+        "En Viaje" to "El camión ha recogido los animales",
+        "En Planta" to "Los animales están en el matadero",
+        "Finalizado" to "Ciclo completado con éxito"
+    )
 
-    if (showCancelDialog) {
-        com.sinc.mobile.app.ui.components.ConfirmationDialog(
-            showDialog = true,
-            title = "Cancelar Venta",
-            message = "¿Está seguro de que desea cancelar esta declaración de venta? Esta acción no se puede deshacer.",
-            onConfirm = {
-                onCancel(declaracion.id)
-                showCancelDialog = false
-            },
-            onDismiss = { showCancelDialog = false }
-        )
-    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        steps.forEachIndexed { index, (title, desc) ->
+            val isCompleted = index <= currentStep
+            val isCurrent = index == currentStep
+            val stepColor = if (isCompleted) SincPrimary else Color.LightGray.copy(alpha = 0.5f)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Header: Cantidad y Estado
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${declaracion.cantidad} Animales",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    color = statusUi.containerColor,
-                    shape = RoundedCornerShape(8.dp)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(32.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .background(if (isCurrent) Color.White else stepColor, CircleShape)
+                            .border(if (isCurrent) 4.dp else 0.dp, SincPrimary, CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        statusUi.icon?.let {
-                            Icon(it, contentDescription = null, tint = statusUi.contentColor, modifier = Modifier.size(16.dp))
+                        if (index < currentStep) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(10.dp), tint = Color.White)
                         }
-                        Text(
-                            text = statusUi.label.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = statusUi.contentColor,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Stepper Simplificado
-            if (statusUi.stepIndex >= 0) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Pasos: Comprometido -> Recogido -> Planta -> Final
-                    // Dibujamos 4 pasos
-                    for (i in 0..3) {
-                        val isCompleted = i <= statusUi.stepIndex
-                        val isCurrent = i == statusUi.stepIndex
-                        
-                        // Dot
+                    
+                    if (index < steps.size - 1) {
                         Box(
                             modifier = Modifier
-                                .size(if (isCurrent) 12.dp else 8.dp)
-                                .background(
-                                    color = if (isCompleted) statusUi.contentColor else Color.LightGray,
-                                    shape = androidx.compose.foundation.shape.CircleShape
-                                )
+                                .width(2.dp)
+                                .height(if (index == 0) 140.dp else 100.dp)
+                                .background(if (index < currentStep) SincPrimary else Color.LightGray.copy(alpha = 0.3f))
                         )
-                        
-                        // Line (excepto el último)
-                        if (i < 3) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(2.dp)
-                                    .background(if (i < statusUi.stepIndex) statusUi.contentColor else Color.LightGray.copy(alpha = 0.5f))
-                            )
-                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
 
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Detalles
-            Text("Fecha Declaración: ${declaracion.fechaDeclaracion.take(10)}")
-            
-            declaracion.pesoAproximadoKg?.let { peso ->
-                if (peso > 0) {
-                    Text("Peso Vivo Aprox.: ${peso} Kg", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
-                }
-            }
-            
-            declaracion.observaciones?.takeIf { it.isNotBlank() }?.let { obs ->
-                ExpandableText(
-                    text = obs,
-                    prefix = "Obs:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.DarkGray
-                )
-            }
-            
-            // Motivo Rechazo (si existe)
-            declaracion.motivoRechazo?.takeIf { it.isNotBlank() }?.let { motivo ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ExpandableText(
-                        text = motivo,
-                        prefix = "Motivo:",
-                        color = Color(0xFFC62828),
-                        modifier = Modifier.padding(8.dp),
-                        style = MaterialTheme.typography.bodySmall
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title.uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isCompleted) Color.Black else Color.Gray
                     )
-                }
-            }
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
 
-            // Botón Cancelar
-            if (statusUi.canCancel) {
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = { showCancelDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancelar Venta")
+                    if (index == 0) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        if (currentStep <= 0) {
+                            OutlinedButton(
+                                onClick = onManageLot,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(4.dp),
+                                border = BorderStroke(1.dp, SincPrimary),
+                                contentPadding = PaddingValues(12.dp, 8.dp, 12.dp, 8.dp)
+                            ) {
+                                Icon(Icons.Default.Settings, null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("GESTIONAR LOTE / CANCELAR", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            }
+                        } else {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = SincGrayBackground,
+                                shape = RoundedCornerShape(4.dp),
+                                border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "El lote ha sido procesado y no permite modificaciones.",
+                                    modifier = Modifier.padding(12.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+
+                    if (index == 1 && rechazos.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Surface(
+                            color = Color(0xFFFFEBEE),
+                            shape = RoundedCornerShape(4.dp),
+                            border = BorderStroke(1.dp, Color(0xFFC62828).copy(alpha = 0.2f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                val cantRechazados = rechazos.sumOf { it.cantidad }
+                                Text(
+                                    "ATENCIÓN: $cantRechazados de ${declaraciones.sumOf { it.cantidad }} animales fueron rechazados en carga.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFC62828),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                rechazos.forEach { 
+                                    Text("• ${it.motivoRechazo}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFC62828))
+                                }
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LotDetailBottomSheet(
+    declaraciones: List<DeclaracionVenta>,
+    isCancelMode: Boolean,
+    onCancel: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp, 0.dp, 0.dp, 32.dp)
+        ) {
+            Text(
+                text = if (isCancelMode) "Gestionar Lote" else "Detalle del Lote",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(24.dp, 16.dp, 24.dp, 16.dp)
+            )
+
+            if (isCancelMode) {
+                Text(
+                    text = "Seleccione el animal que desea retirar de la declaración actual.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(24.dp, 0.dp, 24.dp, 16.dp)
+                )
+            }
+
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(declaraciones) { dec ->
+                    val statusUi = LogisticaUiMapper.getStatusUi(dec.estado)
+                    
+                    LotDetailItem(
+                        dec = dec,
+                        statusUi = statusUi,
+                        isCancelMode = isCancelMode,
+                        onCancel = onCancel
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(24.dp, 0.dp, 24.dp, 0.dp), 
+                        color = Color.LightGray.copy(alpha = 0.3f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LotDetailItem(
+    dec: DeclaracionVenta,
+    statusUi: com.sinc.mobile.app.ui.util.StatusUiModel,
+    isCancelMode: Boolean,
+    onCancel: (Int) -> Unit
+) {
+    var showConfirm by remember { mutableStateOf(false) }
+    
+    if (showConfirm) {
+        ConfirmationDialog(
+            showDialog = true,
+            title = "Cancelar Registro",
+            message = "¿Desea retirar estos ${dec.cantidad} animales del lote?",
+            onConfirm = {
+                onCancel(dec.id)
+                showConfirm = false
+            },
+            onDismiss = { showConfirm = false }
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp, 12.dp, 24.dp, 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "${dec.cantidad} Animales",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Estado: ${statusUi.label}",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (dec.estado.contains("rechazado")) Color(0xFFC62828) else Color.Gray
+            )
+        }
+
+        if (isCancelMode && statusUi.canCancel) {
+            IconButton(
+                onClick = { showConfirm = true },
+                modifier = Modifier.background(Color(0xFFFFEBEE), CircleShape)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Cancelar", tint = Color(0xFFC62828))
+            }
+        }
+    }
+}
