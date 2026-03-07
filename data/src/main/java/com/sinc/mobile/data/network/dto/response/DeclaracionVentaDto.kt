@@ -11,6 +11,8 @@ data class DeclaracionVentaDto(
     @SerialName("especie_id") val especieId: Int,
     @SerialName("raza_id") val razaId: Int,
     @SerialName("categoria_animal_id") val categoriaAnimalId: Int,
+    @SerialName("venta_lote_id") val ventaLoteId: Int? = null,
+    @SerialName("historial_ciclo_id") val historialCicloId: Int? = null,
     @SerialName("cantidad") val cantidad: Int,
     @SerialName("estado") val estado: String,
     @SerialName("fecha_declaracion") val fechaDeclaracion: String,

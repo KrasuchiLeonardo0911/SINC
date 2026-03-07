@@ -7,6 +7,7 @@ data class DeclaracionVenta(
     val especieId: Int,
     val razaId: Int,
     val categoriaAnimalId: Int,
+    val historialCicloId: Int?,
     val cantidad: Int,
     val estado: String,
     val fechaDeclaracion: String,

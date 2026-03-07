@@ -52,9 +52,9 @@ fun StockDetailScreen(
             viewModel.selectUnidad(unidadId)
         }
     }
-    
+
     // Estado local para el agrupamiento
-    var currentGrouping by remember { 
+    var currentGrouping by remember {
         mutableStateOf(
             try { StockGrouping.valueOf(grouping) } catch (e: Exception) { StockGrouping.BY_ALL }
         )
@@ -71,17 +71,11 @@ fun StockDetailScreen(
     var observacionesVenta by remember { mutableStateOf("") }
     var cantidadVenta by remember { mutableStateOf("1") }
 
-    LaunchedEffect(uiState.saleSuccess) {
-        uiState.saleSuccess?.let {
+    LaunchedEffect(uiState.saleSuccess, uiState.saleError) {
+        if (uiState.saleSuccess != null || uiState.saleError != null) {
             showSaleSheet = false
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearSaleMessages()
-        }
-    }
-
-    LaunchedEffect(uiState.saleError) {
-        uiState.saleError?.let {
-            snackbarHostState.showSnackbar(it)
+            uiState.saleSuccess?.let { snackbarHostState.showSnackbar(it) }
+            uiState.saleError?.let { snackbarHostState.showSnackbar(it) }
             viewModel.clearSaleMessages()
         }
     }
@@ -475,15 +469,13 @@ private fun StockListItem(
                 if (onSellClick != null) {
                     IconButton(
                         onClick = onSellClick,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(SincPrimary.copy(alpha = 0.1f), CircleShape)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = "Vender",
-                            tint = SincPrimary,
-                            modifier = Modifier.size(16.dp)
+                            tint = Color(0xFF2E7D32), // Verde oscuro
+                            modifier = Modifier.size(24.dp) // Aumentamos un poco el tamaño del icono ya que no tiene fondo
                         )
                     }
                 }

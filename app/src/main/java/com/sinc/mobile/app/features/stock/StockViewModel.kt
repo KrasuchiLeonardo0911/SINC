@@ -97,6 +97,7 @@ class StockViewModel @Inject constructor(
     private val createDeclaracionVentaUseCase: CreateDeclaracionVentaUseCase,
     private val validateStockForVentaUseCase: ValidateStockForVentaUseCase,
     private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase,
+    private val ventasRepository: com.sinc.mobile.domain.repository.VentasRepository,
     private val catalogosRepository: com.sinc.mobile.domain.repository.CatalogosRepository
 ) : ViewModel() {
 
@@ -143,6 +144,7 @@ class StockViewModel @Inject constructor(
             try {
                 syncStockUseCase()
                 syncUnidadesProductivasUseCase()
+                syncDeclaracionesVentaUseCase() // Sincronizamos ventas para tener estados actualizados
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error de conexión") }
             } finally {
@@ -168,6 +170,7 @@ class StockViewModel @Inject constructor(
             // Perform network sync
             val stockSyncResult = syncStockUseCase()
             syncUnidadesProductivasUseCase()
+            syncDeclaracionesVentaUseCase()
 
             if (stockSyncResult is Result.Failure) {
                 _uiState.update { it.copy(error = stockSyncResult.error.message) }
@@ -194,6 +197,22 @@ class StockViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSelling = true, saleError = null, saleSuccess = null) }
+
+            // 0. Validar si el ciclo logístico ya avanzó
+            val declaracionesActuales = ventasRepository.getDeclaraciones().first()
+            val advancedLogistics = declaracionesActuales.any { 
+                it.estado == "recogido" || it.estado == "en-matadero" || it.estado == "entregado" 
+            }
+
+            if (advancedLogistics) {
+                _uiState.update { 
+                    it.copy(
+                        isSelling = false, 
+                        saleError = "El camión ya está en camino o el lote está en planta. No se pueden añadir más animales en este ciclo."
+                    ) 
+                }
+                return@launch
+            }
 
             // 1. Obtener IDs de los catálogos basados en los nombres
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()

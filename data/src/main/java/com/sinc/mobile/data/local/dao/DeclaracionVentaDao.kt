@@ -31,7 +31,7 @@ interface DeclaracionVentaDao {
         AND especieId = :especieId 
         AND razaId = :razaId 
         AND categoriaAnimalId = :categoriaId 
-        AND (estado = 'pendiente' OR estado = 'comprometido')
+        AND (estado = 'pendiente' OR estado = 'comprometido' OR estado = 'recogido' OR estado = 'en-matadero')
         
     """)
     suspend fun getSumPendientes(upId: Int, especieId: Int, razaId: Int, categoriaId: Int): Int?

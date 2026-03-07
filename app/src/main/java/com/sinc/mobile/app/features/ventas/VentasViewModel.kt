@@ -145,17 +145,26 @@ class VentasViewModel @Inject constructor(
     private fun observeDeclaraciones() {
         viewModelScope.launch {
             getDeclaracionesVentaUseCase()
-                .map { declaraciones ->
-                    declaraciones.filter { 
-                        it.estado == LogisticaStatus.COMPROMETIDO.key ||
-                        it.estado == LogisticaStatus.RECOGIDO.key ||
-                        it.estado == LogisticaStatus.EN_MATADERO.key ||
-                        it.estado == "pendiente" ||
-                        it.estado == LogisticaStatus.RECHAZADO_CARGA.key ||
-                        it.estado == LogisticaStatus.MATADERO_RECHAZADO.key ||
+                .map { todas ->
+                    if (todas.isEmpty()) return@map emptyList<DeclaracionVenta>()
+
+                    // 1. Encontrar el ID de ciclo más reciente
+                    val maxCicloId = todas.maxOf { it.historialCicloId ?: 0 }
+                    
+                    // 2. Filtrar solo las de ese ciclo
+                    val loteActual = todas.filter { it.historialCicloId == maxCicloId }
+
+                    // 3. Verificar si el lote completo ha finalizado
+                    // Un lote finaliza si todos sus items están en estados terminales
+                    val todoFinalizado = loteActual.all { 
+                        it.estado == LogisticaStatus.ENTREGADO.key || 
                         it.estado == LogisticaStatus.RECHAZADO_FINAL.key ||
-                        it.estado == LogisticaStatus.CANCELADO_REGRESANDO.key
+                        it.estado == LogisticaStatus.CANCELADO_REGRESANDO.key ||
+                        it.estado.contains("rechazado")
                     }
+
+                    // Si todo terminó, devolvemos lista vacía para "Seguimiento" (limpia la pantalla)
+                    if (todoFinalizado) emptyList() else loteActual
                 }
                 .collect { filteredDeclaraciones ->
                     _uiState.update { it.copy(declaracionesActivas = filteredDeclaraciones) }

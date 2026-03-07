@@ -38,7 +38,7 @@ import kotlinx.serialization.builtins.serializer
         UnidadProductivaTipoPastoCrossRef::class,
         WeatherAlertEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)
