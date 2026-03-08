@@ -24,20 +24,23 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            // Se utiliza el keystore de depuración por defecto para el build de 'release'.
-            // Esto no es para producción, solo para crear un APK de 'release' para pruebas.
+        create("release") {
+            storeFile = file(project.property("RELEASE_STORE_FILE") as String)
+            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true // Habilitar la ofuscación y reducción de código
+            isShrinkResources = true // Eliminar recursos no utilizados
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // Firmar el build de 'release'
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
