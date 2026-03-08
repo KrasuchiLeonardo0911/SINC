@@ -81,6 +81,9 @@ fun VentasScreen(
         ) {
             VentasList(
                 declaraciones = uiState.declaracionesActivas,
+                especies = uiState.especies,
+                razas = uiState.razas,
+                categorias = uiState.categorias,
                 isLoading = uiState.isLoading,
                 onRefresh = { viewModel.onSyncRequested() },
                 onCancel = { id -> viewModel.onCancelDeclaracion(id) }
@@ -97,6 +100,9 @@ fun VentasScreen(
 @Composable
 fun VentasList(
     declaraciones: List<DeclaracionVenta>,
+    especies: List<com.sinc.mobile.domain.model.Especie>,
+    razas: List<com.sinc.mobile.domain.model.Raza>,
+    categorias: List<com.sinc.mobile.domain.model.Categoria>,
     isLoading: Boolean,
     onRefresh: () -> Unit,
     onCancel: (Int) -> Unit
@@ -182,6 +188,9 @@ fun VentasList(
         if (showSheet) {
             LotDetailBottomSheet(
                 declaraciones = declaraciones,
+                especies = especies,
+                razas = razas,
+                categorias = categorias,
                 isCancelMode = isCancelMode,
                 onCancel = { id ->
                     onCancel(id)
@@ -325,6 +334,9 @@ fun UnifiedVerticalStepper(
 @Composable
 fun LotDetailBottomSheet(
     declaraciones: List<DeclaracionVenta>,
+    especies: List<com.sinc.mobile.domain.model.Especie>,
+    razas: List<com.sinc.mobile.domain.model.Raza>,
+    categorias: List<com.sinc.mobile.domain.model.Categoria>,
     isCancelMode: Boolean,
     onCancel: (Int) -> Unit,
     onDismiss: () -> Unit
@@ -362,6 +374,9 @@ fun LotDetailBottomSheet(
                     LotDetailItem(
                         dec = dec,
                         statusUi = statusUi,
+                        especie = especies.find { it.id == dec.especieId },
+                        raza = razas.find { it.id == dec.razaId },
+                        categoria = categorias.find { it.id == dec.categoriaAnimalId },
                         isCancelMode = isCancelMode,
                         onCancel = onCancel
                     )
@@ -379,6 +394,9 @@ fun LotDetailBottomSheet(
 fun LotDetailItem(
     dec: DeclaracionVenta,
     statusUi: com.sinc.mobile.app.ui.util.StatusUiModel,
+    especie: com.sinc.mobile.domain.model.Especie?,
+    raza: com.sinc.mobile.domain.model.Raza?,
+    categoria: com.sinc.mobile.domain.model.Categoria?,
     isCancelMode: Boolean,
     onCancel: (Int) -> Unit
 ) {
@@ -406,13 +424,34 @@ fun LotDetailItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "${dec.cantidad} Animales",
+                text = "${dec.cantidad} ${especie?.nombre ?: "Animales"}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold
             )
+            
+            val detalle = buildString {
+                if (categoria != null) append(categoria.nombre)
+                if (raza != null) {
+                    if (isNotEmpty()) append(" • ")
+                    append(raza.nombre)
+                }
+                if (dec.pesoAproximadoKg != null) {
+                    if (isNotEmpty()) append(" • ")
+                    append("${dec.pesoAproximadoKg} kg")
+                }
+            }
+            
+            if (detalle.isNotEmpty()) {
+                Text(
+                    text = detalle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.7f)
+                )
+            }
+
             Text(
                 text = "Estado: ${statusUi.label}",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 color = if (dec.estado.contains("rechazado")) Color(0xFFC62828) else Color.Gray
             )
         }

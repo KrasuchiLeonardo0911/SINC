@@ -91,6 +91,7 @@ fun HistorialVentasScreen(
                         items(uiState.declaracionesFiltradas) { item ->
                             HistorialVentaItem(
                                 declaracion = item,
+                                catalogos = uiState.catalogos,
                                 onClick = { viewModel.seleccionarDeclaracion(item) }
                             )
                         }
@@ -162,9 +163,13 @@ fun MonthSelector(
 @Composable
 fun HistorialVentaItem(
     declaracion: DeclaracionVenta,
+    catalogos: Catalogos?,
     onClick: () -> Unit
 ) {
     val statusUi = LogisticaUiMapper.getStatusUi(declaracion.estado)
+    val especieNombre = catalogos?.especies?.find { it.id == declaracion.especieId }?.nombre ?: "Animales"
+    val razaNombre = catalogos?.razas?.find { it.id == declaracion.razaId }?.nombre
+    val categoriaNombre = catalogos?.categorias?.find { it.id == declaracion.categoriaAnimalId }?.nombre
 
     Card(
         modifier = Modifier
@@ -182,7 +187,7 @@ fun HistorialVentaItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${declaracion.cantidad} Animales",
+                    text = "${declaracion.cantidad} $especieNombre",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -190,6 +195,26 @@ fun HistorialVentaItem(
                     text = declaracion.fechaDeclaracion.take(10),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
+                )
+            }
+            
+            val detalle = buildString {
+                if (categoriaNombre != null) append(categoriaNombre)
+                if (razaNombre != null) {
+                    if (isNotEmpty()) append(" • ")
+                    append(razaNombre)
+                }
+                if (declaracion.pesoAproximadoKg != null) {
+                    if (isNotEmpty()) append(" • ")
+                    append("${declaracion.pesoAproximadoKg} kg")
+                }
+            }
+            
+            if (detalle.isNotEmpty()) {
+                Text(
+                    text = detalle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.7f)
                 )
             }
             

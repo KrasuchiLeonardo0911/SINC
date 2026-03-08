@@ -38,7 +38,7 @@ data class VentasState(
     val selectedEspecieId: Int? = null,
     val selectedRazaId: Int? = null,
     val selectedCategoriaId: Int? = null,
-    val cantidad: String = "",
+    val cantidad: String = "1",
     val observaciones: String = "",
     val pesoAproximado: String = "",
     

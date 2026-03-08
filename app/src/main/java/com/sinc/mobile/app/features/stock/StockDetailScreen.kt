@@ -140,18 +140,25 @@ fun StockDetailScreen(
                                     onSellClick = if (currentGrouping == StockGrouping.BY_ALL && originalItem != null) {
                                         {
                                             if (uiState.selectedUnidadId != null) {
-                                                selectedItemForSale = originalItem
-                                                pesoVenta = ""
-                                                observacionesVenta = ""
-                                                cantidadVenta = "1"
-                                                showSaleSheet = true
+                                                if (uiState.isLogisticsOpen) {
+                                                    selectedItemForSale = originalItem
+                                                    pesoVenta = ""
+                                                    observacionesVenta = ""
+                                                    cantidadVenta = "1"
+                                                    showSaleSheet = true
+                                                } else {
+                                                    viewModel.viewModelScope.launch {
+                                                        snackbarHostState.showSnackbar("El periodo de ventas ha cerrado, espere hasta el siguiente ciclo.")
+                                                    }
+                                                }
                                             } else {
                                                 viewModel.viewModelScope.launch {
                                                     snackbarHostState.showSnackbar("Para vender, debe seleccionar un campo en la pantalla anterior.")
                                                 }
                                             }
                                         }
-                                    } else null
+                                    } else null,
+                                    isLogisticsOpen = uiState.isLogisticsOpen
                                 )
                             }
 
@@ -266,7 +273,29 @@ fun StockDetailScreen(
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
                     )
+                } else if (!uiState.isLogisticsOpen) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "El periodo de ventas ha cerrado, espere hasta el siguiente ciclo.",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 } else {
+                    Text(
+                        text = "Cantidad a declarar: 1 animal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+
                     OutlinedTextField(
                         value = pesoVenta,
                         onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) pesoVenta = it },
@@ -274,11 +303,6 @@ fun StockDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp)
-                    )
-
-                    QuantityStepper(
-                        cantidad = cantidadVenta,
-                        onCantidadChanged = { cantidadVenta = it }
                     )
 
                     OutlinedTextField(
@@ -296,7 +320,7 @@ fun StockDetailScreen(
                                 especieNombre = speciesName,
                                 categoriaNombre = selectedItemForSale!!.categoria,
                                 razaNombre = selectedItemForSale!!.raza,
-                                cantidad = cantidadVenta.toIntOrNull() ?: 1,
+                                cantidad = 1,
                                 peso = pesoVenta.toFloatOrNull(),
                                 observaciones = observacionesVenta,
                                 unidadId = uiState.selectedUnidadId!!
@@ -314,51 +338,6 @@ fun StockDetailScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun QuantityStepper(
-    cantidad: String,
-    onCantidadChanged: (String) -> Unit
-) {
-    val count = cantidad.toIntOrNull() ?: 0
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "Cantidad", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-        
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            FilledIconButton(
-                onClick = { if (count > 1) onCantidadChanged((count - 1).toString()) },
-                enabled = count > 1,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.Remove, contentDescription = "Menos")
-            }
-
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.widthIn(min = 40.dp),
-                textAlign = TextAlign.Center
-            )
-
-            FilledIconButton(
-                onClick = { onCantidadChanged((count + 1).toString()) },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Más")
             }
         }
     }
@@ -425,7 +404,8 @@ private fun StockListItem(
     subtitle: String,
     value: Int,
     isLast: Boolean,
-    onSellClick: (() -> Unit)? = null
+    onSellClick: (() -> Unit)? = null,
+    isLogisticsOpen: Boolean = true
 ) {
     Column(
         modifier = Modifier
@@ -474,8 +454,8 @@ private fun StockListItem(
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = "Vender",
-                            tint = Color(0xFF2E7D32), // Verde oscuro
-                            modifier = Modifier.size(24.dp) // Aumentamos un poco el tamaño del icono ya que no tiene fondo
+                            tint = if (isLogisticsOpen) Color(0xFF2E7D32) else Color.Gray.copy(alpha = 0.5f), // Verde oscuro o gris si está cerrado
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }

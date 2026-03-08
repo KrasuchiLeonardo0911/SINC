@@ -84,7 +84,8 @@ data class StockUiState(
     val stock: Stock? = null,
     val processedStock: ProcessedStock? = null,
     val selectedUnidadId: Int? = null,
-    val upSearchQuery: String = ""
+    val upSearchQuery: String = "",
+    val isLogisticsOpen: Boolean = true
 )
 // endregion
 
@@ -98,7 +99,9 @@ class StockViewModel @Inject constructor(
     private val validateStockForVentaUseCase: ValidateStockForVentaUseCase,
     private val syncDeclaracionesVentaUseCase: SyncDeclaracionesVentaUseCase,
     private val ventasRepository: com.sinc.mobile.domain.repository.VentasRepository,
-    private val catalogosRepository: com.sinc.mobile.domain.repository.CatalogosRepository
+    private val catalogosRepository: com.sinc.mobile.domain.repository.CatalogosRepository,
+    private val getLogisticsStatusUseCase: com.sinc.mobile.domain.use_case.ventas.GetLogisticsStatusUseCase,
+    private val initializeAppUseCase: com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StockUiState())
@@ -116,6 +119,7 @@ class StockViewModel @Inject constructor(
     )
 
     init {
+        checkLogisticsStatus()
         // This flow collection will update the UI with data from the DB whenever it changes.
         viewModelScope.launch {
             combine(
@@ -138,13 +142,20 @@ class StockViewModel @Inject constructor(
         initialSync()
     }
 
+    private fun checkLogisticsStatus() {
+        val isOpen = getLogisticsStatusUseCase()
+        _uiState.update { it.copy(isLogisticsOpen = isOpen) }
+    }
+
     private fun initialSync() {
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             try {
+                initializeAppUseCase() // Obtener config global (is_open, etc)
                 syncStockUseCase()
                 syncUnidadesProductivasUseCase()
                 syncDeclaracionesVentaUseCase() // Sincronizamos ventas para tener estados actualizados
+                checkLogisticsStatus() // Volver a chequear tras sync si el endpoint /init se actualizó
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error de conexión") }
             } finally {
@@ -168,9 +179,11 @@ class StockViewModel @Inject constructor(
             val startTime = System.currentTimeMillis()
 
             // Perform network sync
+            initializeAppUseCase()
             val stockSyncResult = syncStockUseCase()
             syncUnidadesProductivasUseCase()
             syncDeclaracionesVentaUseCase()
+            checkLogisticsStatus()
 
             if (stockSyncResult is Result.Failure) {
                 _uiState.update { it.copy(error = stockSyncResult.error.message) }
@@ -198,7 +211,19 @@ class StockViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSelling = true, saleError = null, saleSuccess = null) }
 
-            // 0. Validar si el ciclo logístico ya avanzó
+            // 0. Validar si el periodo de inscripciones está abierto
+            if (!getLogisticsStatusUseCase()) {
+                _uiState.update { 
+                    it.copy(
+                        isSelling = false, 
+                        isLogisticsOpen = false,
+                        saleError = "El periodo de inscripciones ha cerrado. No se pueden realizar ventas en este momento."
+                    ) 
+                }
+                return@launch
+            }
+
+            // 0.1 Validar si el ciclo logístico ya avanzó
             val declaracionesActuales = ventasRepository.getDeclaraciones().first()
             val advancedLogistics = declaracionesActuales.any { 
                 it.estado == "recogido" || it.estado == "en-matadero" || it.estado == "entregado" 
@@ -260,7 +285,12 @@ class StockViewModel @Inject constructor(
                             syncStockUseCase()
                         }
                         is Result.Failure -> {
-                            val msg = (result.error as? GenericError)?.message ?: "Error al guardar la venta"
+                            val rawMsg = (result.error as? GenericError)?.message ?: "Error al guardar la venta"
+                            val msg = if (rawMsg.contains("periodo", ignoreCase = true) || rawMsg.contains("cerrado", ignoreCase = true)) {
+                                "El periodo de ventas ha cerrado, espere hasta el siguiente ciclo."
+                            } else {
+                                rawMsg
+                            }
                             _uiState.update { it.copy(isSelling = false, saleError = msg) }
                         }
                     }
