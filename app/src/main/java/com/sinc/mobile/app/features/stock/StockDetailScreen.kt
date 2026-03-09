@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import androidx.navigation.NavHostController
+import com.sinc.mobile.app.navigation.Routes
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,7 +89,7 @@ fun StockDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             MinimalHeader(
-                title = if (selectedUnidad != null) "Stock de Campo: ${selectedUnidad.nombre}" else "Stock General",
+                title = if (selectedUnidad != null) "Detalles: ${selectedUnidad.nombre}" else "Detalles Generales",
                 onBackPress = onBack,
                 modifier = Modifier.statusBarsPadding(),
                 titleFontSize = 16.sp
@@ -156,6 +157,19 @@ fun StockDetailScreen(
                                                     snackbarHostState.showSnackbar("Para vender, debe seleccionar un campo en la pantalla anterior.")
                                                 }
                                             }
+                                        }
+                                    } else null,
+                                    onAdjustClick = if (currentGrouping == StockGrouping.BY_ALL && originalItem != null) {
+                                        {
+                                            navController.navigate(
+                                                Routes.createMovimientoFormRoute(
+                                                    unidadId = uiState.selectedUnidadId?.toString(),
+                                                    initialPage = 0,
+                                                    especieId = originalItem.especieId,
+                                                    razaId = originalItem.razaId,
+                                                    categoriaId = originalItem.categoriaId
+                                                )
+                                            )
                                         }
                                     } else null,
                                     isLogisticsOpen = uiState.isLogisticsOpen
@@ -405,6 +419,7 @@ private fun StockListItem(
     value: Int,
     isLast: Boolean,
     onSellClick: (() -> Unit)? = null,
+    onAdjustClick: (() -> Unit)? = null,
     isLogisticsOpen: Boolean = true
 ) {
     Column(
@@ -414,8 +429,7 @@ private fun StockListItem(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -436,16 +450,22 @@ private fun StockListItem(
                 }
             }
             
+            // Iconos de acción (Después del nombre)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = value.toString(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = SincPrimary
-                    ),
-                    modifier = Modifier.padding(end = if (onSellClick != null) 16.dp else 0.dp)
-                )
-                
+                if (onAdjustClick != null) {
+                    IconButton(
+                        onClick = onAdjustClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EditNote,
+                            contentDescription = "Ajustar",
+                            tint = Color(0xFF1976D2),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
                 if (onSellClick != null) {
                     IconButton(
                         onClick = onSellClick,
@@ -454,12 +474,25 @@ private fun StockListItem(
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = "Vender",
-                            tint = if (isLogisticsOpen) Color(0xFF2E7D32) else Color.Gray.copy(alpha = 0.5f), // Verde oscuro o gris si está cerrado
+                            tint = if (isLogisticsOpen) Color(0xFF2E7D32) else Color.Gray.copy(alpha = 0.5f),
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Valor total (Al final a la derecha)
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = SincPrimary
+                ),
+                textAlign = TextAlign.End,
+                modifier = Modifier.widthIn(min = 32.dp)
+            )
         }
     }
     

@@ -50,17 +50,23 @@ object Routes {
     const val EDIT_UNIDAD_PRODUCTIVA = "edit_unidad_productiva/{unidadId}"
     fun createEditUnidadProductivaRoute(unidadId: Int) = "edit_unidad_productiva/$unidadId"
     const val CAMPOS = "campos"
-    const val MOVIMIENTO_FORM = "movimiento_form?unidadId={unidadId}&initialPage={initialPage}"
-    fun createMovimientoFormRoute(unidadId: String?, initialPage: Int = 0): String {
+    const val MOVIMIENTO_FORM = "movimiento_form?unidadId={unidadId}&initialPage={initialPage}&especieId={especieId}&razaId={razaId}&categoriaId={categoriaId}"
+    fun createMovimientoFormRoute(
+        unidadId: String?, 
+        initialPage: Int = 0,
+        especieId: Int? = null,
+        razaId: Int? = null,
+        categoriaId: Int? = null
+    ): String {
         val route = "movimiento_form?"
-        val id_param = unidadId?.let { "unidadId=$it" } ?: ""
-        val page_param = "initialPage=$initialPage"
+        val params = mutableListOf<String>()
+        unidadId?.let { params.add("unidadId=$it") }
+        params.add("initialPage=$initialPage")
+        especieId?.let { params.add("especieId=$it") }
+        razaId?.let { params.add("razaId=$it") }
+        categoriaId?.let { params.add("categoriaId=$it") }
 
-        return if (id_param.isNotEmpty()) {
-            "$route$id_param&$page_param"
-        } else {
-            "$route$page_param"
-        }
+        return route + params.joinToString("&")
     }
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
     const val LOGISTICS = "logistics"
@@ -262,6 +268,18 @@ fun AppNavigation(
                 navArgument("initialPage") {
                     type = NavType.IntType
                     defaultValue = 0
+                },
+                navArgument("especieId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
+                navArgument("razaId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
+                navArgument("categoriaId") {
+                    type = NavType.IntType
+                    defaultValue = -1
                 }
             ),
             enterTransition = {

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChartData
+import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.domain.use_case.GetStockUseCase
@@ -38,7 +39,14 @@ enum class StockGrouping {
 }
 
 sealed class DesgloseItem { // Renamed for clarity
-    data class Full(val categoria: String, val raza: String, val quantity: Int) : DesgloseItem()
+    data class Full(
+        val especieId: Int,
+        val categoriaId: Int,
+        val razaId: Int,
+        val categoria: String, 
+        val raza: String, 
+        val quantity: Int
+    ) : DesgloseItem()
 }
 
 data class ProcessedStock(
@@ -107,6 +115,8 @@ class StockViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StockUiState())
     val uiState: StateFlow<StockUiState> = _uiState.asStateFlow()
 
+    private var catalogos: Catalogos? = null
+
     private val pieChartColors = listOf(
         Color(0xFF8C2218), // Bordó Principal (Asignado a Caprinos por orden alfabético)
         Color(0xFF2E7D32), // Verde Oscuro (Asignado a Ovinos por orden alfabético)
@@ -119,20 +129,33 @@ class StockViewModel @Inject constructor(
     )
 
     init {
-        checkLogisticsStatus()
         // This flow collection will update the UI with data from the DB whenever it changes.
         viewModelScope.launch {
             combine(
                 getUnidadesProductivasUseCase(),
-                getStockUseCase()
-            ) { unidades, stock ->
+                getStockUseCase(),
+                catalogosRepository.getMovimientoCatalogos()
+            ) { unidades, stock, catalogosData ->
+                // Guardamos los catálogos localmente
+                catalogos = catalogosData
+                
                 val currentSelectedId = _uiState.value.selectedUnidadId
-                val processed = stock?.let { processStock(it, currentSelectedId) }
+                
+                // Si el productor tiene solo una UP y no hay nada seleccionado, seleccionarla automáticamente
+                val targetSelectedId = if (currentSelectedId == null && unidades.size == 1) {
+                    unidades.first().id
+                } else {
+                    currentSelectedId
+                }
+
+                val processed = stock?.let { processStock(it, targetSelectedId, catalogosData) }
+                
                 _uiState.update {
                     it.copy(
                         unidadesProductivas = unidades,
                         stock = stock,
                         processedStock = processed,
+                        selectedUnidadId = targetSelectedId
                     )
                 }
             }.launchIn(this)
@@ -312,7 +335,7 @@ class StockViewModel @Inject constructor(
 
     fun selectUnidad(unidadId: Int?) {
         _uiState.update { currentState ->
-            val processed = currentState.stock?.let { processStock(it, unidadId) }
+            val processed = currentState.stock?.let { processStock(it, unidadId, catalogos) }
             currentState.copy(
                 selectedUnidadId = unidadId,
                 processedStock = processed
@@ -398,7 +421,7 @@ class StockViewModel @Inject constructor(
         return chartData to legendItems
     }
 
-    internal fun processStock(stock: Stock, selectedUnidadId: Int?): ProcessedStock {
+    internal fun processStock(stock: Stock, selectedUnidadId: Int?, catalogos: Catalogos?): ProcessedStock {
         // Filter units based on selection
         val filteredUnits = if (selectedUnidadId == null) {
             stock.unidadesProductivas
@@ -437,12 +460,30 @@ class StockViewModel @Inject constructor(
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .map { (nombreEspecie, especiesList) ->
+                // Resolve species ID from name
+                val especieId = catalogos?.especies?.find { esp -> esp.nombre.equals(nombreEspecie, ignoreCase = true) }?.id ?: -1
+
                 val desgloses = especiesList.flatMap { it.desglose }
                     .groupBy { Pair(it.categoria, it.raza) }
                     .mapNotNull { (key, group) ->
-                        val sumQuantity = group.sumOf { it.cantidad }
+                        val sumQuantity = group.sumOf { item -> item.cantidad }
                         if (sumQuantity > 0) {
-                            DesgloseItem.Full(key.first, key.second, sumQuantity)
+                            // Resolve category and breed IDs from names
+                            val categoriaId = catalogos?.categorias?.find { cat -> 
+                                cat.nombre.equals(key.first, ignoreCase = true) && cat.especieId == especieId 
+                            }?.id ?: -1
+                            val razaId = catalogos?.razas?.find { rz -> 
+                                rz.nombre.equals(key.second, ignoreCase = true) && rz.especieId == especieId 
+                            }?.id ?: -1
+
+                            DesgloseItem.Full(
+                                especieId = especieId,
+                                categoriaId = categoriaId,
+                                razaId = razaId,
+                                categoria = key.first, 
+                                raza = key.second, 
+                                quantity = sumQuantity
+                            )
                         } else {
                             null
                         }

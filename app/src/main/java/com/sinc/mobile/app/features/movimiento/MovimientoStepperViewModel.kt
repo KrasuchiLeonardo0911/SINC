@@ -13,7 +13,6 @@ import com.sinc.mobile.domain.use_case.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -67,6 +66,9 @@ class MovimientoStepperViewModel @Inject constructor(
 
     private var catalogos: Catalogos? = null
     private val unidadId: String? = savedStateHandle.get("unidadId")
+    private val preSelectedEspecieId: Int = savedStateHandle.get<Int>("especieId") ?: -1
+    private val preSelectedRazaId: Int = savedStateHandle.get<Int>("razaId") ?: -1
+    private val preSelectedCategoriaId: Int = savedStateHandle.get<Int>("categoriaId") ?: -1
 
     init {
         syncManager = MovimientoSyncManager(
@@ -115,22 +117,46 @@ class MovimientoStepperViewModel @Inject constructor(
                 } else {
                     // If a unit is already selected, refresh its instance from the new list.
                     // If the user hasn't selected one, keep it as null.
-                    currentUiState.selectedUnidad?.let { current -> unidades.find { it.id == current.id } }
+                    currentUiState.selectedUnidad?.let { current -> unidades.find { unit -> unit.id == current.id } }
                 }
 
                 // Update the local catalogos cache
                 catalogos = catalogosData
 
+                val isFirstEmission = currentUiState.isLoading
+                val newFormManager = if (isFirstEmission) {
+                    val manager = MovimientoFormManager(catalogosData)
+                    // Apply pre-selections from navigation if present
+                    if (preSelectedEspecieId != -1) {
+                        catalogosData.especies.find { esp -> esp.id == preSelectedEspecieId }?.let { especie ->
+                            manager.onEspecieSelected(especie)
+                        }
+                    }
+                    if (preSelectedCategoriaId != -1) {
+                        catalogosData.categorias.find { cat -> cat.id == preSelectedCategoriaId }?.let { categoria ->
+                            manager.onCategoriaSelected(categoria)
+                        }
+                    }
+                    if (preSelectedRazaId != -1) {
+                        catalogosData.razas.find { rz -> rz.id == preSelectedRazaId }?.let { raza ->
+                            manager.onRazaSelected(raza)
+                        }
+                    }
+                    manager
+                } else {
+                    currentUiState.formManager
+                }
+
                 // Update the entire UI state
-                _uiState.update {
-                    it.copy(
+                _uiState.update { state ->
+                    state.copy(
                         isLoading = false, // Turn off loading after the first data emission
                         unidades = unidades,
                         catalogos = catalogosData,
                         stock = stockData,
                         selectedUnidad = selectedUnidad,
                         // Re-initialize formManager only on first load to not lose user input
-                        formManager = if (currentUiState.isLoading) MovimientoFormManager(catalogosData) else it.formManager
+                        formManager = newFormManager
                     )
                 }
             }
