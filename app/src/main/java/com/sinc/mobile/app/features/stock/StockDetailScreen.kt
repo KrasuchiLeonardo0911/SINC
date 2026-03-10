@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.sinc.mobile.app.features.stock.components.PieChart
+import com.sinc.mobile.app.features.stock.components.PieChartData
+import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.SincPrimary
 import com.sinc.mobile.ui.theme.SincGrayBackground
@@ -54,15 +56,8 @@ fun StockDetailScreen(
         }
     }
 
-    // Estado local para el agrupamiento
-    var currentGrouping by remember {
-        mutableStateOf(
-            try { StockGrouping.valueOf(grouping) } catch (e: Exception) { StockGrouping.BY_ALL }
-        )
-    }
-
-    val detailData = remember(uiState.processedStock, speciesName, currentGrouping) {
-        viewModel.getSpeciesDetailData(speciesName, currentGrouping)
+    val detailData = remember(uiState.processedStock, speciesName) {
+        viewModel.getSpeciesDetailData(speciesName)
     }
 
     // Estado para el modal de venta
@@ -70,7 +65,6 @@ fun StockDetailScreen(
     var selectedItemForSale by remember { mutableStateOf<DesgloseItem.Full?>(null) }
     var pesoVenta by remember { mutableStateOf("") }
     var observacionesVenta by remember { mutableStateOf("") }
-    var cantidadVenta by remember { mutableStateOf("1") }
 
     LaunchedEffect(uiState.saleSuccess, uiState.saleError) {
         if (uiState.saleSuccess != null || uiState.saleError != null) {
@@ -102,152 +96,100 @@ fun StockDetailScreen(
                     CircularProgressIndicator(color = SincPrimary)
                 }
             } else {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Encabezado Formal Estilo Excel / Reporte (Franja Gris)
-                    StockDetailTabHeader(
-                        selectedGrouping = currentGrouping,
-                        onGroupingSelected = { currentGrouping = it }
-                    )
-
-                    if (detailData.tableData.isEmpty() && uiState.selectedUnidadId != null) {
-                        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 32.dp)
+                ) {
+                    // 1. Título de Sección y Encabezado de Tabla
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                        ) {
                             Text(
-                                text = "No hay existencias de esta especie en el campo seleccionado.",
+                                text = speciesName.uppercase(),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                                color = Color.Black
+                            )
+                            Text(
+                                text = "Existencias detalladas en el sistema",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(32.dp)
+                                color = Color.Gray
                             )
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(bottom = 24.dp)
-                        ) {
-                            // Lista Estilo Limpio
-                            val listData = when(currentGrouping) {
-                                StockGrouping.BY_ALL -> detailData.tableData.map { Triple(it.categoria, it.raza, it.quantity) to it }
-                                StockGrouping.BY_CATEGORY -> detailData.legendItems.map { Triple(it.label, "", it.value) to null }
-                                StockGrouping.BY_BREED -> detailData.legendItems.map { Triple(it.label, "", it.value) to null }
-                            }
 
-                            itemsIndexed(listData) { index, (data, originalItem) ->
-                                val (title, subtitle, value) = data
-                                StockListItem(
-                                    title = title,
-                                    subtitle = subtitle,
-                                    value = value,
-                                    isLast = index == listData.size - 1,
-                                    onSellClick = if (currentGrouping == StockGrouping.BY_ALL && originalItem != null) {
-                                        {
-                                            if (uiState.selectedUnidadId != null) {
-                                                if (uiState.isLogisticsOpen) {
-                                                    selectedItemForSale = originalItem
-                                                    pesoVenta = ""
-                                                    observacionesVenta = ""
-                                                    cantidadVenta = "1"
-                                                    showSaleSheet = true
-                                                } else {
-                                                    viewModel.viewModelScope.launch {
-                                                        snackbarHostState.showSnackbar("El periodo de ventas ha cerrado, espere hasta el siguiente ciclo.")
-                                                    }
-                                                }
-                                            } else {
-                                                viewModel.viewModelScope.launch {
-                                                    snackbarHostState.showSnackbar("Para vender, debe seleccionar un campo en la pantalla anterior.")
-                                                }
-                                            }
-                                        }
-                                    } else null,
-                                    onAdjustClick = if (currentGrouping == StockGrouping.BY_ALL && originalItem != null) {
-                                        {
-                                            navController.navigate(
-                                                Routes.createMovimientoFormRoute(
-                                                    unidadId = uiState.selectedUnidadId?.toString(),
-                                                    initialPage = 0,
-                                                    especieId = originalItem.especieId,
-                                                    razaId = originalItem.razaId,
-                                                    categoriaId = originalItem.categoriaId
-                                                )
-                                            )
-                                        }
-                                    } else null,
-                                    isLogisticsOpen = uiState.isLogisticsOpen
-                                )
-                            }
+                        // Encabezado de Tabla Formal
+                        TableHeader()
+                    }
 
-                            // Sección de Gráfico (Solo si hay agrupamiento específico) - AL FINAL
-                            if (currentGrouping != StockGrouping.BY_ALL && detailData.chartData.isNotEmpty()) {
-                                item {
-                                    Spacer(modifier = Modifier.height(64.dp))
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(160.dp)
-                                                .shadow(elevation = 4.dp, shape = CircleShape)
-                                                .background(Color.White, CircleShape),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            PieChart(
-                                                data = detailData.chartData,
-                                                modifier = Modifier.fillMaxSize(),
-                                                strokeWidth = 40f
-                                            )
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(
-                                                    text = detailData.stockTotal.toString(),
-                                                    style = MaterialTheme.typography.headlineSmall,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = "Total",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Color.Gray
-                                                )
-                                            }
-                                        }
-                                        
-                                        Spacer(modifier = Modifier.height(24.dp))
-                                        
-                                        // Leyenda del gráfico
-                                        detailData.legendItems.forEach { item ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 4.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(10.dp)
-                                                        .clip(CircleShape)
-                                                        .background(item.color)
-                                                )
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                                Text(
-                                                    text = item.label,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                                Text(
-                                                    text = "${item.percentage.roundToInt()}%",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
-                                        }
-                                        
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                                    }
-                                }
+                    // 2. Lista de Animales (Tabla)
+                    if (detailData.tableData.isEmpty()) {
+                        item {
+                            Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                Text("No hay datos disponibles.", color = Color.LightGray)
                             }
                         }
+                    } else {
+                        itemsIndexed(detailData.tableData) { index, originalItem ->
+                            StockListItem(
+                                title = originalItem.categoria,
+                                subtitle = originalItem.raza,
+                                value = originalItem.quantity,
+                                isLast = index == detailData.tableData.size - 1,
+                                onSellClick = {
+                                    if (uiState.selectedUnidadId != null) {
+                                        if (uiState.isLogisticsOpen) {
+                                            selectedItemForSale = originalItem
+                                            pesoVenta = ""
+                                            observacionesVenta = ""
+                                            showSaleSheet = true
+                                        } else {
+                                            viewModel.viewModelScope.launch {
+                                                snackbarHostState.showSnackbar("El periodo de ventas ha cerrado, espere hasta el siguiente ciclo.")
+                                            }
+                                        }
+                                    } else {
+                                        viewModel.viewModelScope.launch {
+                                            snackbarHostState.showSnackbar("Para vender, debe seleccionar un campo en la pantalla anterior.")
+                                        }
+                                    }
+                                },
+                                onAdjustClick = {
+                                    navController.navigate(
+                                        Routes.createMovimientoFormRoute(
+                                            unidadId = uiState.selectedUnidadId?.toString(),
+                                            initialPage = 0,
+                                            especieId = originalItem.especieId,
+                                            razaId = originalItem.razaId,
+                                            categoriaId = originalItem.categoriaId
+                                        )
+                                    )
+                                },
+                                isLogisticsOpen = uiState.isLogisticsOpen
+                            )
+                        }
+                    }
+
+                    // 3. SECCIÓN: RESUMEN POR CATEGORÍA
+                    item {
+                        SectionDivider("RESUMEN POR CATEGORÍA")
+                        SummarySection(
+                            total = detailData.stockTotal,
+                            chartData = detailData.categoryChart,
+                            legendItems = detailData.categoryLegend
+                        )
+                    }
+
+                    // 4. SECCIÓN: RESUMEN POR RAZA
+                    item {
+                        SectionDivider("RESUMEN POR RAZA")
+                        SummarySection(
+                            total = detailData.stockTotal,
+                            chartData = detailData.breedChart,
+                            legendItems = detailData.breedLegend
+                        )
                     }
                 }
             }
@@ -358,57 +300,138 @@ fun StockDetailScreen(
 }
 
 @Composable
-private fun StockDetailTabHeader(
-    selectedGrouping: StockGrouping,
-    onGroupingSelected: (StockGrouping) -> Unit
-) {
-    val options = listOf(
-        StockGrouping.BY_ALL to "TOTAL",
-        StockGrouping.BY_CATEGORY to "CATEGORÍA",
-        StockGrouping.BY_BREED to "RAZA"
-    )
-    
-    val selectedIndex = options.indexOfFirst { it.first == selectedGrouping }
+private fun TableHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SincGrayBackground)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "ANIMAL / DETALLE",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "ACCIONES",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(80.dp)
+        )
+        Text(
+            text = "STOCK",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(60.dp)
+        )
+    }
+}
 
-    Column(modifier = Modifier.fillMaxWidth().background(SincGrayBackground)) {
-        TabRow(
-            selectedTabIndex = selectedIndex,
-            containerColor = SincGrayBackground,
-            contentColor = SincPrimary,
-            indicator = { tabPositions ->
-                if (selectedIndex != -1) {
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                        color = SincPrimary,
-                        height = 2.dp
-                    )
-                }
-            },
-            divider = {} // Eliminamos el divisor por defecto para usar el nuestro más fino
+@Composable
+private fun SectionDivider(title: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 32.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(SincGrayBackground)
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            options.forEachIndexed { index, (grouping, label) ->
-                Tab(
-                    selected = selectedIndex == index,
-                    onClick = { onGroupingSelected(grouping) },
-                    text = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Medium,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = if (selectedIndex == index) SincPrimary else Color.Gray,
-                            maxLines = 1
-                        )
-                    }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray,
+                letterSpacing = 1.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummarySection(
+    total: Int,
+    chartData: List<PieChartData>,
+    legendItems: List<LegendItem>
+) {
+    if (chartData.isEmpty()) return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(160.dp)
+                .shadow(elevation = 4.dp, shape = CircleShape)
+                .background(Color.White, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            PieChart(
+                data = chartData,
+                modifier = Modifier.fillMaxSize(),
+                strokeWidth = 40f
+            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = total.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Total",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
                 )
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Leyenda del gráfico
+        legendItems.forEachIndexed { index, item: LegendItem ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(item.color)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = item.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "${item.percentage.roundToInt()}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            if (index < legendItems.size - 1) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            }
+        }
     }
 }
 
@@ -451,7 +474,11 @@ private fun StockListItem(
             }
             
             // Iconos de acción (Después del nombre)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.width(80.dp)
+            ) {
                 if (onAdjustClick != null) {
                     IconButton(
                         onClick = onAdjustClick,
@@ -481,8 +508,6 @@ private fun StockListItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
             // Valor total (Al final a la derecha)
             Text(
                 text = value.toString(),
@@ -491,7 +516,7 @@ private fun StockListItem(
                     color = SincPrimary
                 ),
                 textAlign = TextAlign.End,
-                modifier = Modifier.widthIn(min = 32.dp)
+                modifier = Modifier.width(60.dp)
             )
         }
     }

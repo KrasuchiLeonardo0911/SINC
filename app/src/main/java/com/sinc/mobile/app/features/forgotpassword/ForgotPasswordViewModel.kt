@@ -19,12 +19,14 @@ data class ForgotPasswordState(
     val error: String? = null,
     val showSuccessDialog: Boolean = false,
     val step: ForgotPasswordStep = ForgotPasswordStep.EnterEmail,
-    val email: String = ""
+    val email: String = "",
+    val code: String = ""
 )
 
 enum class ForgotPasswordStep {
     EnterEmail,
-    EnterCodeAndPassword
+    EnterCode,
+    EnterNewPassword
 }
 
 @HiltViewModel
@@ -51,7 +53,7 @@ class ForgotPasswordViewModel @Inject constructor(
             result.onSuccess {
                 _state.value = state.value.copy(
                     isLoading = false,
-                    step = ForgotPasswordStep.EnterCodeAndPassword
+                    step = ForgotPasswordStep.EnterCode
                 )
                 _eventFlow.emit(UiEvent.ShowSnackbar("Si el correo ingresado existe en el sistema, se ha enviado el código."))
             }.onFailure {
@@ -61,11 +63,16 @@ class ForgotPasswordViewModel @Inject constructor(
         }
     }
 
-    fun onResetWithCode(code: String, password: String, passwordConfirmation: String) {
-        if (code.isBlank()) {
-            _state.value = _state.value.copy(error = "El código de verificación es requerido.")
+    fun onCodeEntered(code: String) {
+        if (code.length < 4) { // Asumimos al menos 4 dígitos para avanzar
+            _state.value = state.value.copy(error = "El código debe tener al menos 4 dígitos.")
             return
         }
+        _state.value = state.value.copy(code = code, step = ForgotPasswordStep.EnterNewPassword, error = null)
+    }
+
+    fun onResetWithCode(password: String, passwordConfirmation: String) {
+        val code = state.value.code
         if (password.isBlank()) {
             _state.value = _state.value.copy(error = "La contraseña no puede estar vacía.")
             return
@@ -98,6 +105,14 @@ class ForgotPasswordViewModel @Inject constructor(
             _state.value = state.value.copy(showSuccessDialog = false)
             _eventFlow.emit(UiEvent.NavigateToLogin)
         }
+    }
+
+    fun onBackToEmail() {
+        _state.value = state.value.copy(step = ForgotPasswordStep.EnterEmail, error = null)
+    }
+
+    fun onBackToCode() {
+        _state.value = state.value.copy(step = ForgotPasswordStep.EnterCode, error = null)
     }
 
     sealed class UiEvent {

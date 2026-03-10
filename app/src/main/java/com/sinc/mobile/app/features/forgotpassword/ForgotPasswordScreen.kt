@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -43,10 +44,17 @@ import kotlinx.coroutines.flow.collectLatest
 fun ForgotPasswordScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    isFirstTime: Boolean = false,
     viewModel: ForgotPasswordViewModel = hiltViewModel()
 ) {
     val state = viewModel.state.value
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val screenTitle = when (state.step) {
+        ForgotPasswordStep.EnterEmail -> if (isFirstTime) "Primer Ingreso" else "Recuperar Contraseña"
+        ForgotPasswordStep.EnterCode -> "Verificar Código"
+        ForgotPasswordStep.EnterNewPassword -> if (isFirstTime) "Establecer Contraseña" else "Nueva Contraseña"
+    }
 
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
@@ -66,7 +74,9 @@ fun ForgotPasswordScreen(
             showDialog = true,
             onDismiss = { viewModel.onSuccessDialogDismissed() },
             title = "Éxito",
-            message = "Contraseña restablecida con éxito. Serás redirigido para que inicies sesión."
+            message = if (isFirstTime) 
+                "Contraseña establecida con éxito. Ya puedes ingresar a tu cuenta." 
+                else "Contraseña restablecida con éxito. Serás redirigido para que inicies sesión."
         )
     }
 
@@ -74,9 +84,18 @@ fun ForgotPasswordScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Recuperar Contraseña") },
+                title = { Text(screenTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, enabled = !state.isLoading) {
+                    IconButton(
+                        onClick = {
+                            when (state.step) {
+                                ForgotPasswordStep.EnterEmail -> onNavigateBack()
+                                ForgotPasswordStep.EnterCode -> viewModel.onBackToEmail()
+                                ForgotPasswordStep.EnterNewPassword -> viewModel.onBackToCode()
+                            }
+                        },
+                        enabled = !state.isLoading
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -93,22 +112,30 @@ fun ForgotPasswordScreen(
         ) {
             AnimatedContent(
                 targetState = state.step,
-                label = "ForgotPasswordStepAnimation"
+                label = "ForgotPasswordStepAnimation",
+                modifier = Modifier.fillMaxSize()
             ) { targetStep ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     when (targetStep) {
                         ForgotPasswordStep.EnterEmail -> EnterEmailStep(
                             isLoading = state.isLoading,
+                            isFirstTime = isFirstTime,
                             onSendCode = { email -> viewModel.onEmailEntered(email) }
                         )
-                        ForgotPasswordStep.EnterCodeAndPassword -> EnterCodeAndPasswordStep(
+                        ForgotPasswordStep.EnterCode -> EnterCodeStep(
                             isLoading = state.isLoading,
-                            onReset = { code, pwd, confirm -> viewModel.onResetWithCode(code, pwd, confirm) }
+                            onVerifyCode = { code -> viewModel.onCodeEntered(code) }
+                        )
+                        ForgotPasswordStep.EnterNewPassword -> EnterNewPasswordStep(
+                            isLoading = state.isLoading,
+                            isFirstTime = isFirstTime,
+                            onReset = { pwd, confirm -> viewModel.onResetWithCode(pwd, confirm) }
                         )
                     }
                 }
@@ -117,7 +144,7 @@ fun ForgotPasswordScreen(
             if (state.isLoading) {
                 LoadingOverlay(
                     isLoading = true,
-                    message = if (state.step == ForgotPasswordStep.EnterEmail) "Enviando código..." else "Restableciendo..."
+                    message = if (state.step == ForgotPasswordStep.EnterEmail) "Enviando código..." else "Procesando..."
                 )
             }
         }
@@ -127,6 +154,7 @@ fun ForgotPasswordScreen(
 @Composable
 private fun EnterEmailStep(
     isLoading: Boolean,
+    isFirstTime: Boolean,
     onSendCode: (String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -135,7 +163,13 @@ private fun EnterEmailStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Introduce tu correo electrónico para recibir un código de verificación.")
+        Text(
+            text = if (isFirstTime) 
+                "Introduce tu correo electrónico institucional para solicitar tu código de primer ingreso." 
+                else "Introduce tu correo electrónico para recibir un código de verificación.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -149,25 +183,27 @@ private fun EnterEmailStep(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         ) {
-            Text("Enviar Código")
+            Text("Solicitar Código")
         }
     }
 }
 
 @Composable
-private fun EnterCodeAndPasswordStep(
+private fun EnterCodeStep(
     isLoading: Boolean,
-    onReset: (String, String, String) -> Unit
+    onVerifyCode: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordConfirmation by remember { mutableStateOf("") }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Introduce el código de 6 dígitos que recibiste y tu nueva contraseña.")
+        Text(
+            text = "Introduce el código de verificación que recibiste por correo.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
         OutlinedTextField(
             value = code,
             onValueChange = { code = it },
@@ -175,6 +211,36 @@ private fun EnterCodeAndPasswordStep(
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             enabled = !isLoading
+        )
+        Button(
+            onClick = { onVerifyCode(code) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        ) {
+            Text("Verificar Código")
+        }
+    }
+}
+
+@Composable
+private fun EnterNewPasswordStep(
+    isLoading: Boolean,
+    isFirstTime: Boolean,
+    onReset: (String, String) -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    var passwordConfirmation by remember { mutableStateOf("") }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = if (isFirstTime) 
+                "Crea tu nueva contraseña para acceder al sistema." 
+                else "Introduce tu nueva contraseña.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         OutlinedTextField(
             value = password,
@@ -196,11 +262,13 @@ private fun EnterCodeAndPasswordStep(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { onReset(code, password, passwordConfirmation) },
+            onClick = { onReset(password, passwordConfirmation) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         ) {
-            Text("Restablecer Contraseña")
+            Text(if (isFirstTime) "Establecer Contraseña" else "Actualizar Contraseña")
         }
     }
 }
+
+    

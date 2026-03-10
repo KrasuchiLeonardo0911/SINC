@@ -70,15 +70,17 @@ data class ProcessedEspecieStock(
 )
 
 /**
- * Representa los datos necesarios para visualizar el detalle de una especie.
+ * Representa los datos necesarios para visualizar el detalle completo de una especie en una sola pantalla.
  */
 data class SpeciesDetailUiData(
     val speciesName: String,
     val stockTotal: Int,
     val color: Color,
-    val chartData: List<PieChartData> = emptyList(),
-    val legendItems: List<LegendItem> = emptyList(),
-    val tableData: List<DesgloseItem.Full> = emptyList()
+    val tableData: List<DesgloseItem.Full> = emptyList(),
+    val categoryChart: List<PieChartData> = emptyList(),
+    val categoryLegend: List<LegendItem> = emptyList(),
+    val breedChart: List<PieChartData> = emptyList(),
+    val breedLegend: List<LegendItem> = emptyList()
 )
 
 data class StockUiState(
@@ -344,56 +346,36 @@ class StockViewModel @Inject constructor(
     }
 
     /**
-     * Procesa los datos de detalle para una especie y un agrupamiento específico.
+     * Procesa los datos de detalle completo para una especie (Tabla + Categoría + Raza).
      */
-    fun getSpeciesDetailData(speciesName: String, grouping: StockGrouping): SpeciesDetailUiData? {
+    fun getSpeciesDetailData(speciesName: String): SpeciesDetailUiData? {
         val processedStock = _uiState.value.processedStock ?: return null
         val speciesStock = processedStock.allSpecies.find { it.nombre == speciesName } ?: return null
 
         val totalStock = speciesStock.stockTotal.toFloat()
         
-        return when (grouping) {
-            StockGrouping.BY_ALL -> {
-                SpeciesDetailUiData(
-                    speciesName = speciesName,
-                    stockTotal = speciesStock.stockTotal,
-                    color = speciesStock.color,
-                    tableData = speciesStock.desglose
-                )
-            }
-            StockGrouping.BY_CATEGORY -> {
-                val byCategory = speciesStock.desglose.groupBy { it.categoria }
-                    .mapValues { it.value.sumOf { item -> item.quantity } }
-                    .toSortedMap()
-                
-                val distribution = calculateDistribution(byCategory, totalStock)
-                
-                SpeciesDetailUiData(
-                    speciesName = speciesName,
-                    stockTotal = speciesStock.stockTotal,
-                    color = speciesStock.color,
-                    chartData = distribution.first,
-                    legendItems = distribution.second,
-                    tableData = speciesStock.desglose
-                )
-            }
-            StockGrouping.BY_BREED -> {
-                val byBreed = speciesStock.desglose.groupBy { it.raza }
-                    .mapValues { it.value.sumOf { item -> item.quantity } }
-                    .toSortedMap()
-                
-                val distribution = calculateDistribution(byBreed, totalStock)
+        // Resumen por Categoría
+        val byCategory = speciesStock.desglose.groupBy { it.categoria }
+            .mapValues { it.value.sumOf { item -> item.quantity } }
+            .toSortedMap()
+        val catDistribution = calculateDistribution(byCategory, totalStock)
 
-                SpeciesDetailUiData(
-                    speciesName = speciesName,
-                    stockTotal = speciesStock.stockTotal,
-                    color = speciesStock.color,
-                    chartData = distribution.first,
-                    legendItems = distribution.second,
-                    tableData = speciesStock.desglose
-                )
-            }
-        }
+        // Resumen por Raza
+        val byBreed = speciesStock.desglose.groupBy { it.raza }
+            .mapValues { it.value.sumOf { item -> item.quantity } }
+            .toSortedMap()
+        val breedDistribution = calculateDistribution(byBreed, totalStock)
+
+        return SpeciesDetailUiData(
+            speciesName = speciesName,
+            stockTotal = speciesStock.stockTotal,
+            color = speciesStock.color,
+            tableData = speciesStock.desglose,
+            categoryChart = catDistribution.first,
+            categoryLegend = catDistribution.second,
+            breedChart = breedDistribution.first,
+            breedLegend = breedDistribution.second
+        )
     }
 
     private fun calculateDistribution(

@@ -44,29 +44,69 @@ fun WeatherAlertCard(
         iterations = LottieConstants.IterateForever
     )
 
-    Column(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, levelColor.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        // Fila Superior: Título y Animación
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = alert.evento,
-                style = MaterialTheme.typography.headlineSmall,
-                color = SincTextPrimary,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.weight(1f),
-                lineHeight = 28.sp
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Surface(
+                    color = levelColor.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = alert.nivel.uppercase(),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = levelColor,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = alert.evento,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = SincTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = "${alert.municipio} • ${alert.upNombre}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SincTextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = alert.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SincTextSecondary,
+                    lineHeight = 18.sp,
+                    maxLines = 3
+                )
+            }
             
-            // Animación muy grande
+            // Animación Lottie a la derecha y más pequeña
             Box(
-                modifier = Modifier.size(140.dp),
+                modifier = Modifier.size(90.dp),
                 contentAlignment = Alignment.Center
             ) {
                 LottieAnimation(
@@ -76,49 +116,5 @@ fun WeatherAlertCard(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.4f))
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Información Inferior
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "${alert.municipio} • UP: ${alert.upNombre}",
-                style = MaterialTheme.typography.titleSmall,
-                color = levelColor,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = alert.descripcion,
-                style = MaterialTheme.typography.bodyMedium,
-                color = SincTextSecondary,
-                lineHeight = 20.sp
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Badge de nivel
-            Surface(
-                color = levelColor.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = "NIVEL ${alert.nivel.uppercase()}",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = levelColor,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        // Divisor final opcional si hay varias alertas seguidas
-        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.2f))
     }
 }

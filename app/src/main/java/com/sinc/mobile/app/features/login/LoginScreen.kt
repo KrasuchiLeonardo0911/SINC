@@ -2,7 +2,9 @@ package com.sinc.mobile.app.features.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -26,7 +28,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit
+    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToFirstTime: () -> Unit
 ) {
     val state = viewModel.state.value
     var email by remember { mutableStateOf("") }
@@ -60,73 +63,84 @@ fun LoginScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logoovinos),
-                contentDescription = "Logo de la App",
-                modifier = Modifier.size(180.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(text = "Iniciar Sesión", style = MaterialTheme.typography.headlineMedium)
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth(),
-                isError = state.error != null
-            )
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                isError = state.error != null,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Default.Visibility
-                    else
-                        Icons.Default.VisibilityOff
-
-                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-
-                    IconButton(onClick = {passwordVisible = !passwordVisible}){
-                        Icon(imageVector  = image, contentDescription = description)
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logoovinos),
+                    contentDescription = "Logo de la App",
+                    modifier = Modifier.size(180.dp)
+                )
+    
+                Spacer(modifier = Modifier.height(16.dp))
+    
+                Text(text = "Iniciar Sesión", style = MaterialTheme.typography.headlineMedium)
+    
+                Spacer(modifier = Modifier.height(24.dp))
+    
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = state.error != null
+                )
+    
+                Spacer(modifier = Modifier.height(16.dp))
+    
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = state.error != null,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        val image = if (passwordVisible)
+                            Icons.Default.Visibility
+                        else
+                            Icons.Default.VisibilityOff
+    
+                        val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+    
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = description)
+                        }
                     }
+                )
+    
+                Spacer(modifier = Modifier.height(24.dp))
+    
+                Button(
+                    onClick = { viewModel.onLoginClick(email, password) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoadingOverlayVisible
+                ) {
+                    Text("Entrar")
                 }
-            )
-
-            Button(
-                onClick = { viewModel.onLoginClick(email, password) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoadingOverlayVisible // Simplified condition
-            ) {
-                Text("Entrar")
-            }
-
-            OutlinedButton(
-                onClick = onNavigateToForgotPassword,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoadingOverlayVisible
-            ) {
-                Text("Es mi primer ingreso")
-            }
-
-            TextButton(onClick = onNavigateToForgotPassword) {
-                Text("¿Olvidaste tu contraseña?")
+    
+                Spacer(modifier = Modifier.height(8.dp))
+    
+                OutlinedButton(
+                    onClick = onNavigateToFirstTime,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoadingOverlayVisible
+                ) {
+                    Text("Es mi primer ingreso")
+                }
+    
+                TextButton(
+                    onClick = onNavigateToForgotPassword,
+                    enabled = !isLoadingOverlayVisible
+                ) {
+                    Text("¿Olvidaste tu contraseña?")
+                }
             }
         }
     }
-}

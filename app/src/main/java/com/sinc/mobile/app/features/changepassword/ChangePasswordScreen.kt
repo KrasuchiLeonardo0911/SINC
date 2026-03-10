@@ -104,6 +104,7 @@ fun ChangePasswordScreen(
                 .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = "Para proteger tu cuenta, introduce tu contraseña actual. La nueva contraseña debe tener al menos 8 caracteres.",

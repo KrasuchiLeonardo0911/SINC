@@ -44,7 +44,8 @@ object Routes {
     const val MOVIMIENTO = "movimiento"
     const val SETTINGS = "settings"
     const val CHANGE_PASSWORD = "change_password"
-    const val FORGOT_PASSWORD = "forgot_password"
+    const val FORGOT_PASSWORD = "forgot_password?isFirstTime={isFirstTime}"
+    fun createForgotPasswordRoute(isFirstTime: Boolean = false) = "forgot_password?isFirstTime=$isFirstTime"
     const val SPLASH = "splash"
     const val CREATE_UNIDAD_PRODUCTIVA = "create_unidad_productiva"
     const val EDIT_UNIDAD_PRODUCTIVA = "edit_unidad_productiva/{unidadId}"
@@ -113,7 +114,10 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToForgotPassword = {
-                    navController.navigate(Routes.FORGOT_PASSWORD)
+                    navController.navigate(Routes.createForgotPasswordRoute(isFirstTime = false))
+                },
+                onNavigateToFirstTime = {
+                    navController.navigate(Routes.createForgotPasswordRoute(isFirstTime = true))
                 }
             )
         }
@@ -196,20 +200,26 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToForgotPassword = {
-                    navController.navigate(Routes.FORGOT_PASSWORD)
+                    navController.navigate(Routes.createForgotPasswordRoute(isFirstTime = false))
                 }
             )
         }
         composable(
             route = Routes.FORGOT_PASSWORD,
+            arguments = listOf(navArgument("isFirstTime") {
+                type = NavType.BoolType
+                defaultValue = false
+            }),
             enterTransition = {
                 slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
             },
             popExitTransition = {
                 slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
             }
-        ) {
+        ) { backStackEntry ->
+            val isFirstTime = backStackEntry.arguments?.getBoolean("isFirstTime") ?: false
             ForgotPasswordScreen(
+                isFirstTime = isFirstTime,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
                     navController.navigate(Routes.LOGIN) {
