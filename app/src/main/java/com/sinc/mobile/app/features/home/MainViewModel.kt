@@ -52,7 +52,8 @@ class MainViewModel @Inject constructor(
     private fun observeWeatherAlerts() {
         getWeatherAlertsUseCase()
             .onEach { alerts ->
-                _uiState.update { it.copy(weatherAlerts = alerts) }
+                val unreadAlerts = alerts.filter { !it.isRead }
+                _uiState.update { it.copy(weatherAlerts = unreadAlerts) }
             }
             .launchIn(viewModelScope)
     }

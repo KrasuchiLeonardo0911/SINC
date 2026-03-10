@@ -382,6 +382,7 @@ fun EditUnidadProductivaScreen(
                         onSelect = { selected ->
                             viewModel.addOrUpdateSuelo(SueloInfo(selected.id, selected.nombre, 0))
                             hideSheet()
+                            Unit
                         }
                     )
                 }
@@ -396,6 +397,7 @@ fun EditUnidadProductivaScreen(
                         onSelect = { selected ->
                             viewModel.addOrUpdatePasto(PastoInfo(selected.id, selected.nombre, 0))
                             hideSheet()
+                            Unit
                         }
                     )
                 }
@@ -405,9 +407,10 @@ fun EditUnidadProductivaScreen(
                     itemLabel = { it.nombre },
                     itemId = { it.id },
                     selectedId = uiState.condicionTenenciaId,
-                    onSelect = {
-                        viewModel.onCondicionTenenciaChange(it.id)
+                    onSelect = { item ->
+                        viewModel.onCondicionTenenciaChange(item.id)
                         hideSheet()
+                        Unit
                     }
                 )
                 EditSheetType.FuenteAguaAnimal -> SelectionSheetContent(
@@ -416,9 +419,10 @@ fun EditUnidadProductivaScreen(
                     itemLabel = { it.nombre },
                     itemId = { it.id },
                     selectedId = uiState.aguaAnimalFuenteId,
-                    onSelect = {
-                        viewModel.onAguaAnimalFuenteChange(it.id)
+                    onSelect = { item ->
+                        viewModel.onAguaAnimalFuenteChange(item.id)
                         hideSheet()
+                        Unit
                     }
                 )
                 EditSheetType.FuenteAguaHumano -> SelectionSheetContent(
@@ -427,9 +431,10 @@ fun EditUnidadProductivaScreen(
                     itemLabel = { it.nombre },
                     itemId = { it.id },
                     selectedId = uiState.aguaHumanoFuenteId,
-                    onSelect = {
-                        viewModel.onAguaHumanoFuenteChange(it.id)
+                    onSelect = { item ->
+                        viewModel.onAguaHumanoFuenteChange(item.id)
                         hideSheet()
+                        Unit
                     }
                 )
                 else -> Spacer(Modifier.height(1.dp))

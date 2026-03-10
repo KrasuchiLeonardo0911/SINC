@@ -21,6 +21,9 @@ interface WeatherAlertDao {
     @Query("UPDATE weather_alerts SET isRead = 1 WHERE id = :alertId")
     suspend fun markAsRead(alertId: Int)
 
+    @Query("UPDATE weather_alerts SET isRead = 1")
+    suspend fun markAllAsRead()
+
     @Query("DELETE FROM weather_alerts WHERE fin < :now")
     suspend fun deleteOldAlerts(now: String)
 

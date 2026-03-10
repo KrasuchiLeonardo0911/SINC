@@ -7,23 +7,21 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Launch
-import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -38,6 +36,7 @@ import com.sinc.mobile.app.navigation.Routes
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.FullscreenLoader
 import com.sinc.mobile.ui.theme.SincBackground
+import com.sinc.mobile.ui.theme.SincTextPrimary
 import com.sinc.mobile.ui.theme.SincTextSecondary
 import kotlinx.coroutines.flow.collectLatest
 
@@ -87,200 +86,195 @@ fun WeatherScreen(
                     .padding(paddingValues)
                     .pullRefresh(pullRefreshState)
             ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                // SECCIÓN ALERTAS
-                item {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Notifications,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Alertas Meteorológicas",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        
-                        if (uiState.alerts.isNotEmpty()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                uiState.alerts.forEach { alert ->
-                                    WeatherAlertCard(alert = alert)
-                                }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 20.dp, bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    // SECCIÓN ALERTAS (Tarjetas Arriba)
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Alertas Meteorológicas",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SincTextPrimary
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(Icons.Outlined.NotificationsActive, null, tint = SincTextSecondary, modifier = Modifier.size(18.dp))
                             }
-                        } else {
-                            // Estado Despejado / Sin Alertas (Rediseñado)
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF2F4F7))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(20.dp)
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.img_weather_sunny),
-                                        contentDescription = "Cielo despejado",
-                                        modifier = Modifier.size(70.dp),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(
-                                            text = "Sin alertas activas",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "Las condiciones actuales son favorables.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            lineHeight = 18.sp
-                                        )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (uiState.alerts.isNotEmpty()) {
+                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    uiState.alerts.forEach { alert ->
+                                        WeatherAlertCard(alert = alert)
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
-
-                // SECCIÓN MAPA
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Map,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Mapa en Tiempo Real",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        // Preview del mapa interactivo
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(260.dp)
-                                .clickable { viewModel.onLayerSelected(uiState.selectedLayer) },
-                            shape = RoundedCornerShape(20.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.windy_preview),
-                                    contentDescription = "Ver mapa meteorológico",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                // Gradiente inferior para visibilidad
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
-                                                startY = 300f
+                            } else {
+                                // ESTADO SIN ALERTAS
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    elevation = CardDefaults.cardElevation(0.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF2F4F7))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(24.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            modifier = Modifier.size(48.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFFFEFCE8)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.WbSunny,
+                                                contentDescription = null,
+                                                tint = Color(0xFFEAB308),
+                                                modifier = Modifier.padding(12.dp)
                                             )
-                                        )
+                                        }
+                                        Spacer(modifier = Modifier.width(20.dp))
+                                        Column {
+                                            Text(
+                                                text = "Cielo despejado",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = SincTextPrimary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = "No hay alertas activas en este momento.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = SincTextSecondary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // SECCIÓN MAPA INTERACTIVO (Mapa Abajo) - Versión Compacta Rectangular
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Mapa en Tiempo Real",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SincTextPrimary
                                 )
-                                
-                                // Botón flotante central
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(30.dp))
-                                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Outlined.Launch, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(Icons.Outlined.Language, null, tint = SincTextSecondary, modifier = Modifier.size(18.dp))
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .clickable { viewModel.onLayerSelected(uiState.selectedLayer) },
+                                shape = RoundedCornerShape(20.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.windy_preview),
+                                        contentDescription = "Mapa en vivo",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                brush = Brush.verticalGradient(
+                                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+                                                    startY = 100f
+                                                )
+                                            )
+                                    )
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .background(Color.White.copy(alpha = 0.9f), CircleShape)
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Outlined.ZoomOutMap, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Ver Mapa", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Selector de Capas
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                WindyLayer.values().forEach { layer ->
+                                    val isSelected = uiState.selectedLayer == layer
+                                    Surface(
+                                        modifier = Modifier.clickable { viewModel.onLayerSelected(layer) },
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+                                        shape = CircleShape,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Color.Transparent else Color(0xFFF2F4F7))
+                                    ) {
                                         Text(
-                                            text = "Expandir mapa",
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold
+                                            text = layer.label,
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (isSelected) Color.White else SincTextPrimary,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                         )
                                     }
                                 }
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Botones de capas (Filtros)
-                        Text(
-                            text = "Capas del mapa", style = MaterialTheme.typography.labelMedium,
-                            color = SincTextSecondary,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Row(
+                    }
+                    
+                    // FOOTER
+                    item {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(horizontal = 20.dp, vertical = 8.dp)
+                                .background(Color(0xFFF9FAFB), RoundedCornerShape(12.dp))
+                                .padding(16.dp)
                         ) {
-                            WindyLayer.values().forEach { layer ->
-                                val isSelected = uiState.selectedLayer == layer
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = { viewModel.onLayerSelected(layer) },
-                                    label = { Text(layer.label, fontSize = 13.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                        selectedLabelColor = Color.White,
-                                        containerColor = Color.White
-                                    ),
-                                    border = FilterChipDefaults.filterChipBorder(
-                                        enabled = true,
-                                        selected = isSelected,
-                                        borderColor = Color(0xFFF2F4F7),
-                                        selectedBorderColor = MaterialTheme.colorScheme.primary
-                                    )
+                            Row(verticalAlignment = Alignment.Top) {
+                                Icon(Icons.Outlined.Info, null, tint = SincTextSecondary, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Reportes basados en datos oficiales del sistema central y Windy.com.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SincTextSecondary
                                 )
                             }
                         }
                     }
                 }
-            }
 
-            PullRefreshIndicator(
-                refreshing = uiState.isLoading,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                contentColor = MaterialTheme.colorScheme.primary
-            )
+                PullRefreshIndicator(
+                    refreshing = uiState.isLoading,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
-}
 }

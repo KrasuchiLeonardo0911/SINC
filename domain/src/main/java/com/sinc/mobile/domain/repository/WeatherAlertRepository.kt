@@ -9,6 +9,7 @@ interface WeatherAlertRepository {
     fun getAlerts(): Flow<List<WeatherAlert>>
     suspend fun syncAlerts(): Result<Unit, Error>
     suspend fun markAsRead(alertId: Int)
+    suspend fun markAllAsRead()
     suspend fun deleteOldAlerts()
     suspend fun saveAlert(alert: WeatherAlert)
 }

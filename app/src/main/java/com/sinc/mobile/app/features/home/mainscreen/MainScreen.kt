@@ -71,6 +71,9 @@ import java.time.LocalDate
 import android.content.Intent
 import android.net.Uri
 
+import com.sinc.mobile.app.features.settings.SettingsScreen
+import com.sinc.mobile.app.features.notifications.NotificationsScreen
+
 @Composable
 fun MainScreen(
     navController: NavHostController,
@@ -120,20 +123,14 @@ fun MainScreen(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = SincBackground,
                     bottomBar = {
-                        if (currentRoute != CozyBottomNavRoutes.WEATHER && 
-                            currentRoute != CozyBottomNavRoutes.STOCK &&
+                        if (currentRoute != CozyBottomNavRoutes.STOCK &&
                             currentRoute != CozyBottomNavRoutes.HISTORIAL) {
                             CozyBottomNavBar(
                                 selectedRoute = currentRoute,
                                 unreadNotificationCount = uiState.unreadNotificationCount,
+                                hasWeatherAlerts = uiState.weatherAlerts.isNotEmpty(),
                                 onItemSelected = { newRoute ->
-                                    if (newRoute == CozyBottomNavRoutes.PROFILE) {
-                                        navController.navigate(Routes.SETTINGS)
-                                    } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
-                                        navController.navigate(Routes.NOTIFICATIONS)
-                                    } else {
-                                        currentRoute = newRoute
-                                    }
+                                    currentRoute = newRoute
                                 }
                             )
                         }
@@ -183,6 +180,22 @@ fun MainScreen(
                                 },
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 navController = navController
+                            )
+                            CozyBottomNavRoutes.PROFILE -> SettingsScreen(
+                                onNavigateBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                                onNavigateToLogin = {
+                                    navController.navigate(Routes.LOGIN) {
+                                        popUpTo(Routes.HOME) { inclusive = true }
+                                    }
+                                },
+                                onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
+                                onNavigateToHelp = { navController.navigate(Routes.HELP) },
+                                onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
+                                onNavigateToTerms = { navController.navigate(Routes.TERMS_OF_SERVICE) }
+                            )
+                            CozyBottomNavRoutes.NOTIFICATIONS -> NotificationsScreen(
+                                navController = navController,
+                                onBackPress = { currentRoute = CozyBottomNavRoutes.HOME }
                             )
                             CozyBottomNavRoutes.AGENDA -> {
                                 Box(

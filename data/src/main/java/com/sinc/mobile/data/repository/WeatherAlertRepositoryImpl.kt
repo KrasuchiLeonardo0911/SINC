@@ -10,6 +10,7 @@ import com.sinc.mobile.domain.repository.WeatherAlertRepository
 import com.sinc.mobile.domain.util.Error
 import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -27,21 +28,36 @@ class WeatherAlertRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncAlerts(): Result<Unit, Error> {
-        Log.d("WeatherSync", "Iniciando sincronización de alertas...")
+        Log.d("WeatherSync", "Iniciando sincronización inteligente de alertas...")
         return try {
             val response = apiService.getActiveAlerts()
             if (response.isSuccessful && response.body() != null) {
-                val alertsDto = response.body()!!.alertas
-                Log.d("WeatherSync", "Alertas recibidas: ${alertsDto.size}")
-                alertsDto.forEach { Log.d("WeatherSync", "Alerta DTO: $it") }
+                val remoteAlertsDto = response.body()!!.alertas
                 
+                // Obtener alertas actuales para preservar el estado 'isRead'
+                val localAlerts = dao.getAllAlerts().first()
+                
+                val entitiesToInsert = remoteAlertsDto.map { dto ->
+                    val entity = dto.toEntity()
+                    // Si la alerta ya existía (mismo evento, municipio y UP), preservamos su estado isRead
+                    val existing = localAlerts.find { 
+                        it.evento == entity.evento && 
+                        it.municipio == entity.municipio && 
+                        it.upId == entity.upId 
+                    }
+                    if (existing != null) {
+                        entity.copy(id = existing.id, isRead = existing.isRead)
+                    } else {
+                        entity
+                    }
+                }
+
+                // Limpiar y reinsertar con estados preservados
                 dao.deleteAll()
-                val entities = alertsDto.map { it.toEntity() }
-                dao.insertAlerts(entities)
-                Log.d("WeatherSync", "Sincronización exitosa")
+                dao.insertAlerts(entitiesToInsert)
+                
                 Result.Success(Unit)
             } else {
-                Log.e("WeatherSync", "Error en API: ${response.code()}")
                 Result.Failure(object : Error {
                     override val message: String = "Error al sincronizar alertas: ${response.code()}"
                 })
@@ -56,6 +72,10 @@ class WeatherAlertRepositoryImpl @Inject constructor(
 
     override suspend fun markAsRead(alertId: Int) {
         dao.markAsRead(alertId)
+    }
+
+    override suspend fun markAllAsRead() {
+        dao.markAllAsRead()
     }
 
     override suspend fun deleteOldAlerts() {

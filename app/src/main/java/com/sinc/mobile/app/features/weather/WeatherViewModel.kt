@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.domain.model.WeatherAlert
 import com.sinc.mobile.domain.use_case.weather.GetWeatherAlertsUseCase
 import com.sinc.mobile.domain.use_case.weather.SyncWeatherAlertsUseCase
+import com.sinc.mobile.domain.use_case.weather.MarkWeatherAlertsAsReadUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
@@ -35,7 +36,8 @@ sealed class WeatherEvent {
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     private val getWeatherAlertsUseCase: GetWeatherAlertsUseCase,
-    private val syncWeatherAlertsUseCase: SyncWeatherAlertsUseCase
+    private val syncWeatherAlertsUseCase: SyncWeatherAlertsUseCase,
+    private val markWeatherAlertsAsReadUseCase: MarkWeatherAlertsAsReadUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
@@ -48,6 +50,13 @@ class WeatherViewModel @Inject constructor(
         Log.d("WeatherVM", "Iniciando WeatherViewModel...")
         observeAlerts()
         initialSync()
+        markAsRead()
+    }
+
+    private fun markAsRead() {
+        viewModelScope.launch {
+            markWeatherAlertsAsReadUseCase()
+        }
     }
 
     private fun initialSync() {

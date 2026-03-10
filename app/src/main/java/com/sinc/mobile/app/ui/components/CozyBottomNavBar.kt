@@ -44,28 +44,38 @@ data class BottomNavItem(
 fun CozyBottomNavBar(
     selectedRoute: String,
     onItemSelected: (String) -> Unit,
-    unreadNotificationCount: Int
+    unreadNotificationCount: Int,
+    hasWeatherAlerts: Boolean = false
 ) {
     val items = listOf(
+        BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
         BottomNavItem("Agenda", CozyBottomNavRoutes.AGENDA, Icons.Outlined.Event),
         BottomNavItem("Clima", CozyBottomNavRoutes.WEATHER, Icons.Outlined.WbCloudy),
         BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person)
     )
 
-    Column(modifier = Modifier.navigationBarsPadding()) {
-        HorizontalDivider(thickness = 1.dp, color = Color.LightGray.copy(alpha = 0.3f))
+    Column(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.9f)) // Fondo negro para el área del sistema
+            .navigationBarsPadding()
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp) // Altura reducida
+                .height(52.dp) // Un poco más de altura para elegancia
                 .background(SincBackground)
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround // Distribuir uniformemente
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
             items.forEach { item ->
-                val showBadge = item.route == CozyBottomNavRoutes.NOTIFICATIONS && unreadNotificationCount > 0
+                val showBadge = when (item.route) {
+                    CozyBottomNavRoutes.NOTIFICATIONS -> unreadNotificationCount > 0
+                    CozyBottomNavRoutes.WEATHER -> hasWeatherAlerts
+                    else -> false
+                }
+                
                 CozyBottomNavItem(
                     item = item,
                     isSelected = selectedRoute == item.route,
@@ -93,24 +103,12 @@ fun RowScope.CozyBottomNavItem(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ),
-        contentAlignment = Alignment.Center // Center content vertically and horizontally
+        contentAlignment = Alignment.Center
     ) {
-        // Indicator Line
-        val indicatorColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter) // Align to the very top of the Box
-                .height(3.dp)
-                .width(36.dp) // Lengthen the indicator line slightly
-                .background(indicatorColor, shape = CircleShape)
-        )
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxHeight() // Fill the remaining height after the indicator
-                .padding(top = 0.dp) // Reduce space between top of bar and icons
+            modifier = Modifier.fillMaxHeight()
         ) {
             val icon = item.icon // Always use Outlined version for a finer look
 
