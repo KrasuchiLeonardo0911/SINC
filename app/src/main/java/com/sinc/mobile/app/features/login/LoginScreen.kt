@@ -2,9 +2,7 @@ package com.sinc.mobile.app.features.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -135,12 +133,12 @@ fun LoginScreen(
                     Text("Es mi primer ingreso")
                 }
     
-                TextButton(
-                    onClick = onNavigateToForgotPassword,
-                    enabled = !isLoadingOverlayVisible
-                ) {
-                    Text("¿Olvidaste tu contraseña?")
-                }
-            }
-        }
-    }
+                                        TextButton(
+                                            onClick = onNavigateToForgotPassword,
+                                            enabled = !isLoadingOverlayVisible
+                                        ) {
+                                            Text("¿Olvidaste tu contraseña?")
+                                        }
+                                    }
+                                }
+                            }

@@ -6,11 +6,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WbCloudy
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
@@ -46,11 +47,10 @@ fun CozyBottomNavBar(
     unreadNotificationCount: Int
 ) {
     val items = listOf(
-        BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
+        BottomNavItem("Agenda", CozyBottomNavRoutes.AGENDA, Icons.Outlined.Event),
         BottomNavItem("Clima", CozyBottomNavRoutes.WEATHER, Icons.Outlined.WbCloudy),
-        BottomNavItem("Ayuda", CozyBottomNavRoutes.HELP, Icons.Outlined.HelpOutline),
-        BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person),
-        BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications)
+        BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications),
+        BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person)
     )
 
     Column(modifier = Modifier.navigationBarsPadding()) {
@@ -112,26 +112,13 @@ fun RowScope.CozyBottomNavItem(
                 .fillMaxHeight() // Fill the remaining height after the indicator
                 .padding(top = 0.dp) // Reduce space between top of bar and icons
         ) {
-            val icon = if (isSelected) {
-                // Relleno para el estado activo
-                when (item.route) {
-                    CozyBottomNavRoutes.HOME -> Icons.Filled.Home
-                    CozyBottomNavRoutes.HELP -> Icons.Filled.Help
-                    CozyBottomNavRoutes.PROFILE -> Icons.Filled.Person
-                    CozyBottomNavRoutes.NOTIFICATIONS -> Icons.Filled.Notifications
-                    CozyBottomNavRoutes.WEATHER -> Icons.Filled.WbCloudy
-                    else -> item.icon // Fallback
-                }
-            } else {
-                // Contorno para el estado inactivo
-                item.icon
-            }
+            val icon = item.icon // Always use Outlined version for a finer look
 
             Box {
                 Icon(
                     imageVector = icon,
                     contentDescription = item.label,
-                    tint = if (isSelected) CozyTextMain else CozyIconGray,
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary else SincTextSecondary,
                     modifier = Modifier.size(24.dp)
                 )
                 if (showBadge) {
@@ -148,7 +135,7 @@ fun RowScope.CozyBottomNavItem(
             Text(
                 text = item.label,
                 style = MaterialTheme.typography.labelSmall,
-                color = if (isSelected) CozyTextMain else CozyIconGray
+                color = if (isSelected) MaterialTheme.colorScheme.primary else SincTextSecondary
             )
         }
     }

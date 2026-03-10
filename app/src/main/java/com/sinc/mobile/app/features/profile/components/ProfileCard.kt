@@ -1,5 +1,6 @@
 package com.sinc.mobile.app.features.profile.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -48,9 +50,16 @@ fun ProfileInfoCard(
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
+fun InfoRow(
+    label: String,
+    value: String,
+    isClickable: Boolean = false,
+    onClick: () -> Unit = {}
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (isClickable) Modifier.clickable { onClick() } else Modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -63,7 +72,8 @@ fun InfoRow(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (isClickable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            textDecoration = if (isClickable) TextDecoration.Underline else null,
             modifier = Modifier.weight(0.6f)
         )
     }

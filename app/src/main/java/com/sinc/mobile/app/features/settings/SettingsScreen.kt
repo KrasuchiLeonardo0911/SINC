@@ -5,12 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -21,15 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
+import android.content.Intent
+import android.net.Uri
 
 @Composable
 fun SettingsScreen(
@@ -38,10 +42,12 @@ fun SettingsScreen(
     onNavigateToChangePassword: () -> Unit,
     onNavigateToHelp: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToTerms: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(key1 = true) {
         viewModel.navigationEvent.collectLatest { event ->
@@ -77,6 +83,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -105,6 +112,7 @@ fun SettingsScreen(
                     iconBackgroundColor = CozyLavender,
                     onClick = onNavigateToChangePassword
                 )
+                /* 
                 SettingsItem(
                     title = "Notificaciones",
                     icon = Icons.Outlined.Notifications,
@@ -115,6 +123,46 @@ fun SettingsScreen(
                         onCheckedChange = { notificationsEnabled = it }
                     )
                 }
+                */
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Sobre la Aplicación",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+            )
+
+            SettingsSection {
+                SettingsItem(
+                    title = "Versión",
+                    icon = Icons.Outlined.Info,
+                    iconBackgroundColor = CozyLightGray,
+                    trailingContent = {
+                        Text(
+                            text = "1.0",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = CozyTextSecondary
+                        )
+                    }
+                )
+                SettingsItem(
+                    title = "Políticas de Privacidad",
+                    icon = Icons.Outlined.PrivacyTip,
+                    iconBackgroundColor = CozyMint,
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://sicsurmisiones.online/privacidad.html"))
+                        context.startActivity(intent)
+                    }
+                )
+                SettingsItem(
+                    title = "Términos de Servicio",
+                    icon = Icons.Outlined.Description,
+                    iconBackgroundColor = CozyLavender,
+                    onClick = onNavigateToTerms
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -134,6 +182,8 @@ fun SettingsScreen(
                     onClick = { showLogoutDialog = true }
                 )
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

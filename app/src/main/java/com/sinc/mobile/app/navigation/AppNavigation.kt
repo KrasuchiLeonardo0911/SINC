@@ -78,6 +78,7 @@ object Routes {
     fun createResumenMovimientosRoute(month: Int, year: Int) = "resumen_movimientos/$month/$year"
     const val HELP = "help"
     const val SELECCION_CAMPO = "seleccion_campo"
+    const val TERMS_OF_SERVICE = "terms_of_service"
     const val STOCK_DETAIL = "stock_detail/{speciesName}/{grouping}?unidadId={unidadId}"
     fun createStockDetailRoute(speciesName: String, grouping: String, unidadId: Int? = null): String {
         val base = "stock_detail/$speciesName/$grouping"
@@ -156,7 +157,8 @@ fun AppNavigation(
                 },
                 onNavigateToChangePassword = { navController.navigate(Routes.CHANGE_PASSWORD) },
                 onNavigateToHelp = { navController.navigate(Routes.HELP) },
-                onNavigateToProfile = { navController.navigate(Routes.PROFILE) }
+                onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
+                onNavigateToTerms = { navController.navigate(Routes.TERMS_OF_SERVICE) }
             )
         }
         composable(
@@ -169,7 +171,8 @@ fun AppNavigation(
             }
         ) {
             com.sinc.mobile.app.features.profile.ProfileScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTerms = { navController.navigate(Routes.TERMS_OF_SERVICE) }
             )
         }
         composable(
@@ -498,26 +501,41 @@ fun AppNavigation(
             )
         }
 
-        composable(
-            route = Routes.WINDY_MAP,
-            arguments = listOf(navArgument("layer") { type = NavType.StringType }),
-            enterTransition = {
-                fadeIn(animationSpec = tween(300))
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(300))
+                composable(
+                    route = Routes.WINDY_MAP,
+                    arguments = listOf(navArgument("layer") { type = NavType.StringType }),
+                    enterTransition = {
+                        fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        fadeOut(animationSpec = tween(300))
+                    }
+                ) { backStackEntry ->
+                    val layer = backStackEntry.arguments?.getString("layer") ?: "radar"
+                    val baseLat = -27.367
+                    val baseLong = -55.896
+                    val defaultZoom = 8
+                    // Construir la URL para el modo embed limpio
+                    val windyUrl = "https://embed.windy.com/embed2.html?lat=$baseLat&lon=$baseLong&detailLat=$baseLat&detailLon=$baseLong&zoom=$defaultZoom&level=surface&overlay=$layer&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km/h&metricTemp=°C&radarRange=-1"
+        
+                    WindyMapScreen(
+                        windyUrl = windyUrl,
+                        onBackPress = { navController.popBackStack() }
+                    )
+                }
+        
+                composable(
+                    route = Routes.TERMS_OF_SERVICE,
+                    enterTransition = {
+                        slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
+                    com.sinc.mobile.app.features.profile.TermsOfServiceScreen(
+                        onBackPress = { navController.popBackStack() }
+                    )
+                }
             }
-        ) { backStackEntry ->
-            val layer = backStackEntry.arguments?.getString("layer") ?: "radar"
-            val baseLat = -27.367
-            val baseLong = -55.896
-            val defaultZoom = 8
-            // Construir la URL para el modo embed limpio
-            val windyUrl = "https://embed.windy.com/embed2.html?lat=$baseLat&lon=$baseLong&detailLat=$baseLat&detailLon=$baseLong&zoom=$defaultZoom&level=surface&overlay=$layer&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=km/h&metricTemp=°C&radarRange=-1"
-
-            WindyMapScreen(
-                windyUrl = windyUrl,
-                onBackPress = { navController.popBackStack() }
-            )
         }
-    }}

@@ -129,12 +129,6 @@ fun MainScreen(
                                 onItemSelected = { newRoute ->
                                     if (newRoute == CozyBottomNavRoutes.PROFILE) {
                                         navController.navigate(Routes.SETTINGS)
-                                    } else if (newRoute == CozyBottomNavRoutes.HELP) {
-                                        navController.navigate(Routes.HELP)
-                                    } else if (newRoute == CozyBottomNavRoutes.PROFILE) {
-                                        navController.navigate(Routes.SETTINGS)
-                                    } else if (newRoute == CozyBottomNavRoutes.HELP) {
-                                        navController.navigate(Routes.HELP)
                                     } else if (newRoute == CozyBottomNavRoutes.NOTIFICATIONS) {
                                         navController.navigate(Routes.NOTIFICATIONS)
                                     } else {
@@ -190,6 +184,16 @@ fun MainScreen(
                                 onBack = { currentRoute = CozyBottomNavRoutes.HOME },
                                 navController = navController
                             )
+                            CozyBottomNavRoutes.AGENDA -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(paddingValues),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = "Agenda - Próximamente", style = MaterialTheme.typography.headlineMedium)
+                                }
+                            }
                             else -> {
                                 Column(
                                     modifier = Modifier

@@ -25,6 +25,7 @@ import android.net.Uri
 @Composable
 fun ProfileScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToTerms: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
