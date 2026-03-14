@@ -344,3 +344,41 @@ Se ha transformado la pantalla para ofrecer una experiencia más limpia, interac
 - **Git & Seguridad**: Se añadió `gradle.properties` al `.gitignore` y se eliminó del índice de seguimiento de Git (`git rm --cached`).
 - **Corrección de Errores**: Se resolvieron múltiples errores de compilación relacionados con referencias de tipos (`it`), importaciones faltantes y ambigüedades en lambdas de Compose.
 - **Verificación**: El proyecto compila exitosamente mediante `./gradlew assembleDebug`.
+
+# Avances de la Sesión Actual (12 de Marzo de 2026)
+
+## Módulo de Agenda Digital e Integración de Calendario
+
+Se ha implementado la nueva funcionalidad de **Agenda Digital**, integrándola directamente con el sistema de **Calendario** para ofrecer una experiencia de gestión centralizada para el productor.
+
+### 1. Refactorización de la Navegación
+*   **Renombre de Sección:** La antigua pestaña "Agenda" en la barra de navegación inferior ha sido renombrada a **"Cuaderno"**, destinada a ser una bitácora de registros de texto libre (próximamente).
+*   **Centralización en Calendario:** El calendario (anteriormente centrado solo en logística) se ha transformado en el núcleo de la **Agenda Digital**, accesible desde el cabecero de la pantalla principal.
+
+### 2. Capa de Datos y Dominio (Offline-First)
+*   **Modelos de Dominio:** Creación de `AgendaItem.kt` para representar tareas y recordatorios.
+*   **Persistencia Local (Room):**
+    *   Implementación de `AgendaEntity` y `AgendaDao`.
+    *   Integración en `SincMobileDatabase` (Versión 17).
+*   **Infraestructura de Red (Retrofit):**
+    *   Definición de endpoints en `AgendaApiService`.
+    *   Implementación de `AgendaItemDto` y manejo robusto de respuestas `201 Created` (procesando el objeto devuelto directamente).
+*   **Repositorio:** Implementación de `AgendaRepositoryImpl` con lógica de sincronización y persistencia atómica.
+
+### 3. Interfaz de Usuario (UI/UX)
+*   **Calendario Integral:**
+    *   Visualización de eventos de **Logística** (recogida de animales y cierre de inscripciones) con colores sólidos (Verde/Naranja).
+    *   Visualización de tareas personales mediante **puntos de colores** según la categoría (Sanidad, Alimentación, Logística, General).
+    *   **Scroll Unificado:** La pantalla del calendario ahora utiliza un único scroll fluido que integra el grid y la lista de actividades.
+*   **Gestión de Actividades:**
+    *   **Lista Mensual:** Se muestra un listado cronológico de todas las actividades del mes actual con un diseño limpio de renglones finos.
+    *   **Editor Modal (BottomSheet):** Un formulario rápido para crear o editar notas que incluye selectores de fecha, hora y categoría.
+    *   **Sistema de Checklist:** Cada ítem de la agenda permite marcarse como completado mediante un selector circular, aplicando efectos visuales de tachado y atenuación.
+
+### 4. Correcciones y Mejoras Técnicas
+*   **UserID Dinámico:** El `AgendaViewModel` ahora recupera automáticamente el ID del usuario logueado para asegurar que los registros se guarden correctamente en el servidor.
+*   **Parseo Robusto:** Se implementó un mapeador de fechas más flexible para manejar las variaciones de formato en las respuestas de la API de Laravel.
+*   **Navegación Limpia:** Se eliminaron rutas obsoletas (`LOGISTICS`) y se unificó la lógica de estados en el `MainViewModel`.
+
+---
+**Estado del Proyecto:** Compilación exitosa. La Agenda Digital es plenamente funcional en modo local y está preparada para la sincronización completa con el backend de Laravel.

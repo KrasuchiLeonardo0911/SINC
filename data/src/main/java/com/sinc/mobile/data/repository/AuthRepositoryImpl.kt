@@ -7,13 +7,9 @@ import com.sinc.mobile.data.network.dto.ErrorResponse
 import com.sinc.mobile.data.network.dto.LoginRequest
 import com.sinc.mobile.data.network.dto.ValidationErrorResponse
 import com.sinc.mobile.data.session.SessionManager
-import com.sinc.mobile.domain.model.AuthResult
-import com.sinc.mobile.domain.model.ChangePasswordData
-import com.sinc.mobile.domain.model.GenericError
-import com.sinc.mobile.domain.model.InitData
-import com.sinc.mobile.domain.model.RequestPasswordResetData
-import com.sinc.mobile.domain.model.ResetPasswordWithCodeData
+import com.sinc.mobile.domain.model.*
 import com.sinc.mobile.domain.repository.AuthRepository
+import com.sinc.mobile.domain.util.TimeManager
 import com.sinc.mobile.domain.util.Result as DomainResult
 import com.sinc.mobile.domain.util.Error as DomainError
 import kotlinx.serialization.json.Json
@@ -24,7 +20,8 @@ class AuthRepositoryImpl @Inject constructor(
     private val apiService: AuthApiService,
     private val json: Json,
     private val sessionManager: SessionManager,
-    private val prefs: SharedPreferences
+    private val prefs: SharedPreferences,
+    private val timeManager: TimeManager
 ) : AuthRepository {
 
     @Suppress("ConstantConditionIf")
@@ -36,6 +33,10 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful) {
                 val loginResponse = response.body()
+                
+                // Actualizar tiempo global
+                loginResponse?.serverTime?.let { timeManager.updateServerTime(it) }
+
                 if (loginResponse?.token != null) {
                     android.util.Log.d("TOKEN_DEBUG", "Token recibido y guardado: ${loginResponse.token}")
                     sessionManager.saveAuthToken(loginResponse.token)
@@ -184,6 +185,9 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
                 
+                // Actualizar tiempo global
+                dto.serverTime?.let { timeManager.updateServerTime(it) }
+
                 dto.userContext?.productorId?.let { id ->
                     prefs.edit().putInt("productor_id", id).apply()
                 }

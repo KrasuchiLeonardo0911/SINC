@@ -11,7 +11,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WbCloudy
-import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
@@ -49,7 +49,7 @@ fun CozyBottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Inicio", CozyBottomNavRoutes.HOME, Icons.Outlined.Home),
-        BottomNavItem("Agenda", CozyBottomNavRoutes.AGENDA, Icons.Outlined.Event),
+        BottomNavItem("Registros", CozyBottomNavRoutes.REGISTROS, Icons.Outlined.Assignment),
         BottomNavItem("Clima", CozyBottomNavRoutes.WEATHER, Icons.Outlined.WbCloudy),
         BottomNavItem("Notif", CozyBottomNavRoutes.NOTIFICATIONS, Icons.Outlined.Notifications),
         BottomNavItem("Perfil", CozyBottomNavRoutes.PROFILE, Icons.Outlined.Person)

@@ -81,15 +81,20 @@ class MainViewModel @Inject constructor(
             when (result) {
                 is Result.Success -> {
                     val deadlineString = sessionManager.getOrderDeadline()
+                    val nextVisitString = sessionManager.getNextVisitDate()
                     var deadlineDate: LocalDate? = null
-                    if (deadlineString != null) {
-                        try {
-                            // Assume format is ISO-8601 or standard datetime (e.g. "2026-02-19T12:00:00+00:00")
-                            // We take just the date part for the calendar marker
-                            deadlineDate = LocalDate.parse(deadlineString.take(10))
-                        } catch (e: Exception) {
-                            Log.e("DATE_PARSE", "Error parsing deadline: $deadlineString")
-                        }
+                    var nextVisitDate: LocalDate? = null
+                    
+                    try {
+                        deadlineString?.let { deadlineDate = LocalDate.parse(it.take(10)) }
+                    } catch (e: Exception) {
+                        Log.e("DATE_PARSE", "Error parsing deadline: $deadlineString")
+                    }
+
+                    try {
+                        nextVisitString?.let { nextVisitDate = LocalDate.parse(it.take(10)) }
+                    } catch (e: Exception) {
+                        Log.e("DATE_PARSE", "Error parsing next visit: $nextVisitString")
                     }
 
                     _uiState.update {
@@ -98,7 +103,8 @@ class MainViewModel @Inject constructor(
                             appControl = result.data.appControl,
                             features = result.data.features,
                             isInitialized = true,
-                            orderDeadline = deadlineDate
+                            orderDeadline = deadlineDate,
+                            nextTruckDate = nextVisitDate
                         )
                     }
                     // After successful initialization, fetch the user profile and sync weather alerts
@@ -179,6 +185,7 @@ data class MainUiState(
         val userName: String? = null,
         val unreadNotificationCount: Int = 0,
         val weatherAlerts: List<WeatherAlert> = emptyList(),
-        val orderDeadline: LocalDate? = null
+        val orderDeadline: LocalDate? = null,
+        val nextTruckDate: LocalDate? = null
     )
     

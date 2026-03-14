@@ -121,5 +121,17 @@ object NetworkModule {
     fun provideWeatherAlertApiService(retrofit: Retrofit): WeatherAlertApiService {
         return retrofit.create(WeatherAlertApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideAgendaApiService(retrofit: Retrofit): com.sinc.mobile.data.network.api.agenda.AgendaApiService {
+        return retrofit.create(com.sinc.mobile.data.network.api.agenda.AgendaApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBitacoraApiService(retrofit: Retrofit): com.sinc.mobile.data.network.api.BitacoraApiService {
+        return retrofit.create(com.sinc.mobile.data.network.api.BitacoraApiService::class.java)
+    }
 }
 

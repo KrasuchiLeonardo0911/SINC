@@ -13,7 +13,7 @@ object CozyBottomNavRoutes {
     const val PROFILE = "profile"
     const val NOTIFICATIONS = "notifications"
     const val WEATHER = "weather"
-    const val AGENDA = "agenda"
+    const val REGISTROS = "registros"
 
     // Special action routes
     const val ADD = "add" // This might be handled differently

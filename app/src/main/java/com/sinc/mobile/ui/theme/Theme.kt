@@ -83,15 +83,16 @@ fun SincMobileTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            val grayBackgroundColor = SincGrayBackground // Usar el gris de la app para las barras del sistema
+            val grayBackgroundColor = SincGrayBackground 
+            val darkSystemBarColor = Color(0xFF121212) // Gris muy oscuro casi negro
 
-            // Configurar la barra de estado (superior)
+            // Configurar la barra de estado (superior) - Mantenemos el gris claro actual
             window.statusBarColor = grayBackgroundColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true // Iconos oscuros
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true 
 
-            // Configurar la barra de navegación (inferior)
-            window.navigationBarColor = grayBackgroundColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true // Iconos oscuros
+            // Configurar la barra de navegación (inferior) - Gris muy oscuro con botones blancos
+            window.navigationBarColor = darkSystemBarColor.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false 
         }
     }
 

@@ -26,7 +26,6 @@ import com.sinc.mobile.app.features.home.mainscreen.MainScreen
 import com.sinc.mobile.app.features.login.LoginScreen
 import com.sinc.mobile.app.features.movimiento.MovimientoStepperScreen
 import com.sinc.mobile.app.features.cuenca.CuencaInfoScreen
-import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.ui.components.CozyBottomNavRoutes
@@ -70,7 +69,6 @@ object Routes {
         return route + params.joinToString("&")
     }
     const val HISTORIAL_MOVIMIENTOS = "historial_movimientos"
-    const val LOGISTICS = "logistics"
     const val CUENCA_INFO = "cuenca_info"
     const val VENTAS = "ventas"
     const val VENTAS_HISTORIAL = "ventas_historial"

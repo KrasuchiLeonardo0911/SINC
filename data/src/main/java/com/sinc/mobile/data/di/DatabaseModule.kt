@@ -138,4 +138,16 @@ object DatabaseModule {
     fun provideWeatherAlertDao(database: SincMobileDatabase): WeatherAlertDao {
         return database.weatherAlertDao()
     }
+
+    @Singleton
+    @Provides
+    fun provideAgendaDao(database: SincMobileDatabase): com.sinc.mobile.data.local.dao.AgendaDao {
+        return database.agendaDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideBitacoraDao(database: SincMobileDatabase): com.sinc.mobile.data.local.dao.BitacoraDao {
+        return database.bitacoraDao()
+    }
 }

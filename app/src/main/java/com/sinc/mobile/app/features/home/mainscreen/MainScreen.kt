@@ -55,7 +55,6 @@ import com.sinc.mobile.app.features.home.mainscreen.components.Header
 import com.sinc.mobile.app.features.home.mainscreen.components.MyJournalSection
 import com.sinc.mobile.app.features.home.mainscreen.components.SyncStatusDashboard
 import com.sinc.mobile.app.features.home.mainscreen.components.WeekdaySelector
-import com.sinc.mobile.app.features.logistics.LogisticsScreen
 import com.sinc.mobile.app.features.logistics.components.LogisticsDraggableHandle
 import com.sinc.mobile.app.features.movimiento.SeleccionCampoScreen
 import com.sinc.mobile.app.features.stock.StockScreen
@@ -73,6 +72,9 @@ import android.net.Uri
 
 import com.sinc.mobile.app.features.settings.SettingsScreen
 import com.sinc.mobile.app.features.notifications.NotificationsScreen
+import com.sinc.mobile.app.features.cuaderno.CuadernoScreen
+import com.sinc.mobile.app.features.cuaderno.CuadernoView
+import com.sinc.mobile.app.features.agenda.AgendaScreen
 
 @Composable
 fun MainScreen(
@@ -81,6 +83,7 @@ fun MainScreen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     var currentRoute by rememberSaveable { mutableStateOf(startRoute) }
+    var isSubViewInRegistros by remember { mutableStateOf(false) }
     var showLogisticsPanel by rememberSaveable { mutableStateOf(false) }
 
     val today = remember { LocalDate.now() }
@@ -124,7 +127,8 @@ fun MainScreen(
                     containerColor = SincBackground,
                     bottomBar = {
                         if (currentRoute != CozyBottomNavRoutes.STOCK &&
-                            currentRoute != CozyBottomNavRoutes.HISTORIAL) {
+                            currentRoute != CozyBottomNavRoutes.HISTORIAL &&
+                            !isSubViewInRegistros) {
                             CozyBottomNavBar(
                                 selectedRoute = currentRoute,
                                 unreadNotificationCount = uiState.unreadNotificationCount,
@@ -193,20 +197,18 @@ fun MainScreen(
                                 onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
                                 onNavigateToTerms = { navController.navigate(Routes.TERMS_OF_SERVICE) }
                             )
-                            CozyBottomNavRoutes.NOTIFICATIONS -> NotificationsScreen(
-                                navController = navController,
-                                onBackPress = { currentRoute = CozyBottomNavRoutes.HOME }
-                            )
-                            CozyBottomNavRoutes.AGENDA -> {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(paddingValues),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = "Agenda - Próximamente", style = MaterialTheme.typography.headlineMedium)
-                                }
+                            CozyBottomNavRoutes.NOTIFICATIONS -> {
+                                isSubViewInRegistros = false
+                                NotificationsScreen(
+                                    navController = navController,
+                                    onBackPress = { currentRoute = CozyBottomNavRoutes.HOME }
+                                )
                             }
+                            CozyBottomNavRoutes.REGISTROS -> CuadernoScreen(
+                                onBack = { currentRoute = CozyBottomNavRoutes.HOME },
+                                mainScaffoldBottomPadding = paddingValues.calculateBottomPadding(),
+                                onViewChange = { isSubViewInRegistros = it != CuadernoView.LISTADO }
+                            )
                             else -> {
                                 Column(
                                     modifier = Modifier
@@ -235,9 +237,11 @@ fun MainScreen(
                     )
                 },
                 panelContent = {
-                    LogisticsScreen(
+                    AgendaScreen(
                         onBackPress = { showLogisticsPanel = false },
                         today = today,
+                        nextTruckDate = uiState.nextTruckDate,
+                        orderDeadline = uiState.orderDeadline,
                         onNavigateToVentas = {
                             showLogisticsPanel = false
                             navController.navigate(Routes.VENTAS)

@@ -95,4 +95,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWeatherAlertRepository(impl: WeatherAlertRepositoryImpl): WeatherAlertRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAgendaRepository(impl: com.sinc.mobile.data.repository.agenda.AgendaRepositoryImpl): com.sinc.mobile.domain.repository.agenda.AgendaRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBitacoraRepository(impl: com.sinc.mobile.data.repository.BitacoraRepositoryImpl): com.sinc.mobile.domain.repository.BitacoraRepository
 }

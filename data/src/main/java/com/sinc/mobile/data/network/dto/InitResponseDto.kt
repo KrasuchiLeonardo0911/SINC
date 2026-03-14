@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class InitResponseDto(
+    @SerialName("server_time") val serverTime: String? = null, // NUEVO: Sincronización global
     @SerialName("app_control") val appControl: AppControlDto?,
     @SerialName("user_context") val userContext: UserContextDto?,
     val features: FeaturesDto?,
