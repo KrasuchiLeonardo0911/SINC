@@ -2,6 +2,8 @@ package com.sinc.mobile.app.features.agenda
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sinc.mobile.app.ui.components.BannerManager
+import com.sinc.mobile.app.ui.components.BannerType
 import com.sinc.mobile.domain.model.agenda.AgendaItem
 import com.sinc.mobile.domain.use_case.agenda.*
 import com.sinc.mobile.domain.use_case.profile.GetUserProfileUseCase
@@ -76,9 +78,11 @@ class AgendaViewModel @Inject constructor(
             when (val result = saveAgendaItemUseCase(itemWithUser)) {
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoading = false, error = null, isSuccess = true) }
+                    BannerManager.show("Agenda guardada", BannerType.SUCCESS)
                 }
                 is Result.Failure -> {
                     _uiState.update { it.copy(isLoading = false, error = result.error.message) }
+                    BannerManager.show(result.error.message, BannerType.ERROR)
                 }
             }
         }
@@ -93,25 +97,30 @@ class AgendaViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             when (val result = syncAgendaItemsUseCase()) {
                 is Result.Success -> _uiState.update { it.copy(isLoading = false, error = null) }
-                is Result.Failure -> _uiState.update { it.copy(isLoading = false, error = result.error.message) }
+                is Result.Failure -> {
+                    _uiState.update { it.copy(isLoading = false, error = result.error.message) }
+                    // No mostramos banner en refresh automÃ¡tico para no molestar
+                }
             }
         }
     }
 
     private fun toggleStatus(id: Long, isCompleted: Boolean) {
         viewModelScope.launch {
-            when (val result = toggleAgendaStatusUseCase(id, isCompleted)) {
-                is Result.Success -> { }
-                is Result.Failure -> _uiState.update { it.copy(error = result.error.message) }
+            val result = toggleAgendaStatusUseCase(id, isCompleted)
+            if (result is Result.Failure) {
+                BannerManager.show(result.error.message, BannerType.ERROR)
             }
         }
     }
 
     private fun deleteItem(id: Long) {
         viewModelScope.launch {
-            when (val result = deleteAgendaItemUseCase(id)) {
-                is Result.Success -> { }
-                is Result.Failure -> _uiState.update { it.copy(error = result.error.message) }
+            val result = deleteAgendaItemUseCase(id)
+            if (result is Result.Success) {
+                BannerManager.show("Item eliminado", BannerType.SUCCESS)
+            } else if (result is Result.Failure) {
+                BannerManager.show(result.error.message, BannerType.ERROR)
             }
         }
     }
@@ -120,3 +129,4 @@ class AgendaViewModel @Inject constructor(
         _uiState.update { it.copy(error = null) }
     }
 }
+

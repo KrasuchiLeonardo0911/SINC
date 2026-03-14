@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,41 +27,58 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun AgendaItemCard(
     item: AgendaItem,
-    onToggleStatus: () -> Unit,
-    onDelete: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val now = LocalDateTime.now()
     val isOverdue = !item.isCompleted && item.fechaProgramada.isBefore(now)
+    val tipoColor = getTipoColor(item.tipo)
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onClick() }
     ) {
-        // Checkbox Estilizado
-        IconButton(
-            onClick = onToggleStatus,
-            modifier = Modifier.size(32.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (item.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                contentDescription = null,
-                tint = when {
-                    item.isCompleted -> Color(0xFF4CAF50)
-                    isOverdue -> Color.Red
-                    else -> Color.LightGray
-                },
-                modifier = Modifier.size(24.dp)
+            // Barra Vertical de Color
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(if (item.isCompleted) Color.LightGray else tipoColor)
             )
-        }
 
-        Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Fecha/Hora en Gris
+                    Text(
+                        text = item.fechaProgramada.format(timeFormatter),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isOverdue) Color.Red else Color.Gray,
+                        fontWeight = FontWeight.Normal
+                    )
+                    
+                    if (!item.isSynced) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Outlined.CloudUpload,
+                            contentDescription = "Pendiente",
+                            tint = Color(0xFFFFA500).copy(alpha = 0.6f),
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+
+                // Título
                 Text(
                     text = item.titulo,
                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -76,58 +93,32 @@ fun AgendaItemCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Hora
-                Text(
-                    text = item.fechaProgramada.format(timeFormatter),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isOverdue) Color.Red.copy(alpha = 0.7f) else Color.Gray
+            }
+
+            if (item.isCompleted) {
+                // Indicador de Completado: Check Verde
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Completado",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(20.dp)
+                )
+            } else {
+                // Chevron para Pendientes
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = Color.LightGray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            
-            val description = item.descripcion
-            if (!description.isNullOrBlank()) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
-
-        // Tag de Tipo
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(getTipoColor(item.tipo).copy(alpha = 0.1f))
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = item.tipo.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                color = getTipoColor(item.tipo),
-                fontSize = 9.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Botón Eliminar (Sutil)
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.size(24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Eliminar",
-                tint = Color.LightGray.copy(alpha = 0.5f),
-                modifier = Modifier.size(16.dp)
-            )
-        }
+        
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 0.5.dp,
+            color = Color.LightGray.copy(alpha = 0.3f)
+        )
     }
 }
 

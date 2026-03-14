@@ -1,18 +1,23 @@
 package com.sinc.mobile.data.repository.agenda
 
 import com.sinc.mobile.data.local.dao.AgendaDao
+import com.sinc.mobile.data.local.entities.agenda.AgendaEntity
 import com.sinc.mobile.data.mapper.agenda.toDomain
 import com.sinc.mobile.data.mapper.agenda.toDto
 import com.sinc.mobile.data.mapper.agenda.toEntity
 import com.sinc.mobile.data.network.api.agenda.AgendaApiService
+import com.sinc.mobile.data.network.dto.agenda.UpdateAgendaStatusRequest
 import com.sinc.mobile.domain.model.agenda.AgendaItem
 import com.sinc.mobile.domain.repository.agenda.AgendaRepository
 import com.sinc.mobile.domain.util.Result
 import com.sinc.mobile.domain.util.Error
 import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.util.TimeManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +28,8 @@ class AgendaRepositoryImpl @Inject constructor(
     private val apiService: AgendaApiService,
     private val timeManager: TimeManager
 ) : AgendaRepository {
+
+    private val externalScope = CoroutineScope(Dispatchers.IO)
 
     override fun getAgendaItems(): Flow<List<AgendaItem>> {
         return agendaDao.getAllAgendaItems().map { entities ->
@@ -36,6 +43,7 @@ class AgendaRepositoryImpl @Inject constructor(
 
     override suspend fun syncAgendaItems(): Result<Unit, Error> {
         return try {
+            uploadPendingAgendaItems()
             val response = apiService.getAgendaItems()
             if (response.isSuccessful && response.body() != null) {
                 val items = response.body()!!.map { it.toEntity(timeManager) }
@@ -44,71 +52,80 @@ class AgendaRepositoryImpl @Inject constructor(
             } else {
                 Result.Failure(GenericError("Error al sincronizar agenda: ${response.code()}"))
             }
-        } catch (e: IOException) {
-            Result.Failure(GenericError("Error de red al sincronizar agenda"))
         } catch (e: Exception) {
-            Result.Failure(GenericError(e.message ?: "Error desconocido al sincronizar agenda"))
+            Result.Failure(GenericError(e.message ?: "Error de red"))
         }
     }
 
     override suspend fun saveAgendaItem(item: AgendaItem): Result<AgendaItem, Error> {
         return try {
-            val response = apiService.saveAgendaItem(item.toDto(timeManager))
-            if (response.isSuccessful && response.body() != null) {
-                val savedDto = response.body()!!
-                val entity = savedDto.toEntity(timeManager)
-                agendaDao.insertAgendaItem(entity)
-                Result.Success(entity.toDomain())
-            } else {
-                Result.Failure(GenericError("Error al guardar ítem de agenda: ${response.code()}"))
+            val entity = item.toEntity().copy(sincronizado = false)
+            val localId = agendaDao.insertAgendaItem(entity)
+            val savedLocal = entity.copy(localId = localId)
+
+            externalScope.launch {
+                performSaveApi(savedLocal)
             }
-        } catch (e: IOException) {
-            Result.Failure(GenericError("Error de red al guardar ítem de agenda"))
+
+            Result.Success(savedLocal.toDomain())
         } catch (e: Exception) {
-            Result.Failure(GenericError(e.message ?: "Error desconocido al guardar ítem de agenda"))
+            Result.Failure(GenericError("Error local al guardar"))
         }
+    }
+
+    private suspend fun performSaveApi(localEntity: AgendaEntity) {
+        try {
+            val response = apiService.saveAgendaItem(localEntity.toDomain().toDto(timeManager))
+            if (response.isSuccessful && response.body() != null) {
+                val serverDto = response.body()!!
+                agendaDao.markAsSynced(localEntity.localId, serverDto.id)
+            }
+        } catch (e: Exception) { }
     }
 
     override suspend fun deleteAgendaItem(id: Long): Result<Unit, Error> {
         return try {
-            val response = apiService.deleteAgendaItem(id)
-            if (response.isSuccessful) {
-                agendaDao.deleteAgendaItemById(id)
-                Result.Success(Unit)
-            } else {
-                Result.Failure(GenericError("Error al eliminar ítem: ${response.code()}"))
+            val entity = agendaDao.getAgendaItemByLocalId(id)
+            val serverId = entity?.id
+            
+            agendaDao.deleteAgendaItemByLocalId(id)
+
+            if (serverId != null) {
+                externalScope.launch {
+                    try { apiService.deleteAgendaItem(serverId) } catch (e: Exception) {}
+                }
             }
-        } catch (e: IOException) {
-            Result.Failure(GenericError("Error de red al eliminar ítem"))
+            Result.Success(Unit)
         } catch (e: Exception) {
-            Result.Failure(GenericError(e.message ?: "Error desconocido al eliminar ítem"))
+            Result.Failure(GenericError("Error local al eliminar"))
         }
     }
 
-                override suspend fun toggleAgendaStatus(id: Long, isCompleted: Boolean): Result<Unit, Error> {        
-                    return try {
-                        // ACTUALIZACIÓN OPTIMISTA: Primero actualizamos localmente para feedback instantáneo
-                        val completedAt = if (isCompleted) java.time.LocalDateTime.now() else null
-                        agendaDao.updateStatus(id, completedAt)
-            
-                        val request = com.sinc.mobile.data.network.dto.agenda.UpdateAgendaStatusRequest(completada = isCompleted)
-                        val response = apiService.updateAgendaStatus(id, request)
-                        
-                        if (response.isSuccessful) {
-                            // Sincronizar en segundo plano para asegurar consistencia
-                            syncAgendaItems()
-                            Result.Success(Unit)
-                        } else {
-                            // Si falla la API, podrías revertir el cambio localmente, 
-                            // pero por ahora el usuario ya vio el check. 
-                            // El próximo refresh manual corregirá si hubo un error real.
-                            Result.Failure(GenericError("Error al actualizar en servidor: ${response.code()}"))
-                        }
-                    } catch (e: IOException) {
-                        // El cambio local ya se hizo, devolvemos éxito para la UI
-                        Result.Success(Unit)
-                    } catch (e: Exception) {
-                        Result.Failure(GenericError(e.message ?: "Error desconocido"))
-                    }
+    override suspend fun toggleAgendaStatus(id: Long, isCompleted: Boolean): Result<Unit, Error> {        
+        return try {
+            val completedAt = if (isCompleted) java.time.LocalDateTime.now() else null
+            agendaDao.updateStatus(id, completedAt)
+
+            externalScope.launch {
+                val entity = agendaDao.getAgendaItemByLocalId(id)
+                val serverId = entity?.id
+                if (serverId != null) {
+                    apiService.updateAgendaStatus(serverId, UpdateAgendaStatusRequest(completada = isCompleted))
+                    // Al ser una actualizaciÃ³n de estado, no necesitamos marcarAsSynced de nuevo 
+                    // si el servidor no devuelve un nuevo objeto, pero podemos hacerlo para asegurar.
+                    agendaDao.markAsSynced(id, serverId)
                 }
+            }
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error al actualizar estado"))
+        }
+    }
+
+    private suspend fun uploadPendingAgendaItems() {
+        val pending = agendaDao.getUnsyncedAgendaItems()
+        pending.forEach { 
+            if (it.id == null) performSaveApi(it)
+        }
+    }
 }

@@ -16,6 +16,7 @@ fun AgendaItemDto.toEntity(timeManager: TimeManager): AgendaEntity {
         fechaProgramada = timeManager.toLocalTime(fechaProgramada),
         completadaEn = completadaEn?.let { timeManager.toLocalTime(it) },
         notificado = notificado,
+        sincronizado = true, // Si viene del servidor, estÃ¡ sincronizado
         createdAt = createdAt?.let { timeManager.toLocalTime(it) },
         updatedAt = updatedAt?.let { timeManager.toLocalTime(it) }
     )
@@ -23,7 +24,7 @@ fun AgendaItemDto.toEntity(timeManager: TimeManager): AgendaEntity {
 
 fun AgendaEntity.toDomain(): AgendaItem {
     return AgendaItem(
-        id = id,
+        id = localId, // Usamos localId como ID de referencia para la UI
         userId = userId,
         titulo = titulo,
         descripcion = descripcion,
@@ -31,6 +32,7 @@ fun AgendaEntity.toDomain(): AgendaItem {
         fechaProgramada = fechaProgramada,
         completadaEn = completadaEn,
         notificado = notificado,
+        isSynced = sincronizado,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -38,7 +40,7 @@ fun AgendaEntity.toDomain(): AgendaItem {
 
 fun AgendaItem.toEntity(): AgendaEntity {
     return AgendaEntity(
-        id = id,
+        localId = id,
         userId = userId,
         titulo = titulo,
         descripcion = descripcion,
@@ -46,6 +48,7 @@ fun AgendaItem.toEntity(): AgendaEntity {
         fechaProgramada = fechaProgramada,
         completadaEn = completadaEn,
         notificado = notificado,
+        sincronizado = isSynced,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -53,7 +56,7 @@ fun AgendaItem.toEntity(): AgendaEntity {
 
 fun AgendaItem.toDto(timeManager: TimeManager): AgendaItemDto {
     return AgendaItemDto(
-        id = id,
+        id = 0, // El servidor asignarÃ¡ el ID real en el POST
         userId = userId,
         titulo = titulo,
         descripcion = descripcion,

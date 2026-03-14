@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.agenda.components.AgendaItemCard
 import com.sinc.mobile.app.features.agenda.components.AddEditAgendaSheet
+import com.sinc.mobile.app.features.agenda.components.AgendaDetailSheet
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.domain.model.agenda.AgendaItem
 import com.sinc.mobile.ui.theme.*
@@ -55,9 +56,11 @@ fun AgendaScreen(
     var currentMonth by remember { mutableStateOf(YearMonth.from(today)) }
     var selectedDate by remember { mutableStateOf(today) }
     
-    // Estado del Editor
+    // Estado de los Modales
     var showAddEditSheet by remember { mutableStateOf(false) }
+    var showDetailSheet by remember { mutableStateOf(false) }
     var itemToEdit by remember { mutableStateOf<AgendaItem?>(null) }
+    var selectedItemForDetail by remember { mutableStateOf<AgendaItem?>(null) }
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -94,7 +97,10 @@ fun AgendaScreen(
     Scaffold(
         containerColor = SincBackground,
         topBar = {
-            MinimalHeader(onBackPress = onBackPress)
+            MinimalHeader(
+                title = "Calendario",
+                onBackPress = onBackPress
+            )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -117,21 +123,6 @@ fun AgendaScreen(
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
             item {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Text(
-                        text = "Calendario",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF1F2937)
-                    )
-                    Text(
-                        text = "Actividades y tareas programadas",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF6B7280)
-                    )
-                }
-            }
-
-            item {
                 Spacer(modifier = Modifier.height(16.dp))
                 MonthYearSelectors(
                     currentMonth = currentMonth,
@@ -143,10 +134,9 @@ fun AgendaScreen(
 
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                CalendarHeader(modifier = Modifier.padding(horizontal = 16.dp))
+                CalendarHeaderComp(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // grid de calendario (SOLO SELECCIÓN VISUAL)
                 val firstDayOfMonth = currentMonth.atDay(1)
                 val dayOfWeekOffset = (firstDayOfMonth.dayOfWeek.value % 7) - (DayOfWeek.SUNDAY.value % 7)
                 val startOffset = if (dayOfWeekOffset < 0) dayOfWeekOffset + 7 else dayOfWeekOffset
@@ -162,7 +152,6 @@ fun AgendaScreen(
                     items = uiState.items,
                     onDateSelected = { 
                         selectedDate = it 
-                        // Abrir modal si la fecha es hoy o futura
                         if (!it.isBefore(today)) {
                             itemToEdit = null
                             showAddEditSheet = true
@@ -203,16 +192,13 @@ fun AgendaScreen(
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         when (activity) {
                             is CombinedActivity.Agenda -> {
-                                Box(modifier = Modifier.clickable(enabled = !activity.item.isCompleted) {
-                                    itemToEdit = activity.item
-                                    showAddEditSheet = true
-                                }) {
-                                    AgendaItemCard(
-                                        item = activity.item,
-                                        onToggleStatus = { viewModel.onEvent(AgendaEvent.ToggleStatus(activity.item.id, !activity.item.isCompleted)) },
-                                        onDelete = { viewModel.onEvent(AgendaEvent.DeleteItem(activity.item.id)) }
-                                    )
-                                }
+                                AgendaItemCard(
+                                    item = activity.item,
+                                    onClick = {
+                                        selectedItemForDetail = activity.item
+                                        showDetailSheet = true
+                                    }
+                                )
                             }
                             is CombinedActivity.Logistics -> {
                                 LogisticsEventRow(
@@ -224,7 +210,6 @@ fun AgendaScreen(
                                 )
                             }
                         }
-                        HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.3f))
                     }
                 }
             }
@@ -252,9 +237,19 @@ fun AgendaScreen(
             )
         }
     }
-}
 
-// Sub-componentes y clases de ayuda (Se mantienen igual pero sin lógica de modal en el grid)
+    if (showDetailSheet && selectedItemForDetail != null) {
+        AgendaDetailSheet(
+            item = selectedItemForDetail!!,
+            onToggleStatus = { viewModel.onEvent(AgendaEvent.ToggleStatus(selectedItemForDetail!!.id, !selectedItemForDetail!!.isCompleted)) },
+            onDelete = { viewModel.onEvent(AgendaEvent.DeleteItem(selectedItemForDetail!!.id)) },
+            onDismiss = { 
+                showDetailSheet = false
+                selectedItemForDetail = null
+            }
+        )
+    }
+}
 
 sealed class CombinedActivity {
     abstract val date: LocalDate
@@ -378,8 +373,8 @@ private fun SelectorChip(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CalendarHeader(modifier: Modifier = Modifier) {
-    val daysOfWeek = listOf("DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB")
+private fun CalendarHeaderComp(modifier: Modifier = Modifier) {
+    val daysOfWeek = listOf("DOM", "LUN", "MAR", "MIÃ‰", "JUE", "VIE", "SÃB")
     Row(modifier = modifier.fillMaxWidth()) {
         daysOfWeek.forEach { day ->
             Text(
