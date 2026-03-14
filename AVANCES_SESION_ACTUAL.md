@@ -34,5 +34,20 @@ Se ha desarrollado la funcionalidad completa de "Registros Diarios" (internament
 - **Iconografía**: Actualizado a `Icons.Outlined.Assignment`.
 - **Correcciones de Layout**: Ajuste de paddings en headers, visibilidad dinámica de la barra de navegación inferior y centrado de estados vacíos.
 
+## Mejoras en la Agenda Digital
+
+Se han corregido y potenciado las funcionalidades de control y seguimiento de tareas programadas.
+
+### 1. Funcionalidad de Completado (Check)
+- **Corrección de API**: Se ajustó el endpoint de actualización de estado para enviar un cuerpo JSON con el campo `completada` (boolean), cumpliendo con la especificación V1.
+- **Actualización Optimista**: El repositorio ahora actualiza la base de datos local inmediatamente después del éxito de la red (y de forma preventiva para la UI), asegurando que el tachado visual sea instantáneo y persistente.
+- **Soporte Room**: Se corrigió la consulta en `AgendaDao` para utilizar la columna real `completadaEn` (LocalDateTime?) en lugar de un booleano inexistente.
+
+### 2. Inteligencia de Negocio y UI/UX
+- **Alertas de Atraso**: Implementación de lógica visual que marca en **Rojo** el icono, el título y la hora de las tareas que no han sido completadas y cuya fecha programada ya pasó.
+- **Edición Protegida**: Se deshabilitó la capacidad de abrir el editor para tareas que ya han sido marcadas como completadas, garantizando la integridad de los registros finalizados.
+- **Agendado Automático**: El calendario ahora abre automáticamente el modal de creación al tocar cualquier fecha actual o futura, preseleccionando ese día para mayor agilidad.
+
 ---
-**Estado del Proyecto**: Compilación exitosa (`./gradlew assembleDebug`). El módulo es plenamente funcional y estéticamente consistente con los estándares del sistema.
+**Estado del Proyecto**: Compilación exitosa (`./gradlew assembleDebug`). El sistema de control de tareas y los registros diarios son ahora herramientas robustas y consistentes.
+

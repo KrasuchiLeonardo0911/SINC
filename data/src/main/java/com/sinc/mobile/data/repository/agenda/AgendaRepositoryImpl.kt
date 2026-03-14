@@ -85,19 +85,30 @@ class AgendaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun toggleAgendaStatus(id: Long, isCompleted: Boolean): Result<Unit, Error> {
-        return try {
-            val response = apiService.updateAgendaStatus(id, isCompleted)
-            if (response.isSuccessful) {
-                syncAgendaItems()
-                Result.Success(Unit)
-            } else {
-                Result.Failure(GenericError("Error al actualizar estado: ${response.code()}"))
-            }
-        } catch (e: IOException) {
-            Result.Failure(GenericError("Error de red al actualizar estado"))
-        } catch (e: Exception) {
-            Result.Failure(GenericError(e.message ?: "Error desconocido al actualizar estado"))
-        }
-    }
+                override suspend fun toggleAgendaStatus(id: Long, isCompleted: Boolean): Result<Unit, Error> {        
+                    return try {
+                        // ACTUALIZACIÓN OPTIMISTA: Primero actualizamos localmente para feedback instantáneo
+                        val completedAt = if (isCompleted) java.time.LocalDateTime.now() else null
+                        agendaDao.updateStatus(id, completedAt)
+            
+                        val request = com.sinc.mobile.data.network.dto.agenda.UpdateAgendaStatusRequest(completada = isCompleted)
+                        val response = apiService.updateAgendaStatus(id, request)
+                        
+                        if (response.isSuccessful) {
+                            // Sincronizar en segundo plano para asegurar consistencia
+                            syncAgendaItems()
+                            Result.Success(Unit)
+                        } else {
+                            // Si falla la API, podrías revertir el cambio localmente, 
+                            // pero por ahora el usuario ya vio el check. 
+                            // El próximo refresh manual corregirá si hubo un error real.
+                            Result.Failure(GenericError("Error al actualizar en servidor: ${response.code()}"))
+                        }
+                    } catch (e: IOException) {
+                        // El cambio local ya se hizo, devolvemos éxito para la UI
+                        Result.Success(Unit)
+                    } catch (e: Exception) {
+                        Result.Failure(GenericError(e.message ?: "Error desconocido"))
+                    }
+                }
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sinc.mobile.domain.model.agenda.AgendaItem
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -31,6 +32,8 @@ fun AgendaItemCard(
     modifier: Modifier = Modifier
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val now = LocalDateTime.now()
+    val isOverdue = !item.isCompleted && item.fechaProgramada.isBefore(now)
 
     Row(
         modifier = modifier
@@ -46,7 +49,11 @@ fun AgendaItemCard(
             Icon(
                 imageVector = if (item.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                 contentDescription = null,
-                tint = if (item.isCompleted) Color(0xFF4CAF50) else Color.LightGray,
+                tint = when {
+                    item.isCompleted -> Color(0xFF4CAF50)
+                    isOverdue -> Color.Red
+                    else -> Color.LightGray
+                },
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -61,7 +68,11 @@ fun AgendaItemCard(
                         fontWeight = FontWeight.SemiBold,
                         textDecoration = if (item.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                     ),
-                    color = if (item.isCompleted) Color.Gray else Color(0xFF1F2937),
+                    color = when {
+                        item.isCompleted -> Color.Gray
+                        isOverdue -> Color.Red
+                        else -> Color(0xFF1F2937)
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -72,7 +83,7 @@ fun AgendaItemCard(
                 Text(
                     text = item.fechaProgramada.format(timeFormatter),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = if (isOverdue) Color.Red.copy(alpha = 0.7f) else Color.Gray
                 )
             }
             

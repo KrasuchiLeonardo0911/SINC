@@ -160,7 +160,14 @@ fun AgendaScreen(
                     nextTruckDate = nextTruckDate,
                     orderDeadline = orderDeadline,
                     items = uiState.items,
-                    onDateSelected = { selectedDate = it },
+                    onDateSelected = { 
+                        selectedDate = it 
+                        // Abrir modal si la fecha es hoy o futura
+                        if (!it.isBefore(today)) {
+                            itemToEdit = null
+                            showAddEditSheet = true
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
@@ -196,7 +203,7 @@ fun AgendaScreen(
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         when (activity) {
                             is CombinedActivity.Agenda -> {
-                                Box(modifier = Modifier.clickable {
+                                Box(modifier = Modifier.clickable(enabled = !activity.item.isCompleted) {
                                     itemToEdit = activity.item
                                     showAddEditSheet = true
                                 }) {

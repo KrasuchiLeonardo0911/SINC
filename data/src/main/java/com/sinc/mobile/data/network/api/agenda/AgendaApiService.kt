@@ -2,12 +2,11 @@ package com.sinc.mobile.data.network.api.agenda
 
 import com.sinc.mobile.data.network.dto.agenda.AgendaItemDto
 import com.sinc.mobile.data.network.dto.agenda.AgendaResponseDto
+import com.sinc.mobile.data.network.dto.agenda.UpdateAgendaStatusRequest
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
@@ -25,12 +24,11 @@ interface AgendaApiService {
         @Body item: AgendaItemDto
     ): Response<AgendaItemDto>
 
-    @FormUrlEncoded
     @Headers("Accept: application/json")
     @PUT("api/movil/agenda/{id}")
     suspend fun updateAgendaStatus(
         @Path("id") id: Long,
-        @Field("completada") isCompleted: Boolean
+        @Body request: UpdateAgendaStatusRequest
     ): Response<ResponseBody>
 
     @Headers("Accept: application/json")

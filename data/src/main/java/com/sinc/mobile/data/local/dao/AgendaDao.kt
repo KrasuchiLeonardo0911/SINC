@@ -29,6 +29,9 @@ interface AgendaDao {
     @Query("DELETE FROM agenda_items")
     suspend fun deleteAll()
 
+    @Query("UPDATE agenda_items SET completadaEn = :completadaEn WHERE id = :id")
+    suspend fun updateStatus(id: Long, completadaEn: java.time.LocalDateTime?)
+
     @Transaction
     suspend fun clearAndInsert(items: List<AgendaEntity>) {
         deleteAll()
