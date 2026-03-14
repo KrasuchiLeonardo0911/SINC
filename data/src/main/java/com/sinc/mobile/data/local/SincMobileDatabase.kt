@@ -40,7 +40,7 @@ import kotlinx.serialization.builtins.serializer
         com.sinc.mobile.data.local.entities.agenda.AgendaEntity::class,
         BitacoraEntity::class
     ],
-    version = 18,
+    version = 19,
     exportSchema = false
 )
 @TypeConverters(Converters::class, StockTypeConverter::class)

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import java.util.UUID
@@ -36,16 +38,12 @@ enum class BannerType {
     val backgroundColor: Color
         @Composable
         get() = when (this) {
-            SUCCESS -> MaterialTheme.colorScheme.primaryContainer
-            ERROR -> MaterialTheme.colorScheme.error
+            SUCCESS -> Color(0xFF2E7D32) // Dark Green
+            ERROR -> Color(0xFFD32F2F)   // Material Red
         }
 
     val textColor: Color
-        @Composable
-        get() = when (this) {
-            SUCCESS -> MaterialTheme.colorScheme.onPrimaryContainer
-            ERROR -> MaterialTheme.colorScheme.onError
-        }
+        get() = Color.White
 }
 
 data class BannerData(
@@ -72,7 +70,7 @@ object BannerManager {
 @Composable
 fun GlobalBanner(
     modifier: Modifier = Modifier,
-    durationMillis: Long = 5000
+    durationMillis: Long = 3000
 ) {
     val managerBanner = BannerManager.bannerData
     var bannerToRender by remember { mutableStateOf(managerBanner) }
@@ -120,6 +118,7 @@ fun GlobalBanner(
                     Text(
                         text = it.message,
                         color = it.type.textColor,
+                        fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                     )
                 }

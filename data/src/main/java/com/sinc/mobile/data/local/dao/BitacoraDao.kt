@@ -13,17 +13,31 @@ interface BitacoraDao {
     suspend fun insertAll(bitacoras: List<BitacoraEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(bitacora: BitacoraEntity)
+    suspend fun insert(bitacora: BitacoraEntity): Long
+
+    @Query("SELECT * FROM bitacoras WHERE localId = :localId")
+    suspend fun getBitacoraByLocalId(localId: Int): BitacoraEntity?
+
+    @Query("SELECT * FROM bitacoras WHERE sincronizado = 0")
+    suspend fun getUnsyncedBitacoras(): List<BitacoraEntity>
+
+    @Query("UPDATE bitacoras SET id = :serverId, sincronizado = 1 WHERE localId = :localId")
+    suspend fun markAsSynced(localId: Int, serverId: Int)
+
+    @Query("DELETE FROM bitacoras WHERE localId = :localId")
+    suspend fun deleteByLocalId(localId: Int)
 
     @Query("DELETE FROM bitacoras")
     suspend fun clearAll()
 
-    @Query("DELETE FROM bitacoras WHERE id = :id")
-    suspend fun deleteById(id: Int)
-
     @Transaction
     suspend fun clearAndInsert(bitacoras: List<BitacoraEntity>) {
-        clearAll()
+        // Al sincronizar desde el servidor, solo borramos lo que YA ESTÁ sincronizado
+        // para no perder los pendientes locales.
+        deleteSyncedBitacoras()
         insertAll(bitacoras)
     }
+
+    @Query("DELETE FROM bitacoras WHERE sincronizado = 1")
+    suspend fun deleteSyncedBitacoras()
 }

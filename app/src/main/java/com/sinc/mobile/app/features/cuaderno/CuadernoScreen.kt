@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.features.cuaderno.components.*
 import com.sinc.mobile.app.features.createunidadproductiva.components.ProgressBar
+import com.sinc.mobile.app.ui.components.BannerManager
+import com.sinc.mobile.app.ui.components.BannerType
 import com.sinc.mobile.app.ui.components.ConfirmationDialog
 import com.sinc.mobile.app.ui.components.EmptyState
 import com.sinc.mobile.app.ui.components.FullscreenLoader
@@ -42,7 +44,6 @@ fun CuadernoScreen(
     viewModel: BitacoraViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     
     var selectedBitacora by remember { mutableStateOf<Bitacora?>(null) }
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
@@ -52,7 +53,7 @@ fun CuadernoScreen(
         onViewChange(state.currentView)
     }
 
-    // Manejo de botÃ³n atrÃ¡s fÃ­sico/gesto
+    // Manejo de botón atrás físico/gesto
     BackHandler(enabled = state.currentView != CuadernoView.LISTADO) {
         when (state.currentView) {
             CuadernoView.CATEGORIAS -> viewModel.setView(CuadernoView.LISTADO)
@@ -65,8 +66,8 @@ fun CuadernoScreen(
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is BitacoraViewModel.BitacoraEvent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(event.message)
+                is BitacoraViewModel.BitacoraEvent.ShowBanner -> {
+                    BannerManager.show(event.message, event.type)
                 }
                 BitacoraViewModel.BitacoraEvent.Success -> {
                     viewModel.setView(CuadernoView.LISTADO)
@@ -77,7 +78,6 @@ fun CuadernoScreen(
 
     Scaffold(
         containerColor = SincBackground,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             MinimalHeader(
                 title = "Registros",
@@ -132,7 +132,7 @@ fun CuadernoScreen(
                         val popEnter = slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(300)) + fadeIn()
                         val popExit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut()
 
-                        // LÃ³gica de direcciÃ³n
+                        // Lógica de dirección
                         if (targetState.ordinal > initialState.ordinal) {
                             enter togetherWith exit
                         } else {
@@ -234,12 +234,12 @@ fun CuadernoScreen(
         )
     }
 
-    // ConfirmaciÃ³n para Borrar
+    // Confirmación para Borrar
     if (showDeleteDialog != null) {
         ConfirmationDialog(
             showDialog = true,
             title = "Eliminar Registro",
-            message = "Â¿EstÃ¡s seguro de que deseas borrar esta anotaciÃ³n?",
+            message = "¿Estás seguro de que deseas borrar esta anotación?",
             onConfirm = {
                 viewModel.deleteBitacora(showDeleteDialog!!)
                 showDeleteDialog = null

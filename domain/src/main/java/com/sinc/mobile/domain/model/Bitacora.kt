@@ -7,6 +7,7 @@ data class Bitacora(
     val userId: Int = 0,
     val fecha: LocalDateTime,
     val contenido: String,
+    val isSynced: Boolean = true,
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null
 )

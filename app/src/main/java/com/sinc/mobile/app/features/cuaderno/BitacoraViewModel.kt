@@ -2,6 +2,7 @@ package com.sinc.mobile.app.features.cuaderno
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sinc.mobile.app.ui.components.BannerType
 import com.sinc.mobile.domain.model.Bitacora
 import com.sinc.mobile.domain.use_case.bitacora.*
 import com.sinc.mobile.domain.util.Result
@@ -27,7 +28,7 @@ class BitacoraViewModel @Inject constructor(
     val eventFlow = _eventFlow.asSharedFlow()
 
     sealed class BitacoraEvent {
-        data class ShowSnackbar(val message: String) : BitacoraEvent()
+        data class ShowBanner(val message: String, val type: BannerType) : BitacoraEvent()
         object Success : BitacoraEvent()
     }
 
@@ -113,10 +114,10 @@ class BitacoraViewModel @Inject constructor(
             when (result) {
                 is Result.Success -> {
                     _eventFlow.emit(BitacoraEvent.Success)
-                    _eventFlow.emit(BitacoraEvent.ShowSnackbar("Registro guardado con éxito"))
+                    _eventFlow.emit(BitacoraEvent.ShowBanner("Registro guardado con éxito", BannerType.SUCCESS))
                 }
                 is Result.Failure -> {
-                    _eventFlow.emit(BitacoraEvent.ShowSnackbar(result.error.message))
+                    _eventFlow.emit(BitacoraEvent.ShowBanner(result.error.message, BannerType.ERROR))
                 }
             }
             _state.update { it.copy(isSaving = false) }
@@ -129,10 +130,10 @@ class BitacoraViewModel @Inject constructor(
             val result = updateBitacoraUseCase(id, contenido)
             when (result) {
                 is Result.Success -> {
-                    _eventFlow.emit(BitacoraEvent.ShowSnackbar("Registro actualizado"))
+                    _eventFlow.emit(BitacoraEvent.ShowBanner("Registro actualizado", BannerType.SUCCESS))
                 }
                 is Result.Failure -> {
-                    _eventFlow.emit(BitacoraEvent.ShowSnackbar(result.error.message))
+                    _eventFlow.emit(BitacoraEvent.ShowBanner(result.error.message, BannerType.ERROR))
                 }
             }
             _state.update { it.copy(isSaving = false) }
@@ -143,9 +144,9 @@ class BitacoraViewModel @Inject constructor(
         viewModelScope.launch {
             val result = deleteBitacoraUseCase(id)
             if (result is Result.Failure) {
-                _eventFlow.emit(BitacoraEvent.ShowSnackbar(result.error.message))
+                _eventFlow.emit(BitacoraEvent.ShowBanner(result.error.message, BannerType.ERROR))
             } else {
-                _eventFlow.emit(BitacoraEvent.ShowSnackbar("Registro eliminado"))
+                _eventFlow.emit(BitacoraEvent.ShowBanner("Registro eliminado", BannerType.SUCCESS))
             }
         }
     }
