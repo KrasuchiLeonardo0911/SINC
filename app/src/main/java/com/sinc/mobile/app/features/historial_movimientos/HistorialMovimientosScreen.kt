@@ -1,24 +1,9 @@
 package com.sinc.mobile.app.features.historial_movimientos
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,28 +14,15 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sinc.mobile.app.ui.components.MinimalHeader
 import com.sinc.mobile.app.ui.components.FullscreenLoader
@@ -61,9 +33,6 @@ import java.util.Locale
 
 import com.sinc.mobile.ui.theme.SincBackground
 import com.sinc.mobile.ui.theme.SincGrayBackground
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -73,13 +42,6 @@ fun HistorialMovimientosScreen(
     onNavigateToResumen: (Int, Int) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            snackbarHostState.showSnackbar(message = error)
-        }
-    }
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = state.isLoading,
@@ -88,19 +50,15 @@ fun HistorialMovimientosScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize().navigationBarsPadding(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = SincBackground
     ) { paddingValues ->
         if (state.isInitialLoad) {
             FullscreenLoader(
                 message = "Cargando historial...",
-                modifier = Modifier
-                    .padding(paddingValues)
+                modifier = Modifier.padding(paddingValues)
             )
         } else {
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 // 1. Lista de Movimientos (Scrollable)
                 Box(
                     modifier = Modifier
@@ -110,7 +68,6 @@ fun HistorialMovimientosScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            // Header (48dp) + MonthSelector (~64dp) + Espaciado (24dp)
                             top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 48.dp + 64.dp + 24.dp,
                             bottom = 32.dp
                         )
@@ -120,23 +77,14 @@ fun HistorialMovimientosScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillParentMaxSize()
-                                        .padding(bottom = 150.dp), // Ajuste para header y selector
+                                        .padding(bottom = 150.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = if (state.error != null) "Error al sincronizar" else "No hay movimientos en este mes.",
-                                            color = if (state.error != null) MaterialTheme.colorScheme.error else Color.Gray
-                                        )
-                                        state.error?.let {
-                                            Text(
-                                                text = it,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.error,
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-                                    }
+                                    Text(
+                                        text = "No hay movimientos guardados en este mes.",
+                                        color = Color.Gray,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
                             }
                         }
@@ -182,7 +130,6 @@ fun HistorialMovimientosScreen(
                         }
                     )
                     
-                    // Selector de Mes Fijo sobre fondo blanco
                     Surface(
                         color = SincBackground,
                         modifier = Modifier.fillMaxWidth()
@@ -193,7 +140,6 @@ fun HistorialMovimientosScreen(
                                 onPrevious = { viewModel.previousMonth() },
                                 onNext = { viewModel.nextMonth() }
                             )
-                            // Línea divisoria sutil para marcar el límite al scrollear
                             HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray.copy(alpha = 0.3f))
                         }
                     }
@@ -241,7 +187,6 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
     val isAlta = movimiento.tipoMovimiento.equals("alta", ignoreCase = true)
     val color = if (isAlta) Color(0xFF2E7D32) else Color(0xFFC62828)
     val icon = if (isAlta) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
-    val bgIconColor = if (isAlta) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
 
     Row(
         modifier = Modifier
@@ -250,7 +195,6 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
         Box(
             modifier = Modifier.size(40.dp),
             contentAlignment = Alignment.Center
@@ -265,7 +209,6 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Info
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = movimiento.motivo,
@@ -288,7 +231,6 @@ fun CompactMovimientoRow(movimiento: MovimientoHistorial) {
             }
         }
 
-        // Amount & Date
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "${if (isAlta) "+" else "-"}${movimiento.cantidad}",

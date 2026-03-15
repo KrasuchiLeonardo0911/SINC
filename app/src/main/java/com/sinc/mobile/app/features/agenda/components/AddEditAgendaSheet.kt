@@ -21,10 +21,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sinc.mobile.app.ui.components.BannerManager
+import com.sinc.mobile.app.ui.components.BannerType
 import com.sinc.mobile.domain.model.agenda.AgendaItem
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,10 +43,10 @@ fun AddEditAgendaSheet(
     var descripcion by remember { mutableStateOf(itemToEdit?.descripcion ?: "") }
     var tipo by remember { mutableStateOf(itemToEdit?.tipo ?: "general") }
     var selectedDate by remember { mutableStateOf(itemToEdit?.fechaProgramada?.toLocalDate() ?: initialDate) }
-    var selectedTime by remember { mutableStateOf(itemToEdit?.fechaProgramada?.toLocalTime() ?: LocalTime.now().withSecond(0).withNano(0)) }
+    var selectedTime by remember { mutableStateOf(itemToEdit?.fechaProgramada?.toLocalTime() ?: LocalTime.now().plusMinutes(5).withSecond(0).withNano(0)) }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
+        initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     )
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -170,6 +174,14 @@ fun AddEditAgendaSheet(
 
         Button(
             onClick = {
+                val scheduledDateTime = LocalDateTime.of(selectedDate, selectedTime)
+                val now = LocalDateTime.now()
+
+                if (scheduledDateTime.isBefore(now)) {
+                    BannerManager.show("No puedes agendar una tarea en el pasado.", BannerType.ERROR)
+                    return@Button
+                }
+
                 if (titulo.isNotBlank()) {
                     onSave(
                         AgendaItem(
@@ -178,7 +190,7 @@ fun AddEditAgendaSheet(
                             titulo = titulo,
                             descripcion = descripcion,
                             tipo = tipo,
-                            fechaProgramada = LocalDateTime.of(selectedDate, selectedTime),
+                            fechaProgramada = scheduledDateTime,
                             completadaEn = itemToEdit?.completadaEn
                         )
                     )
@@ -200,7 +212,7 @@ fun AddEditAgendaSheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        selectedDate = LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
+                        selectedDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
                     }
                     showDatePicker = false
                 }) { Text("Confirmar") }
