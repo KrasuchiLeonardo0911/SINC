@@ -5,13 +5,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sinc.mobile.app.features.stock.components.LegendItem
 import com.sinc.mobile.app.features.stock.components.PieChartData
+import com.sinc.mobile.app.ui.components.BannerManager
+import com.sinc.mobile.app.ui.components.BannerType
 import com.sinc.mobile.domain.model.Catalogos
 import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
-import com.sinc.mobile.domain.use_case.GetStockUseCase
+import com.sinc.mobile.domain.use_case.GetEffectiveStockUseCase
 import com.sinc.mobile.domain.use_case.GetUnidadesProductivasUseCase
 import com.sinc.mobile.domain.use_case.SyncStockUseCase
 import com.sinc.mobile.domain.use_case.SyncUnidadesProductivasUseCase
+import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
+import com.sinc.mobile.domain.util.NetworkMonitor
 import com.sinc.mobile.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -19,7 +23,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -95,7 +101,9 @@ data class StockUiState(
     val processedStock: ProcessedStock? = null,
     val selectedUnidadId: Int? = null,
     val upSearchQuery: String = "",
-    val isLogisticsOpen: Boolean = true
+    val isLogisticsOpen: Boolean = true,
+    val hasUnsyncedData: Boolean = false,
+    val isOnline: Boolean = true
 )
 // endregion
 
@@ -103,7 +111,7 @@ data class StockUiState(
 class StockViewModel @Inject constructor(
     private val getUnidadesProductivasUseCase: GetUnidadesProductivasUseCase,
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase,
-    private val getStockUseCase: GetStockUseCase,
+    private val getEffectiveStockUseCase: GetEffectiveStockUseCase,
     private val syncStockUseCase: SyncStockUseCase,
     private val createDeclaracionVentaUseCase: CreateDeclaracionVentaUseCase,
     private val validateStockForVentaUseCase: ValidateStockForVentaUseCase,
@@ -111,7 +119,9 @@ class StockViewModel @Inject constructor(
     private val ventasRepository: com.sinc.mobile.domain.repository.VentasRepository,
     private val catalogosRepository: com.sinc.mobile.domain.repository.CatalogosRepository,
     private val getLogisticsStatusUseCase: com.sinc.mobile.domain.use_case.ventas.GetLogisticsStatusUseCase,
-    private val initializeAppUseCase: com.sinc.mobile.domain.use_case.init.InitializeAppUseCase
+    private val initializeAppUseCase: com.sinc.mobile.domain.use_case.init.InitializeAppUseCase,
+    private val movimientoHistorialRepository: MovimientoHistorialRepository,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StockUiState())
@@ -135,21 +145,23 @@ class StockViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 getUnidadesProductivasUseCase(),
-                getStockUseCase(),
-                catalogosRepository.getMovimientoCatalogos()
-            ) { unidades, stock, catalogosData ->
+                getEffectiveStockUseCase(),
+                catalogosRepository.getMovimientoCatalogos(),
+                movimientoHistorialRepository.getMovimientos(),
+                networkMonitor.isOnline
+            ) { unidades, stock, catalogosData, historial, isOnline ->
                 // Guardamos los catálogos localmente
                 catalogos = catalogosData
                 
                 val currentSelectedId = _uiState.value.selectedUnidadId
                 
-                // Si el productor tiene solo una UP y no hay nada seleccionado, seleccionarla automáticamente
                 val targetSelectedId = if (currentSelectedId == null && unidades.size == 1) {
                     unidades.first().id
                 } else {
                     currentSelectedId
                 }
 
+                val hasUnsynced = historial.any { !it.sincronizado }
                 val processed = stock?.let { processStock(it, targetSelectedId, catalogosData) }
                 
                 _uiState.update {
@@ -157,13 +169,36 @@ class StockViewModel @Inject constructor(
                         unidadesProductivas = unidades,
                         stock = stock,
                         processedStock = processed,
-                        selectedUnidadId = targetSelectedId
+                        selectedUnidadId = targetSelectedId,
+                        hasUnsyncedData = hasUnsynced,
+                        isOnline = isOnline
                     )
                 }
             }.launchIn(this)
         }
 
-        // Perform the initial sync, managing the initial loading spinner
+        // Logic to show banner based on state changes
+        viewModelScope.launch {
+            uiState.map { Pair(it.isOnline, it.hasUnsyncedData) }
+                .distinctUntilChanged()
+                .collect { (isOnline, hasUnsynced) ->
+                    // Show banner only after initial load is complete
+                    if (!_uiState.value.isInitialLoad) {
+                        if (!isOnline) {
+                            BannerManager.show(
+                                "Modo offline: No hay conexión a internet.",
+                                BannerType.WARNING
+                            )
+                        } else if (hasUnsynced) {
+                            BannerManager.show(
+                                "Tienes movimientos locales sin sincronizar.",
+                                BannerType.WARNING
+                            )
+                        }
+                    }
+                }
+        }
+
         initialSync()
     }
 
@@ -176,16 +211,16 @@ class StockViewModel @Inject constructor(
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             try {
-                initializeAppUseCase() // Obtener config global (is_open, etc)
+                initializeAppUseCase()
                 syncStockUseCase()
                 syncUnidadesProductivasUseCase()
-                syncDeclaracionesVentaUseCase() // Sincronizamos ventas para tener estados actualizados
-                checkLogisticsStatus() // Volver a chequear tras sync si el endpoint /init se actualizó
+                syncDeclaracionesVentaUseCase()
+                checkLogisticsStatus()
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error de conexión") }
             } finally {
                 val duration = System.currentTimeMillis() - startTime
-                if (duration < 1000) { // Garantizar visibilidad mínima
+                if (duration < 1000) { 
                     delay(1000 - duration)
                 }
                 _uiState.update { it.copy(isInitialLoad = false) }
@@ -203,7 +238,6 @@ class StockViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val startTime = System.currentTimeMillis()
 
-            // Perform network sync
             initializeAppUseCase()
             val stockSyncResult = syncStockUseCase()
             syncUnidadesProductivasUseCase()
@@ -219,7 +253,6 @@ class StockViewModel @Inject constructor(
                 delay(1000 - duration)
             }
 
-            // End loading state
             _uiState.update { it.copy(isLoading = false) }
         }
     }
@@ -236,7 +269,6 @@ class StockViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSelling = true, saleError = null, saleSuccess = null) }
 
-            // 0. Validar si el periodo de inscripciones está abierto
             if (!getLogisticsStatusUseCase()) {
                 _uiState.update { 
                     it.copy(
@@ -248,7 +280,6 @@ class StockViewModel @Inject constructor(
                 return@launch
             }
 
-            // 0.1 Validar si el ciclo logístico ya avanzó
             val declaracionesActuales = ventasRepository.getDeclaraciones().first()
             val advancedLogistics = declaracionesActuales.any { 
                 it.estado == "recogido" || it.estado == "en-matadero" || it.estado == "entregado" 
@@ -264,7 +295,6 @@ class StockViewModel @Inject constructor(
                 return@launch
             }
 
-            // 1. Obtener IDs de los catálogos basados en los nombres
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()
             val especieId = catalogos.especies.find { it.nombre.equals(especieNombre, ignoreCase = true) }?.id
             val categoriaId = catalogos.categorias.find { it.nombre.equals(categoriaNombre, ignoreCase = true) && it.especieId == especieId }?.id
@@ -275,7 +305,6 @@ class StockViewModel @Inject constructor(
                 return@launch
             }
 
-            // 2. Validar Stock
             val validationResult = validateStockForVentaUseCase(
                 unidadProductivaId = unidadId,
                 especieId = especieId,
@@ -286,7 +315,6 @@ class StockViewModel @Inject constructor(
 
             when (validationResult) {
                 is ValidateStockForVentaUseCase.ValidationResult.Success -> {
-                    // 3. Crear Declaración
                     val result = createDeclaracionVentaUseCase(
                         unidadProductivaId = unidadId,
                         especieId = especieId,
@@ -305,7 +333,6 @@ class StockViewModel @Inject constructor(
                                     saleSuccess = "Venta registrada correctamente."
                                 )
                             }
-                            // 4. Sincronizar Stock y Declaraciones tras éxito
                             syncDeclaracionesVentaUseCase()
                             syncStockUseCase()
                         }
@@ -345,22 +372,17 @@ class StockViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Procesa los datos de detalle completo para una especie (Tabla + Categoría + Raza).
-     */
     fun getSpeciesDetailData(speciesName: String): SpeciesDetailUiData? {
         val processedStock = _uiState.value.processedStock ?: return null
         val speciesStock = processedStock.allSpecies.find { it.nombre == speciesName } ?: return null
 
         val totalStock = speciesStock.stockTotal.toFloat()
         
-        // Resumen por Categoría
         val byCategory = speciesStock.desglose.groupBy { it.categoria }
             .mapValues { it.value.sumOf { item -> item.quantity } }
             .toSortedMap()
         val catDistribution = calculateDistribution(byCategory, totalStock)
 
-        // Resumen por Raza
         val byBreed = speciesStock.desglose.groupBy { it.raza }
             .mapValues { it.value.sumOf { item -> item.quantity } }
             .toSortedMap()
@@ -404,7 +426,6 @@ class StockViewModel @Inject constructor(
     }
 
     internal fun processStock(stock: Stock, selectedUnidadId: Int?, catalogos: Catalogos?): ProcessedStock {
-        // Filter units based on selection
         val filteredUnits = if (selectedUnidadId == null) {
             stock.unidadesProductivas
         } else {
@@ -415,7 +436,7 @@ class StockViewModel @Inject constructor(
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .mapValues { entry -> entry.value.sumOf { it.stockTotal } }
-            .toSortedMap() // Ordenar alfabéticamente por especie
+            .toSortedMap()
         val totalGeneralStock = speciesTotals.values.sum().toFloat()
 
         val speciesDistributionData = speciesTotals.entries.mapIndexed { index, entry ->
@@ -442,7 +463,6 @@ class StockViewModel @Inject constructor(
             .flatMap { it.especies }
             .groupBy { it.nombre }
             .map { (nombreEspecie, especiesList) ->
-                // Resolve species ID from name
                 val especieId = catalogos?.especies?.find { esp -> esp.nombre.equals(nombreEspecie, ignoreCase = true) }?.id ?: -1
 
                 val desgloses = especiesList.flatMap { it.desglose }
@@ -450,7 +470,6 @@ class StockViewModel @Inject constructor(
                     .mapNotNull { (key, group) ->
                         val sumQuantity = group.sumOf { item -> item.cantidad }
                         if (sumQuantity > 0) {
-                            // Resolve category and breed IDs from names
                             val categoriaId = catalogos?.categorias?.find { cat -> 
                                 cat.nombre.equals(key.first, ignoreCase = true) && cat.especieId == especieId 
                             }?.id ?: -1
@@ -471,7 +490,6 @@ class StockViewModel @Inject constructor(
                         }
                     }
 
-                // Get the color for this species based on global consistent colors
                 val globalSpeciesList = stock.unidadesProductivas.flatMap { it.especies }.map { it.nombre }.distinct().sorted()
                 val colorIndex = globalSpeciesList.indexOf(nombreEspecie).takeIf { it >= 0 } ?: 0
                 val speciesColor = pieChartColors[colorIndex % pieChartColors.size]
@@ -497,5 +515,3 @@ class StockViewModel @Inject constructor(
         )
     }
 }
-
-

@@ -10,6 +10,7 @@ import com.sinc.mobile.domain.model.Stock
 import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.domain.repository.StockRepository
 import com.sinc.mobile.domain.use_case.*
+import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -36,7 +37,7 @@ data class MovimientoStepperState(
     val formManager: MovimientoFormManager? = null,
     val syncState: MovimientoSyncState = MovimientoSyncState(),
     val catalogos: Catalogos? = null,
-    val unidades: List<UnidadProductiva> = emptyList(), // Add this
+    val unidades: List<UnidadProductiva> = emptyList(),
     val stock: Stock? = null,
     val stockValidationError: String? = null
 )
@@ -48,11 +49,12 @@ class MovimientoStepperViewModel @Inject constructor(
     private val getMovimientoCatalogosUseCase: GetMovimientoCatalogosUseCase,
     private val saveMovimientoLocalUseCase: SaveMovimientoLocalUseCase,
     getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
-    private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase, // Updated UseCase
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
-    private val stockRepository: StockRepository, // Keep for getStock()
+    private val getEffectiveStockUseCase: GetEffectiveStockUseCase,
+    private val confirmMovimientosUseCase: ConfirmMovimientosUseCase,
     private val syncStockUseCase: SyncStockUseCase,
-    private val syncMovimientosHistorialUseCase: SyncMovimientosHistorialUseCase, // Add this
+    private val syncMovimientosHistorialUseCase: SyncMovimientosHistorialUseCase,
+    private val historialRepository: MovimientoHistorialRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -73,10 +75,10 @@ class MovimientoStepperViewModel @Inject constructor(
     init {
         syncManager = MovimientoSyncManager(
             getMovimientosPendientesUseCase,
-            syncMovimientosLocalesUseCase,
             deleteMovimientoLocalUseCase,
+            historialRepository, // Pass this to manage background sync
             syncStockUseCase,
-            syncMovimientosHistorialUseCase, // Pass this
+            syncMovimientosHistorialUseCase,
             viewModelScope
         )
 
@@ -92,41 +94,28 @@ class MovimientoStepperViewModel @Inject constructor(
     private fun loadInitialData() {
         _uiState.update { it.copy(isLoading = true) }
 
-        // Combine the flows that provide data to the screen
         val combinedDataFlow = combine(
             getUnidadesProductivasUseCase(),
             getMovimientoCatalogosUseCase(),
-            stockRepository.getStock()
+            getEffectiveStockUseCase()
         ) { unidades, catalogos, stock ->
-            // Package them into a data class for clarity
             Triple(unidades, catalogos, stock)
         }
 
         viewModelScope.launch {
-            // Collect the flow. This will run for the lifetime of the ViewModel.
             combinedDataFlow.collect { (unidades, catalogosData, stockData) ->
-                // This block will be executed each time the list of unidades,
-                // catalogos, or stock changes in the database.
-
                 val currentUiState = _uiState.value
-
-                // On the very first data emission, determine the initially selected unit if an ID was passed via navigation.
-                // On subsequent emissions, we respect the user's current selection.
-                val selectedUnidad = if (currentUiState.isLoading) { // Use isLoading as a proxy for "first emission"
+                val selectedUnidad = if (currentUiState.isLoading) {
                     unidades.find { it.id.toString() == unidadId }
                 } else {
-                    // If a unit is already selected, refresh its instance from the new list.
-                    // If the user hasn't selected one, keep it as null.
                     currentUiState.selectedUnidad?.let { current -> unidades.find { unit -> unit.id == current.id } }
                 }
 
-                // Update the local catalogos cache
                 catalogos = catalogosData
 
                 val isFirstEmission = currentUiState.isLoading
                 val newFormManager = if (isFirstEmission) {
                     val manager = MovimientoFormManager(catalogosData)
-                    // Apply pre-selections from navigation if present
                     if (preSelectedEspecieId != -1) {
                         catalogosData.especies.find { esp -> esp.id == preSelectedEspecieId }?.let { especie ->
                             manager.onEspecieSelected(especie)
@@ -147,15 +136,13 @@ class MovimientoStepperViewModel @Inject constructor(
                     currentUiState.formManager
                 }
 
-                // Update the entire UI state
                 _uiState.update { state ->
                     state.copy(
-                        isLoading = false, // Turn off loading after the first data emission
+                        isLoading = false,
                         unidades = unidades,
                         catalogos = catalogosData,
                         stock = stockData,
                         selectedUnidad = selectedUnidad,
-                        // Re-initialize formManager only on first load to not lose user input
                         formManager = newFormManager
                     )
                 }
@@ -183,7 +170,6 @@ class MovimientoStepperViewModel @Inject constructor(
             return
         }
 
-        // --- START VALIDATION LOGIC for "baja" ---
         val stock = _uiState.value.stock ?: run {
             _uiState.value = _uiState.value.copy(stockValidationError = "No se pudo verificar el stock. Intente de nuevo.")
             return
@@ -194,7 +180,6 @@ class MovimientoStepperViewModel @Inject constructor(
         val razaId = currentFormState.selectedRaza!!.id
         val cantidadADescontar = currentFormState.cantidad.toIntOrNull() ?: 0
 
-        // 1. Find current stock for the item by traversing the nested structure
         val especieName = currentFormState.selectedEspecie!!.nombre
         val categoriaName = currentFormState.selectedCategoria!!.nombre
         val razaName = currentFormState.selectedRaza!!.nombre
@@ -207,8 +192,9 @@ class MovimientoStepperViewModel @Inject constructor(
             }
             ?.cantidad ?: 0
 
-        // 2. Find pending bajas for the same item
-        val bajasPendientes = _uiState.value.syncState.movimientosAgrupados
+        // In the new logic, stockActual already considers unsynced history records.
+        // We only need to consider the CURRENT draft list (movimientosAgrupados)
+        val bajasEnBorrador = _uiState.value.syncState.movimientosAgrupados
             .filter {
                 it.especieId == especieId &&
                         it.categoriaId == categoriaId &&
@@ -218,14 +204,12 @@ class MovimientoStepperViewModel @Inject constructor(
             }
             .sumOf { it.cantidadTotal }
 
-        // 3. Apply validation rule
-        val stockDisponible = stockActual - bajasPendientes
+        val stockDisponible = stockActual - bajasEnBorrador
         if (cantidadADescontar > stockDisponible) {
-            val errorMessage = "Stock insuficiente. Disponible: $stockDisponible (Actual: $stockActual, Pendientes: $bajasPendientes)"
+            val errorMessage = "Stock insuficiente. Disponible: $stockDisponible (Actual: $stockActual, En borrador: $bajasEnBorrador)"
             _uiState.value = _uiState.value.copy(stockValidationError = errorMessage)
-            return // Stop the process
+            return
         }
-        // --- END VALIDATION LOGIC ---
         proceedToAddToList()
     }
 
@@ -241,7 +225,6 @@ class MovimientoStepperViewModel @Inject constructor(
         val cantidadNum = formState.cantidad.toIntOrNull() ?: 0
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true)
             try {
                 val movimiento = MovimientoPendiente(
                     id = 0,
@@ -257,24 +240,42 @@ class MovimientoStepperViewModel @Inject constructor(
                     sincronizado = false
                 )
                 
-                // saveMovimientoLocalUseCase uses result.onSuccess {}
                 val result = saveMovimientoLocalUseCase(movimiento)
                 if (result is com.sinc.mobile.domain.util.Result.Success) {
                      _uiState.value = _uiState.value.copy(formManager = MovimientoFormManager(catalogos))
                     _navigateToPage.emit(1)
-                } else if (result is com.sinc.mobile.domain.util.Result.Failure) {
-                    // Handle failure
                 }
             } catch (e: Exception) {
-                // Should not happen with the new logic, but kept for safety
-            } finally {
-                _uiState.value = _uiState.value.copy(isSaving = false)
             }
         }
     }
 
-    fun onSync() {
-        syncManager.syncMovements()
+    fun onSave() { // Renamed from onSync
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            
+            // Artificial delay to improve UX and show the loading screen
+            kotlinx.coroutines.delay(1500)
+            
+            val result = confirmMovimientosUseCase()
+            _uiState.update { it.copy(isSaving = false) }
+            
+            if (result is com.sinc.mobile.domain.util.Result.Success) {
+                // After saving locally, trigger background sync
+                syncManager.triggerBackgroundSync()
+                
+                // Show success banner
+                com.sinc.mobile.app.ui.components.BannerManager.show(
+                    "Movimientos guardados exitosamente", 
+                    com.sinc.mobile.app.ui.components.BannerType.SUCCESS
+                )
+                
+                // Navigation back to form
+                _navigateToPage.emit(0)
+            } else if (result is com.sinc.mobile.domain.util.Result.Failure) {
+                _uiState.update { it.copy(error = result.error.message) }
+            }
+        }
     }
 
     fun deleteMovimientoGroup(grupo: MovimientoAgrupado) {

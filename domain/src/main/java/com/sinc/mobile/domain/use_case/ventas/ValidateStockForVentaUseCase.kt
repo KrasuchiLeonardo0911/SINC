@@ -1,13 +1,13 @@
 package com.sinc.mobile.domain.use_case.ventas
 
 import com.sinc.mobile.domain.repository.CatalogosRepository
-import com.sinc.mobile.domain.repository.StockRepository
+import com.sinc.mobile.domain.use_case.GetEffectiveStockUseCase
 import com.sinc.mobile.domain.repository.VentasRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class ValidateStockForVentaUseCase @Inject constructor(
-    private val stockRepository: StockRepository,
+    private val getEffectiveStockUseCase: GetEffectiveStockUseCase,
     private val ventasRepository: VentasRepository,
     private val catalogosRepository: CatalogosRepository
 ) {
@@ -33,8 +33,8 @@ class ValidateStockForVentaUseCase @Inject constructor(
              return ValidationResult.Error("Datos de catálogo no encontrados. Intente sincronizar.")
         }
 
-        // 2. Obtener Stock Actual
-        val stock = stockRepository.getStock().first()
+        // 2. Obtener Stock Actual (Efectivo: Servidor + Locales no sincronizados)
+        val stock = getEffectiveStockUseCase().first()
         
         // 3. Buscar Cantidad en Stock (Si no existe la UP o el desglose, asumimos 0)
         val stockReal = stock.unidadesProductivas.find { it.id == unidadProductivaId }

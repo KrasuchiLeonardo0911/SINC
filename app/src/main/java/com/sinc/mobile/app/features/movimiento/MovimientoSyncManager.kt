@@ -1,9 +1,9 @@
 package com.sinc.mobile.app.features.movimiento
 
+import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
 import com.sinc.mobile.domain.use_case.DeleteMovimientoLocalUseCase
 import com.sinc.mobile.domain.use_case.GetMovimientosPendientesUseCase
 import com.sinc.mobile.domain.use_case.SyncMovimientosHistorialUseCase
-import com.sinc.mobile.domain.use_case.SyncMovimientosLocalesUseCase
 import com.sinc.mobile.domain.use_case.SyncStockUseCase
 import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.CoroutineScope
@@ -26,14 +26,14 @@ private data class MovimientoGroupKey(
 data class MovimientoSyncState(
     val movimientosAgrupados: List<MovimientoAgrupado> = emptyList(),
     val isSyncing: Boolean = false,
-    val syncCompleted: Boolean = false, // New state for success animation
+    val syncCompleted: Boolean = false,
     val syncError: String? = null,
 )
 
 class MovimientoSyncManager(
     private val getMovimientosPendientesUseCase: GetMovimientosPendientesUseCase,
-    private val syncMovimientosLocalesUseCase: SyncMovimientosLocalesUseCase,
     private val deleteMovimientoLocalUseCase: DeleteMovimientoLocalUseCase,
+    private val historialRepository: MovimientoHistorialRepository,
     private val syncStockUseCase: SyncStockUseCase,
     private val syncMovimientosHistorialUseCase: SyncMovimientosHistorialUseCase,
     private val scope: CoroutineScope
@@ -85,37 +85,42 @@ class MovimientoSyncManager(
         }
     }
 
-    fun syncMovements() {
+    fun triggerBackgroundSync() {
+        scope.launch {
+            // Silently try to sync history
+            historialRepository.syncUnsyncedMovements()
+            // After attempting sync, we should ideally refresh stock from server 
+            // to make sure we are in sync with reality, BUT our local calculation 
+            // already covers it. Refreshing history from server is good though.
+            syncMovimientosHistorialUseCase()
+            syncStockUseCase()
+        }
+    }
+
+    fun syncMovements() { // Still useful for manual retry or troubleshooting
         scope.launch {
             _syncState.value = _syncState.value.copy(isSyncing = true, syncError = null, syncCompleted = false)
             val startTime = System.currentTimeMillis()
 
-            val result = syncMovimientosLocalesUseCase()
+            val result = historialRepository.syncUnsyncedMovements()
             if (result is Result.Success) {
-                val syncedMovements = result.data
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
-                    delay(1000 - duration) // Ensure spinner is visible for at least 1s
+                    delay(1000 - duration)
                 }
-                // Show success animation
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncCompleted = true)
 
-                // Delete the local items now, which will trigger the UI update
-                syncedMovements.forEach {
-                    deleteMovimientoLocalUseCase(it)
-                }
-
-                // Now, trigger a refresh of the total stock AND movement history
+                // Refresh total stock AND movement history from server
                 syncStockUseCase()
                 syncMovimientosHistorialUseCase()
             } else if (result is Result.Failure) {
                 val error = result.error
                 val duration = System.currentTimeMillis() - startTime
                 if (duration < 1000) {
-                    delay(1000 - duration) // Ensure spinner is visible for at least 1s
+                    delay(1000 - duration)
                 }
                 _syncState.value = _syncState.value.copy(isSyncing = false, syncError = error.message)
-                delay(3000L) // Keep error message visible
+                delay(3000L)
                 _syncState.value = _syncState.value.copy(syncError = null)
             }
         }

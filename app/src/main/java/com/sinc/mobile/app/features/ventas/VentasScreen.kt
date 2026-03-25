@@ -32,6 +32,7 @@ import com.sinc.mobile.app.ui.util.LogisticaUiMapper
 import com.sinc.mobile.ui.theme.*
 import com.sinc.mobile.domain.model.DeclaracionVenta
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun VentasScreen(
     onNavigateBack: () -> Unit,
@@ -74,25 +75,48 @@ fun VentasScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = SincBackground
     ) { paddingValues ->
+        val pullRefreshState = rememberPullRefreshState(refreshing = uiState.isLoading, onRefresh = viewModel::onSyncRequested)
+
         Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
+                .pullRefresh(pullRefreshState)
         ) {
-            VentasList(
-                declaraciones = uiState.declaracionesActivas,
-                especies = uiState.especies,
-                razas = uiState.razas,
-                categorias = uiState.categorias,
-                isLoading = uiState.isLoading,
-                onRefresh = { viewModel.onSyncRequested() },
-                onCancel = { id -> viewModel.onCancelDeclaracion(id) }
-            )
+            if (!uiState.isOnline) {
+                OfflineState()
+            } else {
+                VentasList(
+                    declaraciones = uiState.declaracionesActivas,
+                    especies = uiState.especies,
+                    razas = uiState.razas,
+                    categorias = uiState.categorias,
+                    onCancel = { id -> viewModel.onCancelDeclaracion(id) }
+                )
+            }
+            
+            if (uiState.isLoading) {
+                 PullRefreshIndicator(
+                    refreshing = true,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
         }
+    }
+}
 
-        if (uiState.isLoading && uiState.declaracionesActivas.isEmpty()) {
-            LoadingOverlay(isLoading = true)
-        }
+@Composable
+private fun OfflineState() {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        EmptyState(
+            icon = Icons.Default.CloudOff,
+            title = "Sin Conexión",
+            message = "Debe conectarse a internet para declarar y gestionar sus ventas."
+        )
     }
 }
 
@@ -103,15 +127,12 @@ fun VentasList(
     especies: List<com.sinc.mobile.domain.model.Especie>,
     razas: List<com.sinc.mobile.domain.model.Raza>,
     categorias: List<com.sinc.mobile.domain.model.Categoria>,
-    isLoading: Boolean,
-    onRefresh: () -> Unit,
     onCancel: (Int) -> Unit
 ) {
-    val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = onRefresh)
     var showSheet by remember { mutableStateOf(false) }
     var isCancelMode by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (declaraciones.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -198,12 +219,6 @@ fun VentasList(
                 onDismiss = { showSheet = false }
             )
         }
-
-        PullRefreshIndicator(
-            refreshing = isLoading,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
     }
 }
 

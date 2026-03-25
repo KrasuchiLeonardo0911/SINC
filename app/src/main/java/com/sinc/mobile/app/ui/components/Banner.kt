@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,13 +31,15 @@ import java.util.UUID
 
 enum class BannerType {
     SUCCESS,
-    ERROR;
+    ERROR,
+    WARNING;
 
     val backgroundColor: Color
         @Composable
         get() = when (this) {
             SUCCESS -> Color(0xFF2E7D32) // Dark Green
             ERROR -> Color(0xFFD32F2F)   // Material Red
+            WARNING -> Color(0xFFFFA000) // Amber
         }
 
     val textColor: Color
@@ -53,7 +53,6 @@ data class BannerData(
 )
 
 // Global state holder for the banner.
-// This makes it easy to show a banner from anywhere in the app.
 object BannerManager {
     var bannerData by mutableStateOf<BannerData?>(null)
         private set
@@ -70,12 +69,11 @@ object BannerManager {
 @Composable
 fun GlobalBanner(
     modifier: Modifier = Modifier,
-    durationMillis: Long = 3000
+    durationMillis: Long = 4000 // Increased duration for warnings
 ) {
     val managerBanner = BannerManager.bannerData
     var bannerToRender by remember { mutableStateOf(managerBanner) }
 
-    // Update the banner to be rendered only when a new banner appears
     if (managerBanner != null) {
         bannerToRender = managerBanner
     }
@@ -83,26 +81,22 @@ fun GlobalBanner(
     LaunchedEffect(managerBanner) {
         if (managerBanner != null) {
             delay(durationMillis)
-            // Only dismiss if the banner hasn't been replaced by a new one
             if (BannerManager.bannerData?.id == managerBanner.id) {
                 BannerManager.dismiss()
             }
         }
     }
 
-    // Calculate the top padding dynamically to appear below the status bar and a typical top app bar
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val topBarHeight = 64.dp // Approximate height of the TopAppBar
-    val totalPadding = statusBarHeight + topBarHeight + 8.dp // Add 8.dp margin
+    val topBarHeight = 48.dp // Corrected to use the compact header height
+    val totalPadding = statusBarHeight + topBarHeight + 8.dp
 
     AnimatedVisibility(
         visible = managerBanner != null,
         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(animationSpec = tween(300)),
-        // Use a longer fade out to make it feel smoother
         exit = fadeOut(animationSpec = tween(durationMillis = 1000)),
         modifier = modifier
     ) {
-        // Use bannerToRender, which holds the data during the exit animation
         bannerToRender?.let {
             Box(
                 modifier = Modifier

@@ -5,6 +5,9 @@ import com.sinc.mobile.data.local.dao.MovimientoHistorialDao
 import com.sinc.mobile.data.mapper.toDomain
 import com.sinc.mobile.data.mapper.toEntity
 import com.sinc.mobile.data.network.api.HistorialMovimientosApiService
+import com.sinc.mobile.data.network.api.MovimientoApiService
+import com.sinc.mobile.data.network.dto.MovimientoRequest
+import com.sinc.mobile.data.network.dto.MovimientosBatchRequest
 import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.model.MovimientoHistorial
 import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
@@ -15,6 +18,7 @@ import javax.inject.Inject
 
 class MovimientoHistorialRepositoryImpl @Inject constructor(
     private val apiService: HistorialMovimientosApiService,
+    private val syncApiService: MovimientoApiService,
     private val dao: MovimientoHistorialDao,
     private val prefs: SharedPreferences
 ) : MovimientoHistorialRepository {
@@ -69,6 +73,64 @@ class MovimientoHistorialRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Result.Failure(GenericError("Network Error: ${e.message ?: "Unknown"}"))
+        }
+    }
+
+    override suspend fun saveLocalMovimiento(movimiento: MovimientoHistorial): Result<Long, GenericError> {
+        return try {
+            val entity = movimiento.toEntity().copy(sincronizado = false)
+            val localId = dao.insert(entity)
+            Result.Success(localId)
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error al guardar localmente: ${e.message}"))
+        }
+    }
+
+    override suspend fun syncUnsyncedMovements(): Result<Unit, GenericError> {
+        return try {
+            val unsynced = dao.getUnsyncedMovements()
+            if (unsynced.isEmpty()) return Result.Success(Unit)
+
+            // La API agrupa los movimientos por UP en la request, así que los agrupamos localmente
+            val groupedByUp = unsynced.groupBy { it.unidadProductivaId }
+            
+            var allSuccess = true
+            var lastError = ""
+
+            for ((upId, movimientos) in groupedByUp) {
+                val batch = MovimientosBatchRequest(
+                    upId = upId,
+                    movimientos = movimientos.map {
+                        MovimientoRequest(
+                            especie_id = it.especieId,
+                            categoria_id = it.categoriaId,
+                            raza_id = it.razaId,
+                            cantidad = it.cantidad,
+                            motivo_movimiento_id = it.motivoId,
+                            destino_traslado = it.destinoTraslado
+                        )
+                    }
+                )
+
+                val response = syncApiService.saveMovimientos(batch)
+                if (response.isSuccessful) {
+                    // Marcar este lote como sincronizado
+                    movimientos.forEach {
+                        dao.markAsSynced(it.localId, 0) // Asumimos ID 0 o no lo actualizamos si no viene en response
+                    }
+                } else {
+                    allSuccess = false
+                    lastError = "Error en UP $upId: ${response.code()}"
+                }
+            }
+
+            if (allSuccess) {
+                Result.Success(Unit)
+            } else {
+                Result.Failure(GenericError(lastError))
+            }
+        } catch (e: Exception) {
+            Result.Failure(GenericError("Error de red: ${e.message}"))
         }
     }
 

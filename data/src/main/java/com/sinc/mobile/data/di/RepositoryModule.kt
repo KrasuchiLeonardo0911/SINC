@@ -39,10 +39,16 @@ import com.sinc.mobile.data.repository.NotificationRepositoryImpl
 import com.sinc.mobile.domain.repository.NotificationRepository
 import com.sinc.mobile.data.repository.WeatherAlertRepositoryImpl
 import com.sinc.mobile.domain.repository.WeatherAlertRepository
+import com.sinc.mobile.data.util.ConnectivityManagerNetworkMonitor
+import com.sinc.mobile.domain.util.NetworkMonitor
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkMonitor(impl: ConnectivityManagerNetworkMonitor): NetworkMonitor
 
     @Binds
     @Singleton

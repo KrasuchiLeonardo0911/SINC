@@ -15,6 +15,7 @@ import com.sinc.mobile.domain.use_case.ventas.ValidateStockForVentaUseCase
 import com.sinc.mobile.domain.use_case.ventas.CancelDeclaracionVentaUseCase
 import com.sinc.mobile.domain.model.venta.LogisticaStatus
 import com.sinc.mobile.domain.use_case.GetStockUseCase
+import com.sinc.mobile.domain.util.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -49,7 +50,8 @@ data class VentasState(
     val isLogisticsOpen: Boolean = true,
     val logisticsMessage: String? = null,
     val nextVisitDate: String? = null,
-    val orderDeadline: String? = null
+    val orderDeadline: String? = null,
+    val isOnline: Boolean = true
 )
 
 @HiltViewModel
@@ -63,10 +65,10 @@ class VentasViewModel @Inject constructor(
     private val syncUnidadesProductivasUseCase: SyncUnidadesProductivasUseCase,
     private val syncCatalogosUseCase: SyncCatalogosUseCase,
     private val syncStockUseCase: SyncStockUseCase,
-    private val getStockUseCase: GetStockUseCase,
     private val catalogosRepository: CatalogosRepository,
     private val getLogisticsStatusUseCase: com.sinc.mobile.domain.use_case.ventas.GetLogisticsStatusUseCase,
-    private val sessionManager: com.sinc.mobile.data.session.SessionManager
+    private val sessionManager: com.sinc.mobile.data.session.SessionManager,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VentasState())
@@ -74,9 +76,27 @@ class VentasViewModel @Inject constructor(
 
     init {
         checkLogisticsStatus()
-        loadInitialData()
-        syncData()
+        observeNetwork()
         observeDeclaraciones()
+        
+        viewModelScope.launch {
+            if (networkMonitor.isOnline.first()) {
+                loadInitialData()
+                syncData()
+            }
+        }
+    }
+
+    private fun observeNetwork() {
+        viewModelScope.launch {
+            networkMonitor.isOnline.collect { isOnline ->
+                _uiState.update { it.copy(isOnline = isOnline) }
+                // If we come back online, trigger a sync
+                if (isOnline) {
+                    syncData()
+                }
+            }
+        }
     }
 
     private fun checkLogisticsStatus() {

@@ -15,7 +15,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -86,12 +88,7 @@ fun MovimientoStepperScreen(
     }
 
     // --- Overlays for Syncing and Success ---
-    LoadingOverlay(isLoading = uiState.syncState.isSyncing)
-    SyncResultOverlay(
-        show = uiState.syncState.syncCompleted,
-        message = "Stock actualizado con éxito!",
-        onDismiss = { viewModel.onSyncOverlayDismiss() }
-    )
+    // Replaced by inline saving screen
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
@@ -128,50 +125,95 @@ fun MovimientoStepperScreen(
                         if (pagerState.currentPage == 0) {
                             viewModel.onAddToList()
                         } else {
-                            viewModel.onSync()
+                            viewModel.onSave()
                         }
                     }
                 )
             }
         }
     ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize().padding(paddingValues)
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        if (uiState.formManager != null) {
-                            MovimientoFormStepContent(
-                                snackbarHostState = snackbarHostState,
-                                formState = uiState.formManager!!.formState.value,
-                                onEspecieSelected = uiState.formManager!!::onEspecieSelected,
-                                onCategoriaSelected = uiState.formManager!!::onCategoriaSelected,
-                                onRazaSelected = uiState.formManager!!::onRazaSelected,
-                                onMotivoSelected = uiState.formManager!!::onMotivoSelected,
-                                onCantidadChanged = uiState.formManager!!::onCantidadChanged,
-                                onDestinoChanged = uiState.formManager!!::onDestinoChanged
-                            )
-                        } else {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Error: El formulario no pudo ser inicializado.")
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize().padding(paddingValues)
+                ) { page ->
+                    when (page) {
+                        0 -> {
+                            if (uiState.formManager != null) {
+                                MovimientoFormStepContent(
+                                    snackbarHostState = snackbarHostState,
+                                    formState = uiState.formManager!!.formState.value,
+                                    onEspecieSelected = uiState.formManager!!::onEspecieSelected,
+                                    onCategoriaSelected = uiState.formManager!!::onCategoriaSelected,
+                                    onRazaSelected = uiState.formManager!!::onRazaSelected,
+                                    onMotivoSelected = uiState.formManager!!::onMotivoSelected,
+                                    onCantidadChanged = uiState.formManager!!::onCantidadChanged,
+                                    onDestinoChanged = uiState.formManager!!::onDestinoChanged
+                                )
+                            } else {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Error: El formulario no pudo ser inicializado.")
+                                }
                             }
                         }
+                        1 -> MovimientoReviewStepContent(
+                            movimientosAgrupados = uiState.syncState.movimientosAgrupados,
+                            catalogos = uiState.catalogos,
+                            onDelete = { group ->
+                                itemToDelete = group
+                                showDeleteConfirmation = true
+                            },
+                            onEdit = { /* TODO */ }
+                        )
                     }
-                    1 -> MovimientoReviewStepContent(
-                        movimientosAgrupados = uiState.syncState.movimientosAgrupados,
-                        catalogos = uiState.catalogos,
-                        onDelete = { group ->
-                            itemToDelete = group
-                            showDeleteConfirmation = true
-                        },
-                        onEdit = { /* TODO */ }
-                    )
+                }
+            }
+
+            // Pantalla de Guardado Minimalista con Texto Alternado
+            if (uiState.isSaving) {
+                var showFirstText by remember { mutableStateOf(true) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        kotlinx.coroutines.delay(800) // Cambia cada 800ms
+                        showFirstText = !showFirstText
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 3.dp
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        AnimatedContent(
+                            targetState = showFirstText,
+                            transitionSpec = {
+                                androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) togetherWith androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300))
+                            },
+                            label = "loading_text_animation"
+                        ) { isFirst ->
+                            Text(
+                                text = if (isFirst) "Espere..." else "Guardando movimientos...",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -204,7 +246,7 @@ private fun BottomBarButton(
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
-    val buttonText = if (pagerState.currentPage == 0) "Añadir a la Lista" else "Sincronizar y Guardar"
+    val buttonText = if (pagerState.currentPage == 0) "Añadir a la Lista" else "Guardar"
 
     Box(
         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(bottom = 8.dp, top = 4.dp),

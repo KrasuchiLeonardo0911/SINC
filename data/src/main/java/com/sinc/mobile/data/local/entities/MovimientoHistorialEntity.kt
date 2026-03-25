@@ -6,15 +6,22 @@ import java.time.LocalDateTime
 
 @Entity(tableName = "movimiento_historial")
 data class MovimientoHistorialEntity(
-    @PrimaryKey
-    val id: Long,
+    @PrimaryKey(autoGenerate = true)
+    val localId: Long = 0,
+    val id: Long? = null,
     val fechaRegistro: LocalDateTime,
     val cantidad: Int,
     val especie: String,
+    val especieId: Int,
     val categoria: String,
+    val categoriaId: Int,
     val raza: String,
+    val razaId: Int,
     val motivo: String,
+    val motivoId: Int,
     val tipoMovimiento: String,
     val unidadProductiva: String,
-    val destinoTraslado: String?
+    val unidadProductivaId: Int,
+    val destinoTraslado: String?,
+    val sincronizado: Boolean = false
 )

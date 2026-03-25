@@ -382,3 +382,90 @@ Se ha implementado la nueva funcionalidad de **Agenda Digital**, integrándola d
 
 ---
 **Estado del Proyecto:** Compilación exitosa. La Agenda Digital es plenamente funcional en modo local y está preparada para la sincronización completa con el backend de Laravel.
+
+# Avances de la Sesión Actual (14 de Marzo de 2026)
+
+## Implementación del Módulo de Registros Diarios (Bitácora)
+
+Se ha desarrollado la funcionalidad completa de "Registros Diarios" (internamente Bitácora), permitiendo a los productores llevar una bitácora de texto libre asociada a fechas específicas, con soporte offline y sincronización automática.
+
+### 1. Capa de Dominio (:domain)
+- **Modelo de Negocio**: Creación de `Bitacora.kt` con campos para ID, contenido, fecha y timestamps.
+- **Contrato de Datos**: Definición de `BitacoraRepository.kt` con soporte para CRUD y sincronización.
+- **Casos de Uso**: Implementación de `GetBitacorasUseCase`, `SaveBitacoraUseCase`, `UpdateBitacoraUseCase`, `DeleteBitacoraUseCase` y `SyncBitacorasUseCase`.
+
+### 2. Capa de Datos (:data)
+- **Networking**:
+    - Implementación de `BitacoraApiService.kt` con endpoints REST (`GET`, `POST`, `PUT`, `DELETE`).
+    - Creación de DTOs para solicitudes y respuestas.
+- **Persistencia Local (Room)**:
+    - Creación de `BitacoraEntity.kt` y `BitacoraDao.kt` para el almacenamiento local.
+    - Configuración de la base de datos (Versión 18) con `fallbackToDestructiveMigration`.
+- **Mapeo y Repositorio**: Implementación de `BitacoraMapper.kt` y `BitacoraRepositoryImpl.kt` con lógica de sincronización "limpia e inserta" al inicio.
+
+### 3. Capa de Presentación (:app)
+- **ViewModel**: `BitacoraViewModel.kt` gestiona el estado del flujo, la navegación entre pasos y el filtrado por mes/año.
+- **Interfaz de Usuario (UI)**:
+    - **Pantalla Principal**: Listado minimalista con líneas finas y selector de mes/año estilizado (estilo Agenda).
+    - **Detalle de Registro**: Modal (`ModalBottomSheet`) con vista completa y acciones de edición/eliminación.
+    - **Flujo de Creación (Stepper)**:
+        - **Paso 1 (Calendario)**: Selector de fecha integrado con el diseño de la Agenda.
+        - **Paso 2 (Descripción)**: Área de texto amplia con bordes rectos (4.dp).
+    - **Transiciones**: Implementación de animaciones laterales (`slideInHorizontally`) para el flujo del asistente.
+    - **Feedback de Guardado**: Pantalla blanca minimalista con textos alternados ("Espere...", "Guardando registro...") y delay de 500ms para una UX profesional.
+
+### 4. Navegación y Estética
+- **Renombre**: El módulo pasó de llamarse "Cuaderno" a **"Registros"** para el usuario final.
+- **Iconografía**: Actualizado a `Icons.Outlined.Assignment`.
+- **Correcciones de Layout**: Ajuste de paddings en headers, visibilidad dinámica de la barra de navegación inferior y centrado de estados vacíos.
+
+## Mejoras en la Agenda Digital
+
+Se han corregido y potenciado las funcionalidades de control y seguimiento de tareas programadas.
+
+### 1. Funcionalidad de Completado (Check)
+- **Corrección de API**: Se ajustó el endpoint de actualización de estado para enviar un cuerpo JSON con el campo `completada` (boolean), cumpliendo con la especificación V1.
+- **Actualización Optimista**: El repositorio ahora actualiza la base de datos local inmediatamente después del éxito de la red (y de forma preventiva para la UI), asegurando que el tachado visual sea instantáneo y persistente.
+- **Soporte Room**: Se corrigió la consulta en `AgendaDao` para utilizar la columna real `completadaEn` (LocalDateTime?) en lugar de un booleano inexistente.
+
+### 2. Inteligencia de Negocio y UI/UX
+- **Alertas de Atraso**: Implementación de lógica visual que marca en **Rojo** el icono, el título y la hora de las tareas que no han sido completadas y cuya fecha programada ya pasó.
+- **Edición Protegida**: Se deshabilitó la capacidad de abrir el editor para tareas que ya han sido marcadas como completadas, garantizando la integridad de los registros finalizados.
+- **Agendado Automático**: El calendario ahora abre automáticamente el modal de creación al tocar cualquier fecha actual o futura, preseleccionando ese día para mayor agilidad.
+
+---
+**Estado del Proyecto**: Compilación exitosa (`./gradlew assembleDebug`). El sistema de control de tareas y los registros diarios son ahora herramientas robustas y consistentes.
+
+# Avances de la Sesión Actual (23 de Marzo de 2026)
+
+## Refactorización del Flujo de Movimientos: True "Offline-First"
+
+Esta sesión se centró en transformar el flujo de carga de movimientos para que la aplicación sea verdaderamente funcional sin conexión a internet, impactando los datos locales de forma inmediata y sincronizando en segundo plano.
+
+### 1. Refactorización de la Base de Datos (Capa de Datos)
+- **Modificación de Entidades**: Se actualizó `MovimientoHistorialEntity` para soportar registros puramente locales. Se añadieron los campos `localId` (autogenerado), `sincronizado` (booleano) y las referencias directas a los catálogos (`especieId`, `categoriaId`, `razaId`, `motivoId`, `unidadProductivaId`).
+- **Migración de Base de Datos**: Se incrementó la versión de `SincMobileDatabase` a **21** para aplicar estos cambios en el esquema.
+- **DAO y Repositorio**: Se añadieron métodos en `MovimientoHistorialDao` para buscar movimientos no sincronizados (`getUnsyncedMovements`) y para marcarlos como sincronizados tras enviarlos al servidor. El repositorio ahora cuenta con la función `syncUnsyncedMovements()`.
+
+### 2. Implementación de "Stock Dinámico" (Capa de Dominio)
+- **Nuevo Caso de Uso**: Se creó `GetEffectiveStockUseCase.kt`.
+- **Lógica de Cálculo**: En lugar de depender exclusivamente del "Snapshot" de stock que envía el servidor, la aplicación ahora calcula el stock en tiempo real. Suma el stock del servidor con los movimientos locales (historial) que tienen el flag `sincronizado = false` (sumando "Altas" y restando "Bajas").
+- **Impacto Transversal**: `StockViewModel` y las validaciones de `VentasViewModel` fueron actualizados para utilizar este nuevo stock efectivo, garantizando que el usuario nunca pueda sobrevender o registrar bajas de animales que ya registró offline.
+
+### 3. Flujo de Experiencia de Usuario (UI/UX)
+- **Confirmación Instantánea (Borrador -> Oficial)**:
+    - La pestaña "Pendientes" actúa ahora solo como una lista de borradores temporales.
+    - Al pulsar "Guardar", se ejecuta el nuevo `ConfirmMovimientosUseCase`, que mueve los borradores al historial local oficial de forma instantánea.
+- **Feedback Visual Mejorado**:
+    - Se modificó el texto del botón final a simplemente **"Guardar"**.
+    - Se eliminaron las pantallas de carga que interrumpían el flujo al añadir items a la lista de revisión.
+    - Se implementó una **pantalla de carga minimalista** (fondo blanco con texto alternado "Espere..." y "Guardando movimientos...") que aparece exclusivamente al confirmar el guardado final, acompañada de un *delay* artificial de 1.5 segundos para proporcionar una sensación de procesamiento sólida.
+    - Al finalizar, se muestra el banner global verde de éxito (`"Movimientos guardados exitosamente"`) estandarizado de la aplicación.
+- **Sincronización Silenciosa**: Una vez confirmados los movimientos, la app dispara un proceso en segundo plano (`triggerBackgroundSync()`) que intenta enviar el lote a la API (`POST /api/movil/cuaderno/movimientos`) sin bloquear la interfaz.
+
+### 4. Resiliencia de Red y Avisos Proactivos
+- **Indicadores en Stock**: La pantalla `StockScreen` ahora observa el `NetworkMonitor`. Si se pierde la conexión o si el `ViewModel` detecta que existen movimientos locales en el historial esperando sincronización, despliega un **banner amarillo (`BannerType.WARNING`)** notificando al usuario del estado actual ("Modo offline: No hay conexión a internet" o "Tienes movimientos locales sin sincronizar").
+- **Bloqueo Inteligente en Ventas**: Dado que declarar ventas es una operación crítica que compromete logística y requiere confirmación del servidor, la pantalla `VentasScreen` se reestructuró para ocultar su contenido y mostrar un componente claro de `EmptyState` informando al usuario que *"Debe conectarse a internet para declarar y gestionar sus ventas"* cuando el `NetworkMonitor` detecta pérdida de red.
+
+---
+**Estado del Proyecto:** La aplicación compila exitosamente (`assembleDebug`). El flujo de "Cuaderno de Campo" es ahora completamente asíncrono, tolerante a fallos de red y visualmente unificado con el resto del sistema.
