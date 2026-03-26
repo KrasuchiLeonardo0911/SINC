@@ -49,11 +49,8 @@ class HistorialMovimientosViewModel @Inject constructor(
             _state.update { it.copy(isInitialLoad = true, error = null) }
             val startTime = System.currentTimeMillis()
 
-            // Intentamos sincronizar. Si falla (ej. sin red), mostramos el banner
-            val result = syncMovimientosHistorialUseCase()
-            if (result is Result.Failure) {
-                BannerManager.show("Sin internet. Mostrando historial guardado.", BannerType.ERROR)
-            }
+            // Try to sync in background, but don't show banners if it fails
+            syncMovimientosHistorialUseCase()
 
             val duration = System.currentTimeMillis() - startTime
             if (duration < 1500) {
@@ -100,11 +97,7 @@ class HistorialMovimientosViewModel @Inject constructor(
             if (_state.value.isLoading) return@launch
             _state.update { it.copy(isLoading = true, error = null) }
 
-            val result = syncMovimientosHistorialUseCase()
-
-            if (result is Result.Failure) {
-                BannerManager.show("No se pudo actualizar. Conéctese para ver cambios recientes.", BannerType.ERROR)
-            }
+            syncMovimientosHistorialUseCase()
 
             _state.update { it.copy(isLoading = false) }
         }

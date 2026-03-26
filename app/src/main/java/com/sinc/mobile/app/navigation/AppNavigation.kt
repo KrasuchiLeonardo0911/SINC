@@ -77,11 +77,6 @@ object Routes {
     const val HELP = "help"
     const val SELECCION_CAMPO = "seleccion_campo"
     const val TERMS_OF_SERVICE = "terms_of_service"
-    const val STOCK_DETAIL = "stock_detail/{speciesName}/{grouping}?unidadId={unidadId}"
-    fun createStockDetailRoute(speciesName: String, grouping: String, unidadId: Int? = null): String {
-        val base = "stock_detail/$speciesName/$grouping"
-        return if (unidadId != null) "$base?unidadId=$unidadId" else base
-    }
 
     // Ticket Routes
     const val TICKETS_LIST = "tickets_list"
@@ -392,36 +387,6 @@ fun AppNavigation(
                 navController = navController,
                 onBack = { navController.popBackStack() },
                 mainScaffoldBottomPadding = 0.dp // Not needed for standalone screen
-            )
-        }
-
-        composable(
-            route = Routes.STOCK_DETAIL,
-            arguments = listOf(
-                navArgument("speciesName") { type = NavType.StringType },
-                navArgument("grouping") { type = NavType.StringType },
-                navArgument("unidadId") { 
-                    type = NavType.IntType
-                    defaultValue = -1 // Usamos -1 para indicar "ninguno" o "todos"
-                }
-            ),
-            enterTransition = {
-                slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
-            },
-            popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
-            }
-        ) { backStackEntry ->
-            val speciesName = backStackEntry.arguments?.getString("speciesName") ?: ""
-            val grouping = backStackEntry.arguments?.getString("grouping") ?: "BY_ALL"
-            val unidadId = backStackEntry.arguments?.getInt("unidadId").takeIf { it != -1 }
-            
-            com.sinc.mobile.app.features.stock.StockDetailScreen(
-                speciesName = speciesName,
-                grouping = grouping,
-                unidadId = unidadId,
-                onBack = { navController.popBackStack() },
-                navController = navController
             )
         }
 

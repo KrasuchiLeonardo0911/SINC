@@ -182,20 +182,9 @@ class StockViewModel @Inject constructor(
             uiState.map { Pair(it.isOnline, it.hasUnsyncedData) }
                 .distinctUntilChanged()
                 .collect { (isOnline, hasUnsynced) ->
-                    // Show banner only after initial load is complete
-                    if (!_uiState.value.isInitialLoad) {
-                        if (!isOnline) {
-                            BannerManager.show(
-                                "Modo offline: No hay conexión a internet.",
-                                BannerType.WARNING
-                            )
-                        } else if (hasUnsynced) {
-                            BannerManager.show(
-                                "Tienes movimientos locales sin sincronizar.",
-                                BannerType.WARNING
-                            )
-                        }
-                    }
+                    // We removed the "offline" banner for a better UX.
+                    // If you still need a subtle indicator of unsynced data,
+                    // you can add it as a status dot in the UI instead of a banner.
                 }
         }
 

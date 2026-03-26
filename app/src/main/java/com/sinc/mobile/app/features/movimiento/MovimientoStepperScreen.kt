@@ -59,16 +59,8 @@ fun MovimientoStepperScreen(
         }
     }
 
-    // Listen for sync results to show Snackbars for errors
-    LaunchedEffect(uiState.syncState.syncError) {
-        val syncError = uiState.syncState.syncError
-        if (syncError != null) {
-            snackbarHostState.showSnackbar(
-                message = "Error de sincronización: $syncError",
-                duration = SnackbarDuration.Short
-            )
-        }
-    }
+    // We removed the sync error snackbar listener because we handle sync silently in background.
+    // The user already gets a success banner when saving locally.
 
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }

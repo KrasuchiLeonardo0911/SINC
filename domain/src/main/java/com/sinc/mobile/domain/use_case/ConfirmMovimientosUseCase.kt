@@ -2,9 +2,11 @@ package com.sinc.mobile.domain.use_case
 
 import com.sinc.mobile.domain.model.GenericError
 import com.sinc.mobile.domain.model.MovimientoHistorial
+import com.sinc.mobile.domain.model.UnidadProductiva
 import com.sinc.mobile.domain.repository.CatalogosRepository
 import com.sinc.mobile.domain.repository.MovimientoHistorialRepository
 import com.sinc.mobile.domain.repository.MovimientoRepository
+import com.sinc.mobile.domain.repository.UnidadProductivaRepository
 import com.sinc.mobile.domain.util.Result
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -12,7 +14,8 @@ import javax.inject.Inject
 class ConfirmMovimientosUseCase @Inject constructor(
     private val movimientoRepository: MovimientoRepository,
     private val historialRepository: MovimientoHistorialRepository,
-    private val catalogosRepository: CatalogosRepository
+    private val catalogosRepository: CatalogosRepository,
+    private val unidadProductivaRepository: UnidadProductivaRepository
 ) {
     suspend operator fun invoke(): Result<Unit, GenericError> {
         return try {
@@ -20,6 +23,7 @@ class ConfirmMovimientosUseCase @Inject constructor(
             if (pendientes.isEmpty()) return Result.Success(Unit)
 
             val catalogos = catalogosRepository.getMovimientoCatalogos().first()
+            val unidades: List<UnidadProductiva> = unidadProductivaRepository.getUnidadesProductivas().first()
 
             pendientes.forEach { pend ->
                 val especie = catalogos.especies.find { it.id == pend.especieId }?.nombre ?: "Desconocido"
@@ -27,11 +31,9 @@ class ConfirmMovimientosUseCase @Inject constructor(
                 val raza = catalogos.razas.find { it.id == pend.razaId }?.nombre ?: "Desconocido"
                 val motivoObj = catalogos.motivosMovimiento.find { it.id == pend.motivoMovimientoId }
                 val motivoNombre = motivoObj?.nombre ?: "Desconocido"
-                val tipoMovimiento = motivoObj?.tipo ?: "Alta" // Default to Alta if not found
+                val tipoMovimiento = motivoObj?.tipo ?: "Alta"
                 
-                // We don't have the UP name easily here without another lookup, 
-                // but we can pass a generic one or fetch it. 
-                // For the effective stock calculation, the IDs are what matters.
+                val upNombre = unidades.find { unit: UnidadProductiva -> unit.id == pend.unidadProductivaId }?.nombre ?: "Campo Desconocido"
                 
                 val historialItem = MovimientoHistorial(
                     localId = 0,
@@ -47,7 +49,7 @@ class ConfirmMovimientosUseCase @Inject constructor(
                     motivo = motivoNombre,
                     motivoId = pend.motivoMovimientoId,
                     tipoMovimiento = tipoMovimiento,
-                    unidadProductiva = "Campo Local", // Will be updated on sync
+                    unidadProductiva = upNombre,
                     unidadProductivaId = pend.unidadProductivaId,
                     destinoTraslado = pend.destinoTraslado,
                     sincronizado = false

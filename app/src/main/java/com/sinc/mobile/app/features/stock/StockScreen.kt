@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
@@ -16,7 +18,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,12 +42,29 @@ fun StockScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
     onNavigateToVentas: () -> Unit,
-    onNavigateToDetail: (String, String, Int?) -> Unit,
+    onNavigateToMovimientoForm: (Int, Int, Int, Int) -> Unit, // speciesId, breedId, catId, upId
     viewModel: StockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val processedStock = uiState.processedStock
     var showUpSelector by remember { mutableStateOf(false) }
+    
+    // Local state to manage which species is expanded
+    var expandedSpecies by remember { mutableStateOf<String?>(null) }
+
+    // Quick sale state
+    var showSaleSheet by remember { mutableStateOf(false) }
+    var selectedItemForSale by remember { mutableStateOf<DesgloseItem.Full?>(null) }
+    var selectedSpeciesNameForSale by remember { mutableStateOf("") }
+    var pesoVenta by remember { mutableStateOf("") }
+    var observacionesVenta by remember { mutableStateOf("") }
+
+    LaunchedEffect(uiState.saleSuccess, uiState.saleError) {
+        if (uiState.saleSuccess != null || uiState.saleError != null) {
+            showSaleSheet = false
+            // The Snackbar/Dialog is handled below
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize().navigationBarsPadding(),
@@ -69,7 +91,7 @@ fun StockScreen(
                     ), 
                     verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    // Selector de Campo (Estilo Barra de Búsqueda)
+                    // Selector de Campo
                     item {
                         val selectedUnidad = uiState.unidadesProductivas.find { it.id == uiState.selectedUnidadId }
                         CampoSelector(
@@ -80,14 +102,43 @@ fun StockScreen(
                     }
 
                     if (processedStock != null && processedStock.stockTotalGeneral > 0) {
-                        // Sección de Stock Total (Interactiva)
+                        // Sección de Stock Total (Gráfico)
                         item {
-                            TotalStockSection(
-                                stock = processedStock,
-                                onSpeciesSelected = { species ->
-                                    onNavigateToDetail(species, "BY_ALL", uiState.selectedUnidadId)
+                            TotalStockHeader(stock = processedStock)
+                        }
+
+                        // Lista de Especies con Detalle Integrado
+                        items(processedStock.allSpecies.size) { index ->
+                            val species = processedStock.allSpecies[index]
+                            val isExpanded = expandedSpecies == species.nombre
+                            
+                            SpeciesExpandableCard(
+                                species = species,
+                                isExpanded = isExpanded,
+                                onToggle = {
+                                    expandedSpecies = if (isExpanded) null else species.nombre
+                                },
+                                onAdjust = { item ->
+                                    uiState.selectedUnidadId?.let { upId ->
+                                        onNavigateToMovimientoForm(item.especieId, item.razaId, item.categoriaId, upId)
+                                    }
+                                },
+                                onSell = { item ->
+                                    selectedItemForSale = item
+                                    selectedSpeciesNameForSale = species.nombre
+                                    pesoVenta = ""
+                                    observacionesVenta = ""
+                                    showSaleSheet = true
                                 }
                             )
+
+                            if (index < processedStock.allSpecies.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 24.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                    thickness = 1.dp
+                                )
+                            }
                         }
                     } else if (!uiState.isLoading) {
                         item {
@@ -129,6 +180,122 @@ fun StockScreen(
         }
     }
 
+    // Modal de Venta Rápida
+    if (showSaleSheet && selectedItemForSale != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showSaleSheet = false },
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .navigationBarsPadding(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Text(
+                    text = "Registrar Venta",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Text(
+                    text = "${selectedItemForSale?.categoria} - ${selectedItemForSale?.raza}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                if (uiState.selectedUnidadId == null) {
+                    Text(
+                        text = "Para vender, debe seleccionar un campo arriba primero.",
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                } else if (!uiState.isLogisticsOpen) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "El periodo de ventas ha cerrado, espere hasta el siguiente ciclo.",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Cantidad a declarar: 1 animal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+
+                    OutlinedTextField(
+                        value = pesoVenta,
+                        onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) pesoVenta = it },
+                        label = { Text("Peso Vivo Aproximado (Kg)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = observacionesVenta,
+                        onValueChange = { observacionesVenta = it },
+                        label = { Text("Observaciones (Opcional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Button(
+                        onClick = {
+                            viewModel.onSellAnimal(
+                                especieNombre = selectedSpeciesNameForSale,
+                                categoriaNombre = selectedItemForSale!!.categoria,
+                                razaNombre = selectedItemForSale!!.raza,
+                                cantidad = 1,
+                                peso = pesoVenta.toFloatOrNull(),
+                                observaciones = observacionesVenta,
+                                unidadId = uiState.selectedUnidadId!!
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(25.dp),
+                        enabled = !uiState.isSelling
+                    ) {
+                        if (uiState.isSelling) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                        } else {
+                            Text("Confirmar Venta")
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+
+    // Success/Error Dialogs
+    if (uiState.saleSuccess != null || uiState.saleError != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearSaleMessages() },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearSaleMessages() }) {
+                    Text("Entendido")
+                }
+            },
+            title = { Text(if (uiState.saleSuccess != null) "Éxito" else "Atención") },
+            text = { Text(uiState.saleSuccess ?: uiState.saleError ?: "") },
+            containerColor = Color.White
+        )
+    }
+
     if (showUpSelector) {
         UpSelectorBottomSheet(
             unidades = uiState.unidadesProductivas,
@@ -143,18 +310,14 @@ fun StockScreen(
 }
 
 @Composable
-private fun TotalStockSection(
-    stock: ProcessedStock,
-    onSpeciesSelected: (String) -> Unit
-) {
+private fun TotalStockHeader(stock: ProcessedStock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(top = 8.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
+            .padding(top = 8.dp, bottom = 32.dp, start = 24.dp, end = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Gráfico de Dona con Sombra y Total en el centro
         Box(
             modifier = Modifier
                 .size(180.dp)
@@ -186,66 +349,192 @@ private fun TotalStockSection(
                 )
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(32.dp))
+@Composable
+private fun SpeciesExpandableCard(
+    species: ProcessedEspecieStock,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onAdjust: (DesgloseItem.Full) -> Unit,
+    onSell: (DesgloseItem.Full) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(horizontal = 24.dp)
+    ) {
+        // Cabecera de Especie (Clickable)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggle() }
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(species.color)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = species.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF191C1E)
+                    )
+                    Text(
+                        text = "${species.stockTotal} animales en total",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+            
+            val rotationAngle by animateFloatAsState(
+                targetValue = if (isExpanded) 180f else 0f,
+                animationSpec = tween(durationMillis = 300),
+                label = "ArrowRotation"
+            )
 
-        // Leyenda en Filas (Estilo Mis Campos)
-        if (stock.speciesLegendItems.isNotEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Colapsar" else "Expandir",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.rotate(rotationAngle)
+            )
+        }
+
+        // Contenido Expandido (Tabla de Detalle)
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isExpanded,
+            enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.expandVertically(
+                animationSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+            ),
+            exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.shrinkVertically(
+                animationSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+            )
+        ) {
+            Column {
+                StockDetailTable(
+                    desglose = species.desglose,
+                    onAdjust = onAdjust,
+                    onSell = onSell
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StockDetailTable(
+    desglose: List<DesgloseItem.Full>,
+    onAdjust: (DesgloseItem.Full) -> Unit,
+    onSell: (DesgloseItem.Full) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+    ) {
+        // Encabezado de Tabla
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5F5F7), RoundedCornerShape(4.dp))
+                .padding(vertical = 8.dp, horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "ANIMAL / DETALLE",
+                modifier = Modifier.weight(1.5f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+            Text(
+                text = "ACCIONES",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "STOCK",
+                modifier = Modifier.weight(0.5f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                textAlign = TextAlign.End
+            )
+        }
+
+        // Filas de Datos
+        desglose.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                stock.speciesLegendItems.forEachIndexed { index, item ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSpeciesSelected(item.label) }
-                            .padding(vertical = 12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(CircleShape)
-                                        .background(item.color)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = item.label,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF191C1E)
-                                    )
-                                    Text(
-                                        text = "Representa el ${item.percentage.roundToInt()}% del stock",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray
-                                    )
-                                }
-                            }
-                            
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = "Ver detalle",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                // Info Animal
+                Column(modifier = Modifier.weight(1.5f)) {
+                    Text(
+                        text = item.categoria,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = item.raza,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+
+                // Acciones
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onAdjust(item) }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Ajustar",
+                            tint = Color(0xFF1976D2),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
-                    
-                    if (index < stock.speciesLegendItems.size - 1) {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = { onSell(item) }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Vender",
+                            tint = Color(0xFF2E7D32),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
+
+                // Cantidad
+                Text(
+                    text = item.quantity.toString(),
+                    modifier = Modifier.weight(0.5f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End
+                )
             }
+            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.5.dp)
         }
     }
 }
