@@ -1,10 +1,14 @@
 package com.sinc.mobile.data.local.entities
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "movimiento_historial")
+@Entity(
+    tableName = "movimiento_historial",
+    indices = [Index(value = ["id"], unique = true)]
+)
 data class MovimientoHistorialEntity(
     @PrimaryKey(autoGenerate = true)
     val localId: Long = 0,

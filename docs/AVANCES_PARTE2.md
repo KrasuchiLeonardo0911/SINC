@@ -469,3 +469,60 @@ Esta sesión se centró en transformar el flujo de carga de movimientos para que
 
 ---
 **Estado del Proyecto:** La aplicación compila exitosamente (`assembleDebug`). El flujo de "Cuaderno de Campo" es ahora completamente asíncrono, tolerante a fallos de red y visualmente unificado con el resto del sistema.
+
+# Avances de la Sesión Actual (26 de Marzo de 2026)
+
+Esta sesión se centró en resolver un problema crítico de la arquitectura offline-first y en refinar significativamente la experiencia de usuario en el módulo de "Mi Stock".
+
+## 1. Solución de Sincronización de Stock Offline
+
+-   **Problema Crítico**: Los movimientos de stock registrados de forma offline (altas o bajas) se guardaban localmente, pero no impactaban visualmente la pantalla de "Mi Stock" hasta que se sincronizaban con el servidor.
+-   **Causa Raíz Identificada**: La lógica en `GetEffectiveStockUseCase` solo actualizaba las cantidades de animales que ya existían en el stock proveído por el servidor. Si se añadía un animal de una categoría/raza nueva para un campo, este era ignorado en el cálculo del stock "efectivo".
+-   **Solución Implementada**:
+    -   Se refactorizó `GetEffectiveStockUseCase` para que, al procesar movimientos locales, **cree dinámicamente** las estructuras faltantes (Unidad Productiva, Especie o el desglose de Categoría/Raza) si no se encuentran en el stock actual.
+    -   Se mejoró `ConfirmMovimientosUseCase` para que al mover los borradores al historial local, se asigne el nombre correcto de la Unidad Productiva, garantizando la consistencia de los datos para los cálculos.
+-   **Resultado**: El stock visible en la app ahora se actualiza en tiempo real con cada movimiento local, sea online u offline, proporcionando una experiencia de usuario coherente y fiable.
+
+## 2. Refactorización Integral de la Pantalla "Mi Stock"
+
+-   **Objetivo**: Unificar el flujo de visualización de stock, eliminando la necesidad de navegar a una pantalla de detalles separada.
+-   **Implementación**:
+    -   Se eliminó por completo `StockDetailScreen.kt` y su ruta de navegación.
+    -   La pantalla `StockScreen.kt` fue rediseñada para presentar las especies (Ovino, Caprino) como **tarjetas expandibles (acordeón)**.
+    -   Al expandir una especie, ahora se muestra directamente la tabla de desglose por categoría/raza y los botones de acción ("Ajustar", "Vender") que antes estaban en la pantalla de detalle.
+    -   Se integró el modal completo de "Venta Rápida" (con campos de peso y observaciones) en la misma pantalla.
+-   **Resultado**: El usuario puede ver y gestionar todo su stock desde una única vista fluida, sin perder el contexto del campo que ha seleccionado.
+
+## 3. Mejoras Generales de UI/UX
+
+-   **Eliminación de Banners de Conectividad**: Se eliminaron los banners de aviso de "Sin internet" y "Modo offline" de las pantallas de Historial, Stock y Carga de Movimientos, ya que la funcionalidad offline-first hace que estas interrupciones sean innecesarias y contra-intuitivas.
+-   **Animaciones Suaves**: Se mejoró la animación del acordeón en "Mi Stock", añadiendo un efecto de `expand/shrink` y rotación al icono de la flecha para una experiencia de usuario más pulida y profesional.
+
+---
+**Estado del Proyecto:** El proyecto compila con éxito y los problemas de usabilidad y de lógica de negocio reportados han sido solucionados.
+
+# Registro de Avances - Sesión Actual (30 de Abril de 2026)
+
+## Corrección de Errores: Duplicidad en Historial de Movimientos
+
+Se ha identificado y resuelto un problema crítico en el flujo **Offline-First** que causaba la aparición de registros duplicados en el historial de movimientos cuando el dispositivo tenía conexión a internet.
+
+### Diagnóstico de la Falla
+- **Conflicto de Identidad**: Al guardar un movimiento con internet, la app lo registraba localmente y lo enviaba a la API casi simultáneamente.
+- **Sincronización Delta**: Tras el éxito del envío, el movimiento se marcaba como sincronizado localmente, pero una sincronización delta posterior descargaba el mismo movimiento desde el servidor (con su ID oficial).
+- **Duplicado Visual**: Como el registro local no tenía el ID del servidor, Room lo interpretaba como un registro distinto al que bajaba de la red, resultando en dos entradas para el mismo animal.
+
+### Solución Implementada
+1.  **Limpieza Quirúrgica (DAO)**: Se añadió el método `deleteTemporarySyncedMovements()` en `MovimientoHistorialDao` para eliminar registros marcados como sincronizados que aún no tienen ID de servidor justo antes de procesar los datos oficiales.
+2.  **Refactorización del Repositorio**: Se integró la lógica de limpieza en `MovimientoHistorialRepositoryImpl.syncMovimientos`. Ahora, antes de realizar una inserción por sincronización delta, se eliminan los registros temporales.
+3.  **Integridad de Base de Datos**: Se añadió un **Índice Único** al campo `id` (servidor) en `MovimientoHistorialEntity` como medida de seguridad física para evitar que existan dos filas con el mismo ID de servidor.
+4.  **Actualización de Esquema**: Se incrementó la versión de la base de datos a **22**.
+
+## Preparación para Producción (Play Store)
+
+- **Actualización de Versión**: Se incrementaron los valores de versión en `app/build.gradle.kts` para permitir la subida a la consola de Google Play.
+    - **versionCode**: 6 -> **7**
+    - **versionName**: "1.5" -> **"1.6"**
+
+---
+**Estado Final**: El flujo de sincronización es ahora robusto, eliminando la posibilidad de duplicados visuales y garantizando que la versión oficial del servidor siempre prevalezca sobre el registro temporal local una vez sincronizado.

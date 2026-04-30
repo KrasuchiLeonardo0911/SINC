@@ -33,6 +33,9 @@ interface MovimientoHistorialDao {
     @Query("DELETE FROM movimiento_historial WHERE sincronizado = 1")
     suspend fun clearSyncedMovements()
 
+    @Query("DELETE FROM movimiento_historial WHERE sincronizado = 1 AND id IS NULL")
+    suspend fun deleteTemporarySyncedMovements()
+
     @Query("SELECT COUNT(*) FROM movimiento_historial")
     suspend fun getMovimientoCount(): Int
 
@@ -40,5 +43,5 @@ interface MovimientoHistorialDao {
     suspend fun getUnsyncedMovements(): List<MovimientoHistorialEntity>
 
     @Query("UPDATE movimiento_historial SET id = :serverId, sincronizado = 1 WHERE localId = :localId")
-    suspend fun markAsSynced(localId: Long, serverId: Long)
+    suspend fun markAsSynced(localId: Long, serverId: Long?)
 }

@@ -49,6 +49,9 @@ class MovimientoHistorialRepositoryImpl @Inject constructor(
                             if (effectiveTimestamp == null) {
                                 dao.clearAndInsert(entities)
                             } else {
+                                // Important: delete local records that were just synced but don't have a server ID yet
+                                // to avoid duplicates before inserting the official server version
+                                dao.deleteTemporarySyncedMovements()
                                 dao.insertAll(entities)
                             }
 
@@ -114,9 +117,9 @@ class MovimientoHistorialRepositoryImpl @Inject constructor(
 
                 val response = syncApiService.saveMovimientos(batch)
                 if (response.isSuccessful) {
-                    // Marcar este lote como sincronizado
+                    // Marcar este lote como sincronizado (dejamos id en null para que sea limpiado en la delta sync)
                     movimientos.forEach {
-                        dao.markAsSynced(it.localId, 0) // Asumimos ID 0 o no lo actualizamos si no viene en response
+                        dao.markAsSynced(it.localId, null)
                     }
                 } else {
                     allSuccess = false
